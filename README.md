@@ -1,2 +1,28 @@
 # GoZen_GDExtension
+
 The core of GoZen which works thanks to FFmpeg!
+
+## Under construction
+
+This GDExtension still does not work (yet)!!
+
+## Road-map
+
+For the road map of this GDExtension we will keep it simple as we have a lot of it already working. There are only a couple of issues left to tackle to really make this GDExtension useful.
+
+### TO-DO
+
+- Getting all codecs to work properly;
+- Interlacing/De-interlacing support;
+- Audio needs to be fixed for some codecs;
+- Not all frames can be taken from video files;
+- Getting a correct number of all available video frames;
+- Matching frames from video with length of audio;
+- Add support for non-square pixel formats;
+
+## Licensing
+
+Please be careful and read up on the licensing of FFmpeg. If you want access to all video codecs, you'll have to use the GPL 3.0 license for your project. You could go for the lGPL 3.0 is you change the FFmpeg compiling command though.
+
+Both us and FFmpeg can not be blamed for this, blame the big companies with their patents. But on the other hand, yey open source! :D
+
