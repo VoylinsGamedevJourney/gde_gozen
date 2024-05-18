@@ -27,3 +27,5 @@ compile_commands.json
 
 # Other stuff
 *.log
+.cache
+
