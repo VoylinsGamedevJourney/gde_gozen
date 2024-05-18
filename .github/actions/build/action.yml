@@ -27,20 +27,6 @@ inputs:
 runs:
   using: composite
   steps:
-# Android only
-    - name: Android - Set up Java 11
-      uses: actions/setup-java@v3
-      if: ${{ inputs.platform == 'android' }}
-      with:
-        distribution: temurin
-        java-version: 11
-
-    - name: Android - dependencies
-      uses: nttld/setup-ndk@v1
-      if: ${{ inputs.platform == 'android' }}
-      with:
-        ndk-version: r23c
-        link-to-sdk: true
 # Linux only
     - name: Linux - dependencies
       if: ${{ inputs.platform == 'linux' }}
@@ -97,7 +83,7 @@ runs:
       run: |
         scons target=${{ inputs.build-target-type }} platform=${{ inputs.platform }} arch=${{ inputs.arch }} generate_bindings=yes precision=${{ inputs.float-precision }}
       working-directory: ${{ inputs.godot-cpp }}
-# Build gdextension
+# Build gozen gdextension
     - name: Build GoZen GDExtension Debug Build
       shell: sh
       env:

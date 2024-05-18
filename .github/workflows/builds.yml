@@ -28,26 +28,6 @@ jobs:
             float-precision: single
             arch: universal
             os: macos-latest
-          - platform: android
-            float-precision: single
-            arch: arm64
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: single
-            arch: arm32
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: single
-            arch: x86_64
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: single
-            arch: x86_32
-            os: ubuntu-20.04
-          - platform: ios
-            float-precision: single
-            arch: arm64
-            os: macos-latest
           - platform: web
             float-precision: single
             arch: wasm32
@@ -68,26 +48,6 @@ jobs:
           - platform: macos
             float-precision: double
             arch: universal
-            os: macos-latest
-          - platform: android
-            float-precision: double
-            arch: arm64
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: double
-            arch: arm32
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: double
-            arch: x86_64
-            os: ubuntu-20.04
-          - platform: android
-            float-precision: double
-            arch: x86_32
-            os: ubuntu-20.04
-          - platform: ios
-            float-precision: double
-            arch: arm64
             os: macos-latest
           - platform: web
             float-precision: double
