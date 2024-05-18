@@ -1,0 +1,4 @@
+[submodule "FFmpeg"]
+	path = FFmpeg
+	url = git@github.com:FFmpeg/FFmpeg.git
+	branch = release/6.1
