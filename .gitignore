@@ -1,15 +1,29 @@
-# Godot 4+ specific ignores
+# Godot 
 .godot/
-
-# Godot-specific ignores
-.import/
-export.cfg
-export_presets.cfg
 
 # Imported translations (automatically generated from CSV files)
 *.translation
 
-# Mono-specific ignores
-.mono/
-data_*/
-mono_crash.*.json
+# Ignore generated compile_commands.json
+compile_commands.json
+
+# Binaries
+*.o
+*.os
+*.so
+*.obj
+*.bc
+*.pyc
+*.dblite
+*.pdb
+*.lib
+*.config
+*.creator
+*.creator.user
+*.files
+*.includes
+*.idb
+*.exp
+
+# Other stuff
+*.log
