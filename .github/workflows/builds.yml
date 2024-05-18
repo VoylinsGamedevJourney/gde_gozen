@@ -1,7 +1,6 @@
 name: Build GDExtension
 on:
   workflow_call:
-  push:
 
 env:
   LIBNAME: gozen
