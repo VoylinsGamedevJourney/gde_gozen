@@ -24,6 +24,8 @@ compile_commands.json
 *.includes
 *.idb
 *.exp
+*.dll
+*.exe
 
 # Video files
 *.mp4
