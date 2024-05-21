@@ -70,8 +70,7 @@ public:
 
 	void print_av_error(const char *a_message);
 
-	int _decode_packet(AVCodecContext* a_codec_ctx, int a_stream_id);
-	int _decode_frame(AVCodecContext* a_codec_ctx);
+	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
 	void _decode_video_frame(Ref<Image> a_image);
 
 protected:

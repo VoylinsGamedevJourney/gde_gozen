@@ -84,7 +84,7 @@ func _process(a_delta) -> void:
 			if dragging:
 				return
 			is_playing = !is_playing
-			seek_frame(1)
+			seek_frame(0)
 			$AudioStream1.set_stream_paused(true)
 		else:
 			var l_frame: Image = video.next_frame()
@@ -101,7 +101,7 @@ func _process(a_delta) -> void:
 func seek_frame(a_frame_nr: int) -> void:
 	if !is_video_open():
 		return
-	current_frame = clampi(a_frame_nr, 1, max_frame - 1)
+	current_frame = clampi(a_frame_nr, 0, max_frame - 1)
 	if !is_playing:
 		$AudioStream1.set_stream_paused(false)
 	$AudioStream1.seek(current_frame/framerate)
@@ -111,7 +111,7 @@ func seek_frame(a_frame_nr: int) -> void:
 	if l_frame != null and !l_frame.is_empty():
 		%FrameImage.texture.set_image(l_frame)
 	else:
-		print("Seek returned an empty image!")
+		printerr("Seek returned an empty image!")
 	if !dragging:
 		%Timeline.value = current_frame
 
