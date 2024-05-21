@@ -44,8 +44,9 @@ private:
 
 	bool is_open = false, variable_framerate = false;
 	int64_t video_duration = 0;
-	int interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
+	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
 	float framerate = 0.0;
+	double expected_pts = 0.0, actual_pts = 0.0;
 
 public:
 	Video() {}

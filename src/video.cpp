@@ -3,11 +3,13 @@
 #include "godot_cpp/classes/global_constants.hpp"
 #include "godot_cpp/variant/utility_functions.hpp"
 
+#include <cerrno>
 #include <libavcodec/avcodec.h>
 #include <libavcodec/packet.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/error.h>
 #include <libavutil/frame.h>
 #include <libavutil/rational.h>
 
@@ -233,73 +235,9 @@ int Video::open_video(String a_path) {
 	total_frame_number = (static_cast<double>(video_duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
 	UtilityFunctions::print("total_frame_number after: ", total_frame_number);
 
-
-
 	av_packet_free(&av_packet);
 	av_frame_free(&av_frame);
 
-	// Video seeking
-	//	total_frame_number = av_stream_video->nb_frames;
-	//	if (total_frame_number == 0) {
-	//		UtilityFunctions::print("Total number of frames is unreliable, this will take extra time!");
-	//		if (1 < av_stream_video->duration && av_stream_video->duration < av_format_ctx->duration / float(AV_TIME_BASE) * av_q2d(av_stream_video->r_frame_rate) * 2) {
-	//			UtilityFunctions::print("Total frame based on stream duration");
-	//			total_frame_number = av_stream_video->duration;
-	//			// total_frame_number = av_stream_video->duration / AV_TIME_BASE;
-	//			// total_frame_number *= av_q2d(av_stream_video->r_frame_rate);
-	//		} else {
-	//			UtilityFunctions::print("Total frame based on file duration");
-	//			total_frame_number = av_format_ctx->duration / float(AV_TIME_BASE) * av_q2d(av_stream_video->r_frame_rate);
-	//			//		total_frame_number *= av_q2d(av_stream_video->r_frame_rate);
-	//		}
-	//
-	//		if (total_frame_number > av_q2d(av_stream_video->r_frame_rate) + 1) {
-	//			total_frame_number -= av_q2d(av_stream_video->r_frame_rate);
-	//		}
-	//
-	//		frame_timestamp = (long)(total_frame_number * average_frame_duration);
-	//		response = av_seek_frame(av_format_ctx, av_stream_video->index,
-	//								 //(start_time_video + frame_timestamp) / 10,
-	//								 start_time_video,
-	//								 AVSEEK_FLAG_FRAME | AVSEEK_FLAG_BACKWARD);
-	//		avcodec_flush_buffers(av_codec_ctx_video);
-	//		if (response < 0) {
-	//			UtilityFunctions::printerr("Can't seek video stream!");
-	//			av_frame_free(&av_frame);
-	//			av_packet_free(&av_packet);
-	//		}
-	//
-	//		while (true) {
-	//			// Demux packet
-	//			if (_decode_packet(av_codec_ctx_video, av_stream_video->index))
-	//				break;
-	//
-	//			// Valid packet found, decode frame
-	//			while (true) {
-	//				// Receive frame
-	//				if (_decode_frame(av_codec_ctx_video))
-	//					break;
-	//
-	//				// Get frame pts
-	//				current_pts = av_frame->best_effort_timestamp == AV_NOPTS_VALUE
-	//								  ? av_frame->pts
-	//								  : av_frame->best_effort_timestamp;
-	//				if (current_pts == AV_NOPTS_VALUE) {
-	//					UtilityFunctions::print("frame dropped");
-	//					av_frame_unref(av_frame);
-	//					continue;
-	//				}
-	//
-	//				// Skip to actual requested frame
-	//				if ((long)(current_pts * stream_time_base_video) / 10000 <
-	//					frame_timestamp / 10000) {
-	//					av_frame_unref(av_frame);
-	//					continue;
-	//				}
-	//				total_frame_number++;
-	//			}
-	//		}
-	//	}
 	UtilityFunctions::print("Video file successfully loaded!");
 	is_open = true;
 	return OK;
@@ -512,7 +450,6 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 			break;
 		// Valid packet found, decode frame
 		while (true) {
-			// Receive all frames
 			if (_decode_frame(av_codec_ctx_video))
 				break;
 
@@ -575,10 +512,17 @@ Ref<Image> Video::next_frame() {
 }
 
 int Video::_decode_packet(AVCodecContext *a_codec_ctx, int a_stream_id) {
+	av_frame_unref(av_frame);
 	while (true) {
 		response = av_read_frame(av_format_ctx, av_packet);
-		if (response != 0)
+		if (response == AVERROR_EOF) {
+			UtilityFunctions::print("End of stream");
 			break;
+		}
+		if (response != 0) {
+			UtilityFunctions::printerr("Something went wrong decoding packet, response = ", response);
+			break;
+		}
 		if (av_packet->stream_index != a_stream_id) {
 			av_packet_unref(av_packet);
 			continue;
@@ -586,8 +530,10 @@ int Video::_decode_packet(AVCodecContext *a_codec_ctx, int a_stream_id) {
 		// Send packet for decoding
 		response = avcodec_send_packet(a_codec_ctx, av_packet);
 		av_packet_unref(av_packet);
-		if (response != 0)
+		if (response != 0) {
+			UtilityFunctions::printerr("Couldn't send packet!");
 			break;
+		}
 		return 0;
 	}
 	return 1;
@@ -595,13 +541,16 @@ int Video::_decode_packet(AVCodecContext *a_codec_ctx, int a_stream_id) {
 
 int Video::_decode_frame(AVCodecContext *a_codec_ctx) {
 	response = avcodec_receive_frame(a_codec_ctx, av_frame);
-	if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+	if (response == AVERROR_EOF || response == AVERROR(EAGAIN)) {
+		if (response == AVERROR_EOF)
+			UtilityFunctions::printerr("decode_frame reached EOF");
 		av_frame_unref(av_frame);
 		return 1;
 	} else if (response < 0) {
 		UtilityFunctions::printerr("Error decoding frame!");
 		return 1;
 	}
+
 	return 0;
 }
 
