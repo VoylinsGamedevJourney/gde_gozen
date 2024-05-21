@@ -1,77 +1,49 @@
 #!/usr/bin/env python
 import os
+import platform as os_platform
 
 
-def normalize_path(val, env):
-    return val if os.path.isabs(val) else os.path.join(
-        env.Dir("#").abspath, val)
+libname = 'gozen'
+projectdir = 'test_room'
+
+num_jobs = ARGUMENTS.get('jobs', 4)
+platform = ARGUMENTS.get('platform', 'linux')
+
+env = SConscript('godot_cpp/SConstruct')
+env.Append(CPPPATH=['src'])
+env.Append(LIBS=['avcodec', 'avformat', 'avfilter', 'avdevice', 'avutil', 'swscale', 'swresample'])
 
 
-def validate_parent_dir(key, val, env):
-    if not os.path.isdir(normalize_path(os.path.dirname(val), env)):
-        raise UserError("'%s' is not a directory: %s" %
-                        (key, os.path.dirname(val)))
+if platform == 'windows':
+	ffmpeg_bin = os.path.join(os.path.dirname(os.path.realpath('__file__')), 'ffmpeg_bin')
+	os.makedirs(ffmpeg_bin, exist_ok=True)
+
+	# Building FFmpeg
+	extra_args = ''
+	if os_platform.system().lower() == 'linux':
+		os.environ['PATH'] = '/opt/bin/' + os.environ['PATH']
+		extra_args = f'--cross-prefix=x86_64-w64-mingw32- --arch=x86_64 --target-os=mingw32'
+
+	os.chdir('ffmpeg')
+	os.system(f'./configure --prefix={ffmpeg_bin} --enable-gpl --enable-shared {extra_args}')
+	os.system(f'make -j {num_jobs}')
+	os.system(f'make -j {num_jobs} install')
+	os.chdir('..')
+
+	# Static linking for libwinpthread on Windows
+	# TODO: Check if works or not
+	env.Append(LINKFLAGS=['-static-libstdc++', '-static-libgcc'])
+
+	if os_platform.system().lower() == 'windows':
+		env.Append(LIBS=[
+			'avcodec.lib', 'avformat.lib', 'avfilter.lib', 'avdevice.lib', 'avutil.lib',
+			'swscale.lib', 'swresample.lib'])
+	env.Append(CPPPATH=['ffmpeg_bin/include'])
+	env.Append(LIBPATH=['ffmpeg_bin/bin'])
+	os.system(f'cp {ffmpeg_bin}/bin/*.dll bin/windows/')
 
 
-libname = "gozen"
-projectdir = "test_room"
-
-localEnv = Environment(tools=["default"], PLATFORM="")
-
-customs = ["custom.py"]
-customs = [os.path.abspath(path) for path in customs]
-
-opts = Variables(customs, ARGUMENTS)
-opts.Add(
-    BoolVariable(
-        key="compiledb",
-        help="Generate compilation DB (`compile_commands.json`) for external tools",
-        default=localEnv.get("compiledb", False),
-    )
-)
-opts.Add(
-    PathVariable(
-        key="compiledb_file",
-        help="Path to a custom `compile_commands.json` file",
-        default=localEnv.get("compiledb_file", "compile_commands.json"),
-        validator=validate_parent_dir,
-    )
-)
-opts.Update(localEnv)
-
-Help(opts.GenerateHelpText(localEnv))
-
-env = localEnv.Clone()
-env["compiledb"] = False
-
-env.Tool("compilation_db")
-compilation_db = env.CompilationDatabase(
-    normalize_path(localEnv["compiledb_file"], localEnv)
-)
-env.Alias("compiledb", compilation_db)
-
-env = SConscript("godot_cpp/SConstruct", {"env": env, "customs": customs})
-
-env.Append(CPPPATH=["src/"])
-sources = Glob("src/*.cpp")
-
-file = "{}{}{}".format(libname, env["suffix"], env["SHLIBSUFFIX"])
-
-if env["platform"] == "macos":
-    platlibname = "{}.{}.{}".format(libname, env["platform"], env["target"])
-    file = "{}.framework/{}".format(env["platform"], platlibname, platlibname)
-
-libraryfile = "bin/{}/{}".format(env["platform"], file)
-library = env.SharedLibrary(
-    libraryfile,
-    source=sources,
-)
-
-copy = env.InstallAs("{}/bin/{}/lib{}".format(projectdir,
-                                              env["platform"], file), library)
-
-default_args = [library, copy]
-if localEnv.get("compiledb", False):
-    default_args += [compilation_db]
-Default(*default_args)
-
+src = Glob('src/*.cpp')
+libpath = 'bin/{}/lib{}{}{}'.format(platform, libname, env['suffix'], env['SHLIBSUFFIX'])
+sharedlib = env.SharedLibrary(libpath, src)
+Default(sharedlib)

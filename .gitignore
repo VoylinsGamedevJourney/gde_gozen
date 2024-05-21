@@ -25,7 +25,19 @@ compile_commands.json
 *.idb
 *.exp
 
+# Video files
+*.mp4
+*.mxf
+*.mpg
+*.webm
+*.mkv
+*.mjpg
+*.mts
+*.MTS
+*.mov
+
 # Other stuff
 *.log
 .cache
 .clang-format
+ffmpeg_bin/

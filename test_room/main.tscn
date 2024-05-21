@@ -1,0 +1,165 @@
+[gd_scene load_steps=7 format=3 uid="uid://b1e501df8faw"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_kus11"]
+[ext_resource type="Texture2D" uid="uid://dms0pea5t8h7e" path="res://icons/fast_rewind_48dp_FILL1_wght400_GRAD0_opsz48.png" id="2_qnc5d"]
+[ext_resource type="Texture2D" uid="uid://cnmcxoy57tr0" path="res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png" id="3_vr00e"]
+[ext_resource type="Texture2D" uid="uid://dmx51y6qr8c14" path="res://icons/fast_forward_48dp_FILL1_wght400_GRAD0_opsz48.png" id="4_dy0wb"]
+
+[sub_resource type="ImageTexture" id="ImageTexture_w3bnw"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ae1f1"]
+content_margin_left = 7.0
+content_margin_top = 7.0
+content_margin_right = 7.0
+content_margin_bottom = 7.0
+bg_color = Color(0.230469, 0.230469, 0.230469, 0.556863)
+corner_radius_bottom_right = 14
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_kus11")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FramePanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FrameImage" type="TextureRect" parent="VBox/FramePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = SubResource("ImageTexture_w3bnw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LoadingLabel" type="Label" parent="VBox/FramePanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 1
+text = "Loading ..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Timeline" type="HSlider" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="ButtonsHBox" type="HBoxContainer" parent="VBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+alignment = 1
+
+[node name="FastRewindButton" type="TextureButton" parent="VBox/ButtonsHBox"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+texture_normal = ExtResource("2_qnc5d")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="PlayPauseButton" type="TextureButton" parent="VBox/ButtonsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+texture_normal = ExtResource("3_vr00e")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="FastForwardButton" type="TextureButton" parent="VBox/ButtonsHBox"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+texture_normal = ExtResource("4_dy0wb")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="Debug" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DebugPanel" type="PanelContainer" parent="Debug"]
+layout_mode = 0
+offset_right = 181.0
+offset_bottom = 77.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_ae1f1")
+
+[node name="DebugGrid" type="GridContainer" parent="Debug/DebugPanel"]
+layout_mode = 2
+columns = 2
+
+[node name="CurrentFrameLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Current frame:"
+
+[node name="CurrentFrameValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0"
+horizontal_alignment = 2
+
+[node name="MaxFrameLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Total frames:"
+
+[node name="MaxFrameValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0"
+horizontal_alignment = 2
+
+[node name="FPSLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "FPS:"
+
+[node name="FPSValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0"
+horizontal_alignment = 2
+
+[node name="FrameTimeLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Frame time:"
+
+[node name="FrameTimeValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0"
+horizontal_alignment = 2
+
+[node name="AudioStream1" type="AudioStreamPlayer" parent="."]
+
+[connection signal="drag_ended" from="VBox/Timeline" to="." method="_on_timeline_drag_ended"]
+[connection signal="drag_started" from="VBox/Timeline" to="." method="_on_timeline_drag_started"]
+[connection signal="value_changed" from="VBox/Timeline" to="." method="_on_timeline_value_changed"]
+[connection signal="button_down" from="VBox/ButtonsHBox/FastRewindButton" to="." method="_on_fast_rewind_button_button_down"]
+[connection signal="button_up" from="VBox/ButtonsHBox/FastRewindButton" to="." method="_on_fast_rewind_button_button_up"]
+[connection signal="pressed" from="VBox/ButtonsHBox/PlayPauseButton" to="." method="_on_play_pause_button_pressed"]
+[connection signal="button_down" from="VBox/ButtonsHBox/FastForwardButton" to="." method="_on_fast_forward_button_button_down"]
+[connection signal="button_up" from="VBox/ButtonsHBox/FastForwardButton" to="." method="_on_fast_forward_button_button_up"]
+[connection signal="finished" from="AudioStream1" to="." method="_on_audio_stream_1_finished"]

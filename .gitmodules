@@ -1,5 +1,5 @@
 [submodule "FFmpeg"]
-	path = FFmpeg
+	path = ffmpeg
 	url = git@github.com:FFmpeg/FFmpeg.git
 	branch = release/6.1
 [submodule "godot-cpp"]
