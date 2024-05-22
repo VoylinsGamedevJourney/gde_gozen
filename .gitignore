@@ -43,3 +43,4 @@ compile_commands.json
 .cache
 .clang-format
 ffmpeg_bin/
+test_exports/

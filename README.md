@@ -22,7 +22,5 @@ For the road map of this GDExtension we will keep it simple as we have a lot of 
 
 ## Licensing
 
-Please be careful and read up on the licensing of FFmpeg. If you want access to all video codecs, you'll have to use the GPL 3.0 license for your project. You could go for the lGPL 3.0 is you change the FFmpeg compiling command though.
-
-Both us and FFmpeg can not be blamed for this, blame the big companies with their patents. But on the other hand, yey open source! :D
-
+Please be careful and read up on the licensing of FFmpeg. If you want access to all video codecs and features, you'll have to use the GPL 3.0 license for your project. Licensing is complicated and I'm not a lawyer, we removed the --enable-gpl flag so the binaries are LGPL, but you can add that flag after '.configure' in the SCons file. Both us and FFmpeg can not be blamed for these licensing rules, blame the big (money hungry) companies with their (ridiculous) patents. 
+> This software uses libraries from the FFmpeg project under the LGPLv2.1
