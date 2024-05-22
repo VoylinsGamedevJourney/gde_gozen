@@ -60,7 +60,6 @@ func is_video_open() -> bool:
 
 
 func _process(a_delta) -> void:
-	%EditorFPSValue.text = str(Engine.get_frames_per_second()).left(6)
 
 	if task_id != -1 and WorkerThreadPool.is_task_completed(task_id):
 		WorkerThreadPool.wait_for_task_completion(task_id)
@@ -81,6 +80,7 @@ func _process(a_delta) -> void:
 		while time_elapsed >= frame_time:
 			time_elapsed -= frame_time
 			current_frame += 1
+		%EditorFPSValue.text = str(Engine.get_frames_per_second()).left(6)
 		
 		if current_frame >= max_frame:
 			if dragging:
