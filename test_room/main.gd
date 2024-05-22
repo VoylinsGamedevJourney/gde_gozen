@@ -31,9 +31,12 @@ func _ready() -> void:
 
 
 func on_video_drop(a_files: PackedStringArray) -> void:
-	%LoadingLabel.visible = true
-	video = Video.new()
-	task_id = WorkerThreadPool.add_task(video.open_video.bind(a_files[0]))
+	if a_files[0].split('.')[-1].to_lower() in ["webm" ,"mkv" ,"flv" ,"vob" ,"ogv" ,"ogg" ,"mng" ,"avi" ,"mts" ,"m2ts" ,"ts" ,"mov" ,"qt" ,"wmv" ,"yuv" ,"rm" ,"rmvb" ,"viv" ,"asf" ,"amv" ,"mp4" ,"m4p" ,"mp2" ,"mpe" ,"mpv" ,"mpg" ,"mpeg" ,"m2v" ,"m4v" ,"svi" ,"3gp" ,"3g2" ,"mxf" ,"roq" ,"nsv" ,"flv" ,"f4v" ,"f4p" ,"f4a" ,"f4b"]: 
+		%LoadingLabel.visible = true
+		video = Video.new()
+		task_id = WorkerThreadPool.add_task(video.open_video.bind(a_files[0]))
+	else:
+		print("Not a valid video file!");
 
 
 func open_video(a_file: String) -> void:
