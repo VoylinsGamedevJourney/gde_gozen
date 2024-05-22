@@ -137,8 +137,7 @@ int Video::open_video(String a_path) {
 	}
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response) {
-		print_av_error("First frame: ");
-		print_av_error("Something went wrong getting first frame!");
+		print_av_error("Something went wrong getting first frame!" );
 	}
 
 	// Checking for interlacing and what type of interlacing
@@ -182,9 +181,7 @@ int Video::open_video(String a_path) {
 			if (l_temp_rational.num != av_stream_video->time_base.num || l_temp_rational.num != av_stream_video->time_base.num)
 				video_duration = std::ceil(static_cast<double>(video_duration) * av_q2d(l_temp_rational) / av_q2d(av_stream_video->time_base));
 		}
-		UtilityFunctions::print("Stream duration before: ", av_stream_video->duration);
 		av_stream_video->duration = video_duration;
-		UtilityFunctions::print("Stream duration after: ", av_stream_video->duration);
 	}
 	total_frame_number = (static_cast<double>(video_duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
 
@@ -452,13 +449,13 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 			l_eof = true;
 			avcodec_send_packet(a_codec_ctx, nullptr); // Send null packet to signal end
 		} else if (response < 0) {
-			UtilityFunctions::print("Error reading frame! ", response);
+			UtilityFunctions::printerr("Error reading frame! ", response);
 			break;
 		} else {
 			response = avcodec_send_packet(a_codec_ctx, av_packet);
 			av_packet_unref(av_packet);
 			if (response < 0) {
-				UtilityFunctions::print("Problem sending package! ", response);
+				UtilityFunctions::printerr("Problem sending package! ", response);
 				break;
 			}
 		}

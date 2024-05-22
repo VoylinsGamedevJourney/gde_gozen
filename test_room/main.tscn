@@ -104,6 +104,18 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_ae1f1")
 layout_mode = 2
 columns = 2
 
+[node name="EditorFPSLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Editor FPS:"
+
+[node name="EditorFPSValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0"
+horizontal_alignment = 2
+
 [node name="CurrentFrameLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
 layout_mode = 2
 size_flags_horizontal = 3

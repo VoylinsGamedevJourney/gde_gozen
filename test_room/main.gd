@@ -60,6 +60,8 @@ func is_video_open() -> bool:
 
 
 func _process(a_delta) -> void:
+	%EditorFPSValue.text = str(Engine.get_frames_per_second()).left(6)
+
 	if task_id != -1 and WorkerThreadPool.is_task_completed(task_id):
 		WorkerThreadPool.wait_for_task_completion(task_id)
 		task_id = -1

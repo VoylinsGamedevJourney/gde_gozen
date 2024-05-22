@@ -6,7 +6,7 @@ import readline
 if __name__ == '__main__':
 	print('GoZen GDExtension builder')
 	print('Select platform:')
-	print('1. Linux;')
+	print('1. Linux; (default)')
 	print('2. Windows (WIP);')
 	print('3. MacOS (WIP);')
 	print('4. Android (WIP);')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
 	target = 'debug'
 	print('Select target:')
-	print('1. Debug;')
+	print('1. Debug; (default)')
 	print('2. Release.')
 	match input('> '):
 		case '2': target = 'release'
