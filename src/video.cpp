@@ -195,6 +195,8 @@ int Video::open_video(String a_path) {
 
 void Video::close_video() {
 	is_open = false;
+	if (!audio.is_null())
+		audio.unref();
 
 	if (av_format_ctx)
 		avformat_close_input(&av_format_ctx);
