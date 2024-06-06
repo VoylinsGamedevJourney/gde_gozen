@@ -3,16 +3,6 @@
 #include "godot_cpp/classes/global_constants.hpp"
 #include "godot_cpp/variant/utility_functions.hpp"
 
-#include <cerrno>
-#include <libavcodec/avcodec.h>
-#include <libavcodec/packet.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/error.h>
-#include <libavutil/frame.h>
-#include <libavutil/rational.h>
-
 #include <cmath>
 
 // possible return values:
@@ -137,7 +127,7 @@ int Video::open_video(String a_path) {
 	}
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response) {
-		print_av_error("Something went wrong getting first frame!" );
+		print_av_error("Something went wrong getting first frame!");
 	}
 
 	// Checking for interlacing and what type of interlacing
@@ -268,9 +258,8 @@ bool Video::_get_audio() {
 	// Setup SWR for converting frame
 	struct SwrContext *swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
-		&swr_ctx, &av_codec_ctx_audio->ch_layout, AV_SAMPLE_FMT_S16,
-		av_codec_ctx_audio->sample_rate, &av_codec_ctx_audio->ch_layout,
-		av_codec_ctx_audio->sample_fmt, av_codec_ctx_audio->sample_rate, 0,
+		&swr_ctx, &av_codec_ctx_audio->ch_layout, AV_SAMPLE_FMT_S16, av_codec_ctx_audio->sample_rate,
+		&av_codec_ctx_audio->ch_layout, av_codec_ctx_audio->sample_fmt, av_codec_ctx_audio->sample_rate, 0,
 		nullptr);
 	if (response < 0) {
 		print_av_error("Failed to obtain SWR context!");
@@ -340,7 +329,7 @@ bool Video::_get_audio() {
 			av_frame_unref(l_av_new_frame);
 			break;
 		}
-
+		
 		size_t l_byte_size = l_av_new_frame->nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 		if (av_codec_ctx_audio->ch_layout.nb_channels >= 2)
 			l_byte_size *= 2;

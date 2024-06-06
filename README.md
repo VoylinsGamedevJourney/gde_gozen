@@ -12,13 +12,7 @@ For the road map of this GDExtension we will keep it simple as we have a lot of 
 
 ### TO-DO
 
-- Getting all codecs to work properly;
 - Interlacing/De-interlacing support;
-- Audio needs to be fixed for some codecs;
-- Not all frames can be taken from video files;
-- Getting a correct number of all available video frames;
-- Matching frames from video with length of audio;
-- Add support for non-square pixel formats;
 
 ## Licensing
 
