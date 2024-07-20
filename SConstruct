@@ -53,18 +53,26 @@ elif platform == 'windows':
     os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
     cross_prefix = 'x86_64-w64-mingw32-'
     extra_args = f'--cross_prefix={cross_prefix} --arch={arch} --target-os=mingw32'
+
     os.system('make distclean')
     os.system(f'./configure --prefix={folder_bin} --enable-shared {extra_args}')
+
     os.system(f'make -j {num_jobs}')
     os.system(f'make -j {num_jobs} install')
     os.chdir('..')
 
     if os_platform.system().lower() == 'windows':
         env.Append(LIBS=[
-            'avcodec.lib', 'avformat.lib', 'avfilter.lib', 'avdevice.lib', 'avutil.lib', 'swscale.lib', 'swresample.lib'])
-    env.Append(CPPPATH=['ffmpeg/include'])
-    env.Append(LIBPATH=['ffmpeg/bin'])
-    os.system(f'cp ffmpeg/bin/*.dll {folder_bin}/{platform}/')
+            'avcodec.lib',
+            'avformat.lib',
+            'avfilter.lib',
+            'avdevice.lib',
+            'avutil.lib',
+            'swscale.lib',
+            'swresample.lib'])
+    env.Append(CPPPATH=['ffmpeg/bin/include'])
+    env.Append(LIBPATH=['ffmpeg/bin/bin'])
+    os.system('cp ffmpeg/bin/bin/*.dll bin/windows/')
 
 
 src = Glob('src/*.cpp')
