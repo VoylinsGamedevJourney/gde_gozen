@@ -11,6 +11,7 @@ compile_commands.json
 *.o
 *.os
 *.so
+*.so.*
 *.obj
 *.bc
 *.pyc
