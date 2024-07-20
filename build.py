@@ -54,7 +54,7 @@ if __name__ == '__main__':
 	if platform == 'linux':
 		print('Use system FFmpeg:')
 		print('1. No; (default)')
-		print('2. Yes;')
+		print('2. Yes. WIP')
 		match input('> '):
 			case '2': extra_args = 'use_system=yes'
 			case _: extra_args = 'use_system=no'
