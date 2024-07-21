@@ -19,8 +19,8 @@ if platform == 'linux':
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
     else:  # For people needing FFmpeg binaries
         platform += '_full'
-        env.Append(CPPFLAGS=['-Iffmpeg', '-Iffmpeg/bin'])
-        env.Append(CPPPATH=[
+        env.Append(CPPFLAGS=['-Iffmpeg/bin', '-Iffmpeg/bin/include'])
+        env.Append(LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
             'ffmpeg/bin/include/libavfilter',
@@ -28,14 +28,18 @@ if platform == 'linux':
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/include/libswresample'])
-        env.Append(LIBPATH=['ffmpeg/lib'])
+        env.Append(LIBPATH=['ffmpeg/bin/lib'])
 
         os.chdir('ffmpeg')
-        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared --target-os=linux --disable-postproc')
+
+        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared  --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
         os.system('make distclean')
-        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared --target-os=linux --disable-postproc')
+        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared  --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
+
         os.system(f'make -j {num_jobs}')
         os.system(f'make -j {num_jobs} install')
+
+        os.system('make distclean')
         os.chdir('..')
 
         os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/')
@@ -54,11 +58,14 @@ elif platform == 'windows':
     cross_prefix = 'x86_64-w64-mingw32-'
     extra_args = f'--cross_prefix={cross_prefix} --arch={arch} --target-os=mingw32'
 
+    os.system(f'./configure --prefix={folder_bin} --enable-shared {extra_args}')
     os.system('make distclean')
     os.system(f'./configure --prefix={folder_bin} --enable-shared {extra_args}')
 
     os.system(f'make -j {num_jobs}')
     os.system(f'make -j {num_jobs} install')
+
+    os.system('make distclean')
     os.chdir('..')
 
     if os_platform.system().lower() == 'windows':
