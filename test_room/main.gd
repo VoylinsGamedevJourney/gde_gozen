@@ -25,7 +25,7 @@ var task_id: int = -1
 func _ready() -> void:
 	if OS.get_cmdline_args().size() > 1:
 		video = Video.new()
-		video.open_video(OS.get_cmdline_args()[1])
+		video.open_video(OS.get_cmdline_args()[1], true)
 		after_video_open()
 	get_window().files_dropped.connect(on_video_drop)
 
@@ -40,7 +40,7 @@ func on_video_drop(a_files: PackedStringArray) -> void:
 
 
 func open_video(a_file: String) -> void:
-	video.open_video(a_file)
+	video.open_video(a_file, true)
 
 
 func after_video_open() -> void:
@@ -63,7 +63,6 @@ func is_video_open() -> bool:
 
 
 func _process(a_delta) -> void:
-
 	if task_id != -1 and WorkerThreadPool.is_task_completed(task_id):
 		WorkerThreadPool.wait_for_task_completion(task_id)
 		task_id = -1

@@ -57,7 +57,7 @@ public:
 	Video() {}
 	~Video() { close_video(); }
 
-	int open_video(String a_path);
+	int open_video(String a_path = "", bool a_load_audio = true);
 	void close_video();
 
 	inline bool is_video_open() { return is_open; }
@@ -80,8 +80,8 @@ public:
 
 protected:
 	static inline void _bind_methods() {
-		ClassDB::bind_method(D_METHOD("open_video", "a_path"),
-							 &Video::open_video);
+		ClassDB::bind_method(D_METHOD("open_video", "a_path", "a_load_audio"),
+							 &Video::open_video, DEFVAL(""), DEFVAL(true));
 		ClassDB::bind_method(D_METHOD("close_video"), &Video::close_video);
 
 		ClassDB::bind_method(D_METHOD("is_video_open"), &Video::is_video_open);

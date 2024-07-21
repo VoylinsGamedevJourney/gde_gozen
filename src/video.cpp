@@ -15,7 +15,7 @@
 // 6: Invalid frame-rate;
 // 7: Not usable video file;
 //
-int Video::open_video(String a_path) {
+int Video::open_video(String a_path, bool a_load_audio) {
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
 	if (!av_format_ctx) {
@@ -45,7 +45,7 @@ int Video::open_video(String a_path) {
 			continue;
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			av_stream_audio = av_format_ctx->streams[i];
-			if (!_get_audio())
+			if (a_load_audio && !_get_audio())
 				return 5;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
 			av_stream_video = av_format_ctx->streams[i];
