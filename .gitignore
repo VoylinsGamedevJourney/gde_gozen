@@ -45,3 +45,5 @@ compile_commands.json
 .clang-format
 ffmpeg_bin/
 test_exports/
+
+*.tar.gz
