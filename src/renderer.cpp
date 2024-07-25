@@ -1,17 +1,4 @@
 #include "renderer.hpp"
-#include <cerrno>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <libavcodec/avcodec.h>
-#include <libavcodec/codec.h>
-#include <libavcodec/codec_id.h>
-#include <libavcodec/packet.h>
-#include <libavformat/avformat.h>
-#include <libavutil/dict.h>
-#include <libavutil/frame.h>
-#include <libavutil/rational.h>
-#include <libswscale/swscale.h>
 
 Renderer::~Renderer() {
 	if (av_codec_ctx)

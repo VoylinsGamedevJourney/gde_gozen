@@ -65,7 +65,6 @@ elif platform == 'windows':
     os.system(f'make -j {num_jobs}')
     os.system(f'make -j {num_jobs} install')
 
-    os.system('make distclean')
     os.chdir('..')
 
     if os_platform.system().lower() == 'windows':

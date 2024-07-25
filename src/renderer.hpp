@@ -3,10 +3,10 @@
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <libavcodec/codec.h>
-#include <libavcodec/codec_id.h>
 
 extern "C" {
+#include <libavcodec/codec.h>
+#include <libavcodec/codec_id.h>
 #include <libavcodec/avcodec.h>
 #include <libavcodec/packet.h>
 #include <libavdevice/avdevice.h>
