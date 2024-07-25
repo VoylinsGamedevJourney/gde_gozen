@@ -31,16 +31,16 @@ class Renderer : public Resource {
 
 private:
 	static const int byte_per_pixel = 4;
-	struct SwsContext *sws_ctx;
-	AVCodecContext *av_codec_ctx;
-	const AVCodec *av_codec_video, *av_codec_audio;
-	FILE *output_file;
-	AVPacket *av_packet;
-	AVFrame *av_frame;
-	int i, x, y, response;
+	struct SwsContext *sws_ctx = nullptr;
+	AVCodecContext *av_codec_ctx = nullptr;
+	const AVCodec *av_codec_video = nullptr, *av_codec_audio = nullptr;
+	FILE *output_file = nullptr;
+	AVPacket *av_packet = nullptr;
+	AVFrame *av_frame = nullptr;
+	int i = 0, x = 0, y = 0, response = 0;
 
 	/* Render requirements */
-	String file_path;
+	String file_path = "";
 	AVCodecID av_codec_id_video, av_codec_id_audio;
 	Vector2i resolution = Vector2i(0, 0);
 	int frame_rate = -1, bit_rate = -1;
@@ -124,7 +124,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_output_file_path", "a_file_path"), &Renderer::set_output_file_path);
 
 		ClassDB::bind_method(D_METHOD("set_video_codec", "a_video_codec"), &Renderer::set_video_codec);
-		ClassDB::bind_method(D_METHOD("set_audio_codec", "a_audio_codec"), &Renderer::set_video_codec);
+		ClassDB::bind_method(D_METHOD("set_audio_codec", "a_audio_codec"), &Renderer::set_audio_codec);
 
 		ClassDB::bind_method(D_METHOD("set_resolution", "a_resolution"), &Renderer::set_resolution);
 		ClassDB::bind_method(D_METHOD("set_frame_rate", "a_frame_rate"), &Renderer::set_frame_rate);

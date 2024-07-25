@@ -1,7 +1,7 @@
 #include "renderer.hpp"
 
 Renderer::~Renderer() {
-	if (av_codec_ctx)
+	if (av_codec_ctx != nullptr)
 		close();
 }
 

@@ -16,8 +16,10 @@ env.Append(LIBS=['avcodec', 'avformat', 'avfilter', 'avdevice', 'avutil', 'swsca
 
 if platform == 'linux':
     if ARGUMENTS.get('use_system', 'no') == 'no':  # For people who don't need the FFmpeg libs
+        print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
     else:  # For people needing FFmpeg binaries
+        print("Ful linux build")
         platform += '_full'
         env.Append(CPPFLAGS=['-Iffmpeg/bin', '-Iffmpeg/bin/include'])
         env.Append(LIBPATH=[
@@ -38,8 +40,6 @@ if platform == 'linux':
 
         os.system(f'make -j {num_jobs}')
         os.system(f'make -j {num_jobs} install')
-
-        os.system('make distclean')
         os.chdir('..')
 
         os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/')
@@ -64,7 +64,6 @@ elif platform == 'windows':
 
     os.system(f'make -j {num_jobs}')
     os.system(f'make -j {num_jobs} install')
-
     os.chdir('..')
 
     if os_platform.system().lower() == 'windows':
