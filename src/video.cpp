@@ -436,7 +436,6 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 		} while (av_packet->stream_index != a_stream_id && response >= 0);
 
 		if (response == AVERROR_EOF) {
-			UtilityFunctions::print("Reached EOF!");
 			l_eof = true;
 			avcodec_send_packet(a_codec_ctx, nullptr); // Send null packet to signal end
 		} else if (response < 0) {
