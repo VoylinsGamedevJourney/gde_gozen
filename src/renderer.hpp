@@ -2,6 +2,7 @@
 
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/resource.hpp>
+#include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 extern "C" {
@@ -109,6 +110,7 @@ public:
 
 	int open();
 	int send_frame(Ref<Image> a_frame_image);
+	int send_audio(Ref<AudioStreamWAV> a_wav);
 	int close();
 
 protected:
@@ -163,7 +165,8 @@ protected:
 		ClassDB::bind_method(D_METHOD("ready_check"), &Renderer::ready_check);
 
 		ClassDB::bind_method(D_METHOD("open"), &Renderer::open);
-		ClassDB::bind_method(D_METHOD("send_frame"), &Renderer::send_frame);
+		ClassDB::bind_method(D_METHOD("send_frame", "a_frame_image"), &Renderer::send_frame);
+		ClassDB::bind_method(D_METHOD("send_audio", "a_wav"), &Renderer::send_audio);
 		ClassDB::bind_method(D_METHOD("close"), &Renderer::close);
 	}
 };

@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include <cstdint>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
@@ -295,8 +296,8 @@ int Renderer::open() {
 
 // TODO: Make argument int frame_nr, this could allow for multi-threaded rendering ... maybe
 int Renderer::send_frame(Ref<Image> a_frame_image) {
-	if (!av_codec_ctx) {
-		UtilityFunctions::printerr("No FFmpeg instance running!");
+	if (!av_codec_ctx_video) {
+		UtilityFunctions::printerr("Video codec isn't open!");
 		return -1;
 	}
 
@@ -324,6 +325,28 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 	av_frame->pts = i;
 	i++;
 	_encode(av_codec_ctx, av_frame, av_packet, output_file);
+	return 0;
+}
+
+int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {
+	if (render_audio) {
+		UtilityFunctions::printerr("Audio not enabled for this renderer!");
+		return -1;
+	} else if (!av_codec_ctx_audio) {
+		UtilityFunctions::printerr("Audio codec isn't open!");
+		return -2;
+	}
+
+	i = 0;	
+	// LOOP over data
+	// uint16_t *l_data = (int16_t*)av_frame_audio->data[0];
+	// for (int j = 0; j < av_frame_audio->nb_samples; j++) {
+	//		l_v = (int)(sin
+	// }
+	// av_frame_pts = i;
+	// i += av_frame_audio->nb_samples;
+	// while loop end to repeat
+
 	return 0;
 }
 
