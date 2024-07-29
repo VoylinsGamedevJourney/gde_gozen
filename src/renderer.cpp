@@ -6,6 +6,7 @@
 #include <libavutil/frame.h>
 #include <libavutil/opt.h>
 #include <libavutil/samplefmt.h>
+#include <libswresample/swresample.h>
 
 // TODO: Set proper return errors and document them!
 // TODO: Check if everything is properly freed in close!
@@ -330,41 +331,23 @@ int Renderer::close() {
 	if (av_codec_ctx == nullptr)
 		return 1;
 
-	// Flush encoder
-	_encode(av_codec_ctx, NULL, av_packet, output_file);
+	av_write_trailer(av_format_ctx);
 
-	// Add sequence endcode to complete file data
-	// Does not work for all codecs (some require packets)
-	const uint8_t l_endcode[] = {0, 0, 1, 0xb7};
-	if (av_codec_video->id == AV_CODEC_ID_MPEG1VIDEO ||
-		av_codec_video->id == AV_CODEC_ID_MPEG2VIDEO)
-		fwrite(l_endcode, 1, sizeof(l_endcode), output_file);
-	fclose(output_file);
-
-	avcodec_free_context(&av_codec_ctx);
-	av_frame_free(&av_frame);
-	av_packet_free(&av_packet);
+	avcodec_free_context(&av_codec_ctx_video);
+	av_frame_free(&av_frame_video);
+	av_packet_free(&av_packet_video);
 	sws_freeContext(sws_ctx);
 
+	if (render_audio) {
+		avcodec_free_context(&av_codec_ctx_audio);
+		av_frame_free(&av_frame_audio);
+		av_packet_free(&av_packet_audio);
+		swr_free(swr_ctx);
+	}
+
+	if (!(av_out_format->flags) & AVFMT_NOFILE))
+		avio_closep(av_format_ctx->pb);
+	avformat_free_context(av_format_ctx);
+
 	return 0;
-}
-
-void Renderer::_encode(AVCodecContext *a_codec_ctx, AVFrame *a_frame, AVPacket *a_packet, FILE *a_output_file) {
-	response = avcodec_send_frame(a_codec_ctx, a_frame);
-	if (response < 0) {
-		UtilityFunctions::printerr("Error sending frame for encoding!");
-		return;
-	}
-
-	while (response >= 0) {
-		response = avcodec_receive_packet(a_codec_ctx, a_packet);
-		if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
-			return;
-		else if (response < 0) {
-			UtilityFunctions::printerr(stderr, "Error during encoding!");
-			return;
-		}
-		fwrite(a_packet->data, 1, a_packet->size, a_output_file);
-		av_packet_unref(a_packet);
-	}
 }

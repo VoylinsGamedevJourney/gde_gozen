@@ -47,3 +47,4 @@ ffmpeg_bin/
 test_exports/
 
 *.tar.gz
+ffmpeg_examples

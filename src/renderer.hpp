@@ -53,8 +53,6 @@ private:
 	int framerate = 30, bit_rate = 400000;
 	bool render_audio = false;
 
-	void _encode(AVCodecContext *a_codec_ctx, AVFrame *a_frame, AVPacket *a_packet, FILE *a_output_file);
-
 public:
 	enum AUDIO_CODEC {
 		MP3 = AV_CODEC_ID_MP3,
@@ -89,10 +87,10 @@ public:
 	inline void set_output_file_path(String a_file_path) { file_path = a_file_path; }
 	inline String get_output_file_path(String a_file_path) { return file_path; }
 
-	inline void set_video_codec(VIDEO_CODEC a_video_codec) { av_codec_id_video = static_cast<AVCodecID>(a_video_codec);	}
+	inline void set_video_codec(VIDEO_CODEC a_video_codec) { av_codec_id_video = static_cast<AVCodecID>(a_video_codec); }
 	inline VIDEO_CODEC get_video_codec() { return static_cast<VIDEO_CODEC>(av_codec_id_video); }
 
-	inline void set_audio_codec(AUDIO_CODEC a_audio_codec) { av_codec_id_audio = static_cast<AVCodecID>(a_audio_codec);	}
+	inline void set_audio_codec(AUDIO_CODEC a_audio_codec) { av_codec_id_audio = static_cast<AVCodecID>(a_audio_codec); }
 	inline AUDIO_CODEC get_audio_codec() { return static_cast<AUDIO_CODEC>(av_codec_id_audio); }
 
 	inline void set_resolution(Vector2i a_resolution) { resolution = a_resolution; }
