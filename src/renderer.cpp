@@ -1,4 +1,14 @@
 #include "renderer.hpp"
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavformat/avio.h>
+#include <libavutil/error.h>
+#include <libavutil/frame.h>
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
+
+// TODO: Set proper return errors and document them!
+// TODO: Check if everything is properly freed in close!
 
 Renderer::~Renderer() {
 	close();
@@ -118,12 +128,6 @@ int Renderer::open() {
 		return -3;
 	}
 
-	av_packet_video = av_packet_alloc();
-	if (!av_packet_video) {
-		UtilityFunctions::printerr("Couldn't allocate packet!");
-		return -3;
-	}
-
 	av_stream_video = avformat_new_stream(av_format_ctx, NULL);
 	if (!av_stream_video) {
 		UtilityFunctions::printerr("Couldn't create stream!");
@@ -177,7 +181,6 @@ int Renderer::open() {
 			}
 		}
 		av_channel_layout_copy(&av_codec_ctx_audio->ch_layout, &(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
-
 	}
 
 	// Some formats want stream headers separated
@@ -191,41 +194,98 @@ int Renderer::open() {
 	// if (codec->id == AV_CODEC_ID_H264)
 	//   av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
 
- I am here!!
 	// Opening the video encoder codec
-	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL) < 0) {
-		UtilityFunctions::printerr("Couldn't open video codec!");
+	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
+	if (response < 0) {
+		UtilityFunctions::printerr("Couldn't open video codec!", av_err2str(response));
 		return -3;
 	}
 
-	output_file = fopen(file_path.utf8(), "wb");
-	if (!output_file) {
-		UtilityFunctions::printerr("Couldn't open output file!");
-		return -4;
+	av_packet_video = av_packet_alloc();
+	if (!av_packet_video) {
+		UtilityFunctions::printerr("Couldn't allocate packet!");
+		return -3;
 	}
-
-	av_frame = av_frame_alloc();
-	if (!av_frame) {
+	av_frame_video = av_frame_alloc();
+	if (!av_frame_video) {
 		UtilityFunctions::printerr("Couldn't allocate frame!");
-		return -5;
+		return -3;
 	}
-
-	av_frame->format = av_codec_ctx->pix_fmt;
-	av_frame->width = av_codec_ctx->width;
-	av_frame->height = av_codec_ctx->height;
-
-	if (av_frame_get_buffer(av_frame, 0) < 0) {
-		UtilityFunctions::printerr("Couldn't allocate video frame");
-		return -6;
+	av_frame_video->format = AV_PIX_FMT_YUV420P;
+	av_frame_video->width = resolution.x;
+	av_frame_video->height = resolution.y;
+	if (av_frame_get_buffer(av_frame_video, 0)) {
+		UtilityFunctions::printerr("Couldn't allocate frame data!");
+		return -3;
 	}
 
 	sws_ctx = sws_getContext(
-		av_frame->width, av_frame->height, AV_PIX_FMT_RGBA, // 24, //AV_PIX_FMT_RGBA
-		av_frame->width, av_frame->height, AV_PIX_FMT_YUV420P,
+		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_RGBA, // 24, //AV_PIX_FMT_RGBA
+		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_YUV420P,
 		SWS_BILINEAR, NULL, NULL, NULL); // TODO: Option to change SWS_BILINEAR
 	if (!sws_ctx) {
 		UtilityFunctions::printerr("Couldn't get sws context!");
 		return -7;
+	}
+
+	// Copy video stream params to muxer
+	if (avcodec_parameters_from_context(av_stream_video->codecpar, av_codec_ctx_video) < 0) {
+		UtilityFunctions::printerr("Couldn't copy video stream params!");
+		return -3;
+	}
+
+	if (render_audio) {
+		// Opening the audio encoder codec
+		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
+		if (response < 0) {
+			UtilityFunctions::printerr("Couldn't open audio codec!", av_err2str(response));
+			return -4;
+		}
+
+		// Copy audio stream params to muxer
+		if (avcodec_parameters_from_context(av_stream_audio->codecpar, av_codec_ctx_audio)) {
+			UtilityFunctions::printerr("Couldn't copy audio stream params!");
+			return -4;
+		}
+
+		// Creating resampler
+		swr_ctx = swr_alloc();
+		if (!swr_ctx) {
+			UtilityFunctions::printerr("Couldn't allocate swr!");
+			return -4;
+		}
+
+		// Setting audio options
+		av_opt_set_chlayout(swr_ctx, "in_chlayout", &av_codec_ctx_audio->ch_layout, 0);
+		av_opt_set_int(swr_ctx, "in_sample_rate", av_codec_ctx_audio->sample_rate, 0);
+		av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt", AV_SAMPLE_FMT_S16, 0);
+		av_opt_set_chlayout(swr_ctx, "out_chlayout", &av_codec_ctx_audio->ch_layout, 0);
+		av_opt_set_int(swr_ctx, "out_sample_rate", av_codec_ctx_audio->sample_rate, 0);
+		av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", av_codec_ctx_audio->sample_fmt, 0);
+
+		// Initialize resampling context
+		if ((response = swr_init(swr_ctx)) < 0) {
+			UtilityFunctions::printerr("Failed to initialize resampling context!");
+			return -4;
+		}
+	}
+
+	av_dump_format(av_format_ctx, 0, file_path.utf8(), 1);
+
+	// Open output file if needed
+	if (!(av_out_format->flags & AVFMT_NOFILE)) {
+		response = avio_open(av_format_ctx->pb, file_path.utf8(), AVIO_FLAG_WRITE);
+		if (response < 0) {
+			UtilityFunctions::printerr("Couldn't open output file!", av_err2str(response));
+			return -5;
+		}
+	}
+
+	// Write stream header - if any
+	response = avformat_write_header(av_format_ctx, NULL);
+	if (response < 0) {
+		UtilityFunctions::printerr("Error when writing header!", av_err2str(response));
+		return -6;
 	}
 
 	i = 0; // Reset i for send_frame
