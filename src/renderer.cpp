@@ -1,16 +1,6 @@
 #include "renderer.hpp"
-#include <cstdint>
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavformat/avio.h>
-#include <libavutil/error.h>
-#include <libavutil/frame.h>
-#include <libavutil/opt.h>
-#include <libavutil/samplefmt.h>
-#include <libswresample/swresample.h>
 
 // TODO: Set proper return errors and document them!
-// TODO: Check if everything is properly freed in close!
 
 Renderer::~Renderer() {
 	close();
@@ -40,7 +30,7 @@ Dictionary Renderer::get_video_file_meta(String a_file_path) {
 }
 
 Dictionary Renderer::get_supported_codecs() {
-	std::pair<AUDIO_CODEC, String> audio_codecs[] = {
+	std::pair<RENDERER_AUDIO_CODEC, String> audio_codecs[] = {
 		{MP3, "MP3"},
 		{AAC, "AAC"},
 		{OPUS, "OPUS"},
@@ -50,7 +40,7 @@ Dictionary Renderer::get_supported_codecs() {
 		{EAC3, "EAC3"},
 		{WAV, "WAV"},
 	};
-	std::pair<VIDEO_CODEC, String> video_codecs[] = {
+	std::pair<RENDERER_VIDEO_CODEC, String> video_codecs[] = {
 		{H264, "H264"},
 		{H265, "H265"},
 		{VP9, "VP9"},
@@ -84,11 +74,11 @@ Dictionary Renderer::get_supported_codecs() {
 	return l_dic;
 }
 
-bool Renderer::is_video_codec_supported(VIDEO_CODEC a_codec) {
+bool Renderer::is_video_codec_supported(RENDERER_VIDEO_CODEC a_codec) {
 	return (const AVCodec *)avcodec_find_encoder(static_cast<AVCodecID>(a_codec));
 }
 
-bool Renderer::is_audio_codec_supported(AUDIO_CODEC a_codec) {
+bool Renderer::is_audio_codec_supported(RENDERER_AUDIO_CODEC a_codec) {
 	return (const AVCodec *)avcodec_find_encoder(static_cast<AVCodecID>(a_codec));
 }
 
@@ -182,7 +172,9 @@ int Renderer::open() {
 					av_codec_ctx_audio->sample_rate = 44100;
 			}
 		}
-		av_channel_layout_copy(&av_codec_ctx_audio->ch_layout, &(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
+		AVChannelLayout l_chlayout = AV_CHANNEL_LAYOUT_STEREO;
+		av_channel_layout_copy(&av_codec_ctx_audio->ch_layout, &(l_chlayout)); //&(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
+
 	}
 
 	// Some formats want stream headers separated
@@ -276,7 +268,7 @@ int Renderer::open() {
 
 	// Open output file if needed
 	if (!(av_out_format->flags & AVFMT_NOFILE)) {
-		response = avio_open(av_format_ctx->pb, file_path.utf8(), AVIO_FLAG_WRITE);
+		response = avio_open(&av_format_ctx->pb, file_path.utf8(), AVIO_FLAG_WRITE);
 		if (response < 0) {
 			UtilityFunctions::printerr("Couldn't open output file!", av_err2str(response));
 			return -5;
@@ -301,31 +293,63 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		return -1;
 	}
 
-	if (av_frame_make_writable(av_frame) < 0) {
-		UtilityFunctions::printerr("Frame is not writeable!");
+	if (av_frame_make_writable(av_frame_video) < 0) {
+		UtilityFunctions::printerr("Video frame is not writeable!");
 		return -2;
 	}
+
 	uint8_t *l_src_data[4] = {a_frame_image->get_data().ptrw(), NULL, NULL, NULL};
-	int l_src_linesize[4] = {av_frame->width * byte_per_pixel, 0, 0, 0};
+	int l_src_linesize[4] = {av_frame_video->width * byte_per_pixel, 0, 0, 0};
+
+	//	TODO: Test to see if sws_scale works or not, if it works, test speed
 	//	sws_scale(sws_ctx, l_src_data, l_src_linesize, 0, av_frame->height, av_frame->data, av_frame->linesize);
-	for (y = 0; y < av_codec_ctx->height; y++) {
-		for (x = 0; x < av_codec_ctx->width; x++) {
-			av_frame->data[0][y * av_frame->linesize[0] + x] = x + y + i * 3;
+	for (y = 0; y < av_codec_ctx_video->height; y++) {
+		for (x = 0; x < av_codec_ctx_video->width; x++) {
+			av_frame_video->data[0][y * av_frame_video->linesize[0] + x] = x + y + i * 3;
 		}
 	}
 
 	/* Cb and Cr */
-	for (y = 0; y < av_codec_ctx->height / 2; y++) {
-		for (x = 0; x < av_codec_ctx->width / 2; x++) {
-			av_frame->data[1][y * av_frame->linesize[1] + x] = 128 + y + i * 2;
-			av_frame->data[2][y * av_frame->linesize[2] + x] = 64 + x + i * 5;
+	for (y = 0; y < av_codec_ctx_video->height / 2; y++) {
+		for (x = 0; x < av_codec_ctx_video->width / 2; x++) {
+			av_frame_video->data[1][y * av_frame_video->linesize[1] + x] = 128 + y + i * 2;
+			av_frame_video->data[2][y * av_frame_video->linesize[2] + x] = 64 + x + i * 5;
 		}
 	}
 
-	av_frame->pts = i;
+	av_frame_video->pts = i;
 	i++;
-	_encode(av_codec_ctx, av_frame, av_packet, output_file);
-	return 0;
+
+	// Adding frame
+	response = avcodec_send_frame(av_codec_ctx_video, av_frame_video);
+	if (response < 0) {
+		UtilityFunctions::printerr("Error sending video frame!", av_err2str(response));
+		return -1;
+	}
+
+	while (response >= 0) {
+		response = avcodec_receive_packet(av_codec_ctx_video, av_packet_audio);
+		if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
+			break;
+		else if (response < 0) {
+			UtilityFunctions::printerr("Error encoding video frame", av_err2str(response));
+			return -1;
+		}
+
+		// Rescale output packet timestamp values from codec to stream timebase
+		av_packet_rescale_ts(av_packet_video, av_codec_ctx_video->time_base, av_stream_video->time_base);
+		av_packet_video->stream_index = av_stream_video->index;
+
+		// Write the frame to file
+		response = av_interleaved_write_frame(av_format_ctx, av_packet_video);
+		// Packet is now blank as function above takes ownership of it, so no unreferencing is necessary.
+		// When using av_write_frame this would be needed.
+		if (response < 0) {
+			UtilityFunctions::printerr("Error whilst writing output packet!", av_err2str(response));
+			return -1;
+		}
+	}
+	return response == AVERROR_EOF ? 1 : 0;
 }
 
 int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {
@@ -337,7 +361,7 @@ int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {
 		return -2;
 	}
 
-	i = 0;	
+	i = 0;
 	// LOOP over data
 	// uint16_t *l_data = (int16_t*)av_frame_audio->data[0];
 	// for (int j = 0; j < av_frame_audio->nb_samples; j++) {
@@ -351,7 +375,7 @@ int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {
 }
 
 int Renderer::close() {
-	if (av_codec_ctx == nullptr)
+	if (av_codec_ctx_video == nullptr)
 		return 1;
 
 	av_write_trailer(av_format_ctx);
@@ -365,11 +389,11 @@ int Renderer::close() {
 		avcodec_free_context(&av_codec_ctx_audio);
 		av_frame_free(&av_frame_audio);
 		av_packet_free(&av_packet_audio);
-		swr_free(swr_ctx);
+		swr_free(&swr_ctx);
 	}
 
-	if (!(av_out_format->flags) & AVFMT_NOFILE))
-		avio_closep(av_format_ctx->pb);
+	if (!(av_out_format->flags & AVFMT_NOFILE))
+		avio_closep(&av_format_ctx->pb);
 	avformat_free_context(av_format_ctx);
 
 	return 0;

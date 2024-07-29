@@ -55,7 +55,7 @@ private:
 	bool render_audio = false;
 
 public:
-	enum AUDIO_CODEC {
+	enum RENDERER_AUDIO_CODEC {
 		MP3 = AV_CODEC_ID_MP3,
 		AAC = AV_CODEC_ID_AAC,
 		OPUS = AV_CODEC_ID_OPUS,
@@ -66,7 +66,7 @@ public:
 		EAC3 = AV_CODEC_ID_EAC3,
 		WAV = AV_CODEC_ID_WAVPACK,
 	};
-	enum VIDEO_CODEC {
+	enum RENDERER_VIDEO_CODEC {
 		H264 = AV_CODEC_ID_H264,
 		H265 = AV_CODEC_ID_HEVC,
 		VP9 = AV_CODEC_ID_VP9,
@@ -82,17 +82,17 @@ public:
 	static Dictionary get_video_file_meta(String a_file_path);
 
 	static Dictionary get_supported_codecs();
-	static bool is_video_codec_supported(VIDEO_CODEC a_codec);
-	static bool is_audio_codec_supported(AUDIO_CODEC a_codec);
+	static bool is_video_codec_supported(RENDERER_VIDEO_CODEC a_codec);
+	static bool is_audio_codec_supported(RENDERER_AUDIO_CODEC a_codec);
 
 	inline void set_output_file_path(String a_file_path) { file_path = a_file_path; }
 	inline String get_output_file_path(String a_file_path) { return file_path; }
 
-	inline void set_video_codec(VIDEO_CODEC a_video_codec) { av_codec_id_video = static_cast<AVCodecID>(a_video_codec); }
-	inline VIDEO_CODEC get_video_codec() { return static_cast<VIDEO_CODEC>(av_codec_id_video); }
+	inline void set_video_codec(RENDERER_VIDEO_CODEC a_video_codec) { av_codec_id_video = static_cast<AVCodecID>(a_video_codec); }
+	inline RENDERER_VIDEO_CODEC get_video_codec() { return static_cast<RENDERER_VIDEO_CODEC>(av_codec_id_video); }
 
-	inline void set_audio_codec(AUDIO_CODEC a_audio_codec) { av_codec_id_audio = static_cast<AVCodecID>(a_audio_codec); }
-	inline AUDIO_CODEC get_audio_codec() { return static_cast<AUDIO_CODEC>(av_codec_id_audio); }
+	inline void set_audio_codec(RENDERER_AUDIO_CODEC a_audio_codec) { av_codec_id_audio = static_cast<AVCodecID>(a_audio_codec); }
+	inline RENDERER_AUDIO_CODEC get_audio_codec() { return static_cast<RENDERER_AUDIO_CODEC>(av_codec_id_audio); }
 
 	inline void set_resolution(Vector2i a_resolution) { resolution = a_resolution; }
 	inline Vector2i get_resolution() { return resolution; }
@@ -171,4 +171,5 @@ protected:
 	}
 };
 
-VARIANT_ENUM_CAST(Renderer::VIDEO_CODEC);
+VARIANT_ENUM_CAST(Renderer::RENDERER_VIDEO_CODEC);
+VARIANT_ENUM_CAST(Renderer::RENDERER_AUDIO_CODEC);
