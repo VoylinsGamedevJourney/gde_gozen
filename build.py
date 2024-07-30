@@ -53,11 +53,11 @@ if __name__ == '__main__':
 	extra_args = ''
 	if platform == 'linux':
 		print('Use system FFmpeg:')
-		print('1. No; (default)')
-		print('2. Yes.')
+		print('1. Yes; (default)')
+		print('2. No.')
 		match input('> '):
-			case '2': extra_args = 'use_system=yes'
-			case _: extra_args = 'use_system=no'
+			case '2': extra_args = 'use_system=no'
+			case _: extra_args = 'use_system=yes'
 
 	user_input = input('Number of threads/cores for compiling> ')
 	if user_input.isdigit():

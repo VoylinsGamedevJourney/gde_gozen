@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 import platform as os_platform
+import time
+
 
 libname = 'gozen'
 folder_bin = './bin'  # Where to compile to
@@ -11,21 +13,29 @@ arch = ARGUMENTS.get('arch', 'x86_64')
 
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
-env.Append(LIBS=['avcodec', 'avformat', 'avfilter', 'avdevice', 'avutil', 'swscale', 'swresample'])
+env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swscale', 'swresample'])
+
+ffmpeg_build_args = '--enable-shared'
+ffmpeg_build_args += ' --disable-programs'
+ffmpeg_build_args += ' --disable-doc'
+ffmpeg_build_args += ' --disable-postproc'
+ffmpeg_build_args += ' --disable-avfilter'
+ffmpeg_build_args += ' --quiet'
+ffmpeg_build_args += ' --disable-logging'
+ffmpeg_build_args += f' --arch={arch}'
 
 
 if platform == 'linux':
-    if ARGUMENTS.get('use_system', 'no') == 'no':  # For people who don't need the FFmpeg libs
+    if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
     else:  # For people needing FFmpeg binaries
-        print("Ful linux build")
+        print("Full linux build")
         platform += '_full'
         env.Append(CPPFLAGS=['-Iffmpeg/bin', '-Iffmpeg/bin/include'])
         env.Append(LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavfilter',
             'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswscale',
@@ -34,9 +44,12 @@ if platform == 'linux':
 
         os.chdir('ffmpeg')
 
-        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared  --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
         os.system('make distclean')
-        os.system(f'./configure --prefix={folder_bin} --arch={arch} --enable-shared  --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
+        time.sleep(5)
+        # These may be needed when running into trouble compiling
+        # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux') 
+        os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} --target-os=linux')
+        time.sleep(5)
 
         os.system(f'make -j {num_jobs}')
         os.system(f'make -j {num_jobs} install')
@@ -48,20 +61,23 @@ elif platform == 'windows':
     extra_args = ''
     if os_platform.system().lower() == 'linux':
         os.environ['PATH'] = '/opt/bin/' + os.environ['PATH']
-        extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
+        extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32 --enable-cross-compile'
+
+        # TEST: Testing if adding this makes it so copying files is no longer needed
+        extra_args += ' --extra-ldflags="-static"'
         # Copying necessary files
-        os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/')
-        os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/')
+        # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/')
+        # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/')
+    else:
+        extra_args = ' --target-os=windows'
 
     os.chdir('ffmpeg')
     os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
-    cross_prefix = 'x86_64-w64-mingw32-'
-    extra_args = f'--cross_prefix={cross_prefix} --arch={arch} --target-os=mingw32'
 
-    os.system(f'./configure --prefix={folder_bin} --enable-shared {extra_args}')
     os.system('make distclean')
-    os.system(f'./configure --prefix={folder_bin} --enable-shared {extra_args}')
-
+    time.sleep(5)
+    os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} {extra_args}')
+    time.sleep(5)
     os.system(f'make -j {num_jobs}')
     os.system(f'make -j {num_jobs} install')
     os.chdir('..')
@@ -70,7 +86,6 @@ elif platform == 'windows':
         env.Append(LIBS=[
             'avcodec.lib',
             'avformat.lib',
-            'avfilter.lib',
             'avdevice.lib',
             'avutil.lib',
             'swscale.lib',
