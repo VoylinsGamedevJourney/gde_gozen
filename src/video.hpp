@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include "godot_cpp/classes/gd_extension_manager.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>

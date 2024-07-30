@@ -301,22 +301,8 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 	uint8_t *l_src_data[4] = {a_frame_image->get_data().ptrw(), NULL, NULL, NULL};
 	int l_src_linesize[4] = {av_frame_video->width * byte_per_pixel, 0, 0, 0};
 
-	//	TODO: Test to see if sws_scale works or not, if it works, test speed
-	//	sws_scale(sws_ctx, l_src_data, l_src_linesize, 0, av_frame->height, av_frame->data, av_frame->linesize);
-	for (y = 0; y < av_codec_ctx_video->height; y++) {
-		for (x = 0; x < av_codec_ctx_video->width; x++) {
-			av_frame_video->data[0][y * av_frame_video->linesize[0] + x] = x + y + i * 3;
-		}
-	}
-
-	/* Cb and Cr */
-	for (y = 0; y < av_codec_ctx_video->height / 2; y++) {
-		for (x = 0; x < av_codec_ctx_video->width / 2; x++) {
-			av_frame_video->data[1][y * av_frame_video->linesize[1] + x] = 128 + y + i * 2;
-			av_frame_video->data[2][y * av_frame_video->linesize[2] + x] = 64 + x + i * 5;
-		}
-	}
-
+	sws_scale(sws_ctx, l_src_data, l_src_linesize, 0, av_frame_video->height, av_frame_video->data, av_frame_video->linesize);
+	
 	av_frame_video->pts = i;
 	i++;
 
@@ -328,7 +314,7 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 	}
 
 	while (response >= 0) {
-		response = avcodec_receive_packet(av_codec_ctx_video, av_packet_audio);
+		response = avcodec_receive_packet(av_codec_ctx_video, av_packet_video);
 		if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
 			break;
 		else if (response < 0) {
