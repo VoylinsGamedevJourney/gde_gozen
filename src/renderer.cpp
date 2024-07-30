@@ -172,9 +172,7 @@ int Renderer::open() {
 					av_codec_ctx_audio->sample_rate = 44100;
 			}
 		}
-		AVChannelLayout l_chlayout = AV_CHANNEL_LAYOUT_STEREO;
-		av_channel_layout_copy(&av_codec_ctx_audio->ch_layout, &(l_chlayout)); //&(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO);
-
+		av_channel_layout_copy(&av_codec_ctx_audio->ch_layout, &(chlayout_stereo));
 	}
 
 	// Some formats want stream headers separated
@@ -191,7 +189,7 @@ int Renderer::open() {
 	// Opening the video encoder codec
 	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
 	if (response < 0) {
-		UtilityFunctions::printerr("Couldn't open video codec!", av_err2str(response));
+		UtilityFunctions::printerr("Couldn't open video codec!", get_av_error());
 		return -3;
 	}
 
@@ -232,7 +230,7 @@ int Renderer::open() {
 		// Opening the audio encoder codec
 		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
 		if (response < 0) {
-			UtilityFunctions::printerr("Couldn't open audio codec!", av_err2str(response));
+			UtilityFunctions::printerr("Couldn't open audio codec!", get_av_error());
 			return -4;
 		}
 
@@ -270,7 +268,7 @@ int Renderer::open() {
 	if (!(av_out_format->flags & AVFMT_NOFILE)) {
 		response = avio_open(&av_format_ctx->pb, file_path.utf8(), AVIO_FLAG_WRITE);
 		if (response < 0) {
-			UtilityFunctions::printerr("Couldn't open output file!", av_err2str(response));
+			UtilityFunctions::printerr("Couldn't open output file!", get_av_error());
 			return -5;
 		}
 	}
@@ -278,7 +276,7 @@ int Renderer::open() {
 	// Write stream header - if any
 	response = avformat_write_header(av_format_ctx, NULL);
 	if (response < 0) {
-		UtilityFunctions::printerr("Error when writing header!", av_err2str(response));
+		UtilityFunctions::printerr("Error when writing header!", get_av_error());
 		return -6;
 	}
 
@@ -309,7 +307,7 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 	// Adding frame
 	response = avcodec_send_frame(av_codec_ctx_video, av_frame_video);
 	if (response < 0) {
-		UtilityFunctions::printerr("Error sending video frame!", av_err2str(response));
+		UtilityFunctions::printerr("Error sending video frame!", get_av_error());
 		return -1;
 	}
 
@@ -318,7 +316,7 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
 			break;
 		else if (response < 0) {
-			UtilityFunctions::printerr("Error encoding video frame", av_err2str(response));
+			UtilityFunctions::printerr("Error encoding video frame!", get_av_error());
 			return -1;
 		}
 
@@ -331,7 +329,7 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		// Packet is now blank as function above takes ownership of it, so no unreferencing is necessary.
 		// When using av_write_frame this would be needed.
 		if (response < 0) {
-			UtilityFunctions::printerr("Error whilst writing output packet!", av_err2str(response));
+			UtilityFunctions::printerr("Error whilst writing output packet!", get_av_error());
 			return -1;
 		}
 	}

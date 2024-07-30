@@ -1,8 +1,8 @@
 #pragma once
 
+#include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/resource.hpp>
-#include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 extern "C" {
@@ -35,6 +35,7 @@ class Renderer : public Resource {
 
 private:
 	static const int byte_per_pixel = 4;
+	static constexpr AVChannelLayout chlayout_stereo = AV_CHANNEL_LAYOUT_STEREO;
 	AVFormatContext *av_format_ctx = nullptr;
 	const AVOutputFormat *av_out_format = nullptr;
 	struct SwsContext *sws_ctx = nullptr;
@@ -45,6 +46,7 @@ private:
 	AVStream *av_stream_video, *av_stream_audio;
 	AVPacket *av_packet_video = nullptr, *av_packet_audio = nullptr;
 	AVFrame *av_frame_video = nullptr, *av_frame_audio = nullptr;
+	char error_str[AV_ERROR_MAX_STRING_SIZE];
 	int i = 0, x = 0, y = 0, response = 0;
 
 	/* Render requirements */
@@ -105,6 +107,8 @@ public:
 
 	inline void set_render_audio(bool a_value) { render_audio = a_value; }
 	inline bool get_render_audio() { return render_audio; }
+
+	inline char *get_av_error() { return av_make_error_string(error_str, AV_ERROR_MAX_STRING_SIZE, response); }
 
 	bool ready_check();
 
