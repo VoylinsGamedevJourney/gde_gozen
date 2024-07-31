@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include <libavcodec/packet.h>
 
 // TODO: Set proper return errors and document them!
 
@@ -31,24 +32,42 @@ Dictionary Renderer::get_video_file_meta(String a_file_path) {
 
 Dictionary Renderer::get_supported_codecs() {
 	std::pair<RENDERER_AUDIO_CODEC, String> audio_codecs[] = {
-		{MP3, "MP3"},
-		{AAC, "AAC"},
-		{OPUS, "OPUS"},
-		{VORBIS, "VORBIS"},
-		{FLAC, "FLAC"},
-		{AC3, "AC3"},
-		{EAC3, "EAC3"},
-		{WAV, "WAV"},
+		{A_MP3, "MP3"},
+		{A_AAC, "AAC"},
+		{A_OPUS, "OPUS"},
+		{A_VORBIS, "VORBIS"},
+		{A_FLAC, "FLAC"},
+		{A_PCM_UNCOMPRESSED, "PCM_UNCOMPRESSED"},
+		{A_AC3, "AC3"},
+		{A_EAC3, "EAC3"},
+		{A_WAV, "WAV"},
+		{A_MP2, "MP2"},
 	};
 	std::pair<RENDERER_VIDEO_CODEC, String> video_codecs[] = {
-		{H264, "H264"},
-		{H265, "H265"},
-		{VP9, "VP9"},
-		{MPEG4, "MPEG4"},
-		{MPEG2, "MPEG2"},
-		{MPEG1, "MPEG1"},
-		{AV1, "AV1"},
-		{VP8, "VP8"},
+		{V_H264, "H264"},
+		{V_HEVC, "HEVC"},
+		{V_VP9, "VP9"},
+		{V_MPEG4, "MPEG4"},
+		{V_MPEG2, "MPEG2"},
+		{V_MPEG1, "MPEG1"},
+		{V_AV1, "AV1"},
+		{V_VP8, "VP8"},
+		{V_AMV, "AMV"},
+		{V_GOPRO_CINEFORM, "GOPRO_CINEFORM"},
+		{V_CINEPAK, "CINEPAK"},
+		{V_DIRAC, "DIRAC"},
+		{V_FLV1, "FLV1"},
+		{V_GIF, "GIF"},
+		{V_H261, "H261"},
+		{V_H263, "H263"},
+		{V_H263p, "H263p"},
+		{V_THEORA, "THEORA"},
+		{V_WEBP, "WEBP"},
+		{V_DNXHD, "DNXHD"},
+		{V_MJPEG, "MJPEG"},
+		{V_PRORES, "PRORES"},
+		{V_RAWVIDEO, "RAWVIDEO"},
+		{V_YUV4, "YUV4"},
 	};
 	Dictionary l_dic = {}, l_audio_dic = {}, l_video_dic = {};
 
@@ -133,7 +152,7 @@ int Renderer::open() {
 	av_codec_ctx_video->height = resolution.y;
 	av_codec_ctx_video->time_base = (AVRational){1, framerate};
 	av_codec_ctx_video->framerate = (AVRational){framerate, 1};
-	av_codec_ctx_video->gop_size = 10;
+	av_codec_ctx_video->gop_size = gop_size;
 	av_codec_ctx_video->max_b_frames = 1;
 
 	// Setting up audio stream
@@ -186,6 +205,15 @@ int Renderer::open() {
 	// if (codec->id == AV_CODEC_ID_H264)
 	//   av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
 
+	// Enable multi-threading for encoding - Video
+	av_codec_ctx_video->thread_count = 0;
+	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+		av_codec_ctx_video->thread_type = FF_THREAD_FRAME;
+	else if (av_codec_video->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
+	else
+		av_codec_ctx_video->thread_count = 1; // Don't use multithreading
+
 	// Opening the video encoder codec
 	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
 	if (response < 0) {
@@ -227,6 +255,17 @@ int Renderer::open() {
 	}
 
 	if (render_audio) {
+		// Enable multi-threading for encoding - Audio
+		// set codec to automatically determine how many threads suits best for the
+		// decoding job
+		av_codec_ctx_audio->thread_count = 0;
+		if (av_codec_audio->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+			av_codec_ctx_audio->thread_type = FF_THREAD_FRAME;
+		else if (av_codec_audio->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+			av_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
+		else
+			av_codec_ctx_audio->thread_count = 1; // don't use multithreading
+		
 		// Opening the audio encoder codec
 		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
 		if (response < 0) {
@@ -279,7 +318,7 @@ int Renderer::open() {
 		UtilityFunctions::printerr("Error when writing header!", get_av_error());
 		return -6;
 	}
-
+	av_packet_free(&av_packet_video);
 	i = 0; // Reset i for send_frame
 	return 0;
 }
@@ -298,9 +337,8 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 
 	uint8_t *l_src_data[4] = {a_frame_image->get_data().ptrw(), NULL, NULL, NULL};
 	int l_src_linesize[4] = {av_frame_video->width * byte_per_pixel, 0, 0, 0};
-
 	sws_scale(sws_ctx, l_src_data, l_src_linesize, 0, av_frame_video->height, av_frame_video->data, av_frame_video->linesize);
-	
+
 	av_frame_video->pts = i;
 	i++;
 
@@ -311,18 +349,21 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		return -1;
 	}
 
+	av_packet_video = av_packet_alloc();
+
 	while (response >= 0) {
 		response = avcodec_receive_packet(av_codec_ctx_video, av_packet_video);
 		if (response == AVERROR(EAGAIN) || response == AVERROR_EOF)
 			break;
 		else if (response < 0) {
 			UtilityFunctions::printerr("Error encoding video frame!", get_av_error());
-			return -1;
+			response = -1;
+			goto failed;
 		}
 
 		// Rescale output packet timestamp values from codec to stream timebase
-		av_packet_rescale_ts(av_packet_video, av_codec_ctx_video->time_base, av_stream_video->time_base);
 		av_packet_video->stream_index = av_stream_video->index;
+		av_packet_rescale_ts(av_packet_video, av_codec_ctx_video->time_base, av_stream_video->time_base);
 
 		// Write the frame to file
 		response = av_interleaved_write_frame(av_format_ctx, av_packet_video);
@@ -330,10 +371,16 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		// When using av_write_frame this would be needed.
 		if (response < 0) {
 			UtilityFunctions::printerr("Error whilst writing output packet!", get_av_error());
-			return -1;
+			response = -1;
+			goto failed;
 		}
+
+		av_packet_unref(av_packet_video);
 	}
-	return response == AVERROR_EOF ? 1 : 0;
+
+failed:
+	av_packet_free(&av_packet_video);
+	return response;
 }
 
 int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {

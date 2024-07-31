@@ -53,30 +53,56 @@ private:
 	String file_path = "";
 	AVCodecID av_codec_id_video, av_codec_id_audio;
 	Vector2i resolution = Vector2i(1920, 1080);
-	int framerate = 30, bit_rate = 400000;
+	int framerate = 30, bit_rate = 400000, gop_size = 0;
 	bool render_audio = false;
 
 public:
 	enum RENDERER_AUDIO_CODEC {
-		MP3 = AV_CODEC_ID_MP3,
-		AAC = AV_CODEC_ID_AAC,
-		OPUS = AV_CODEC_ID_OPUS,
-		VORBIS = AV_CODEC_ID_VORBIS,
-		FLAC = AV_CODEC_ID_FLAC,
-		PCM_UNCOMPRESSED = AV_CODEC_ID_PCM_S16LE,
-		AC3 = AV_CODEC_ID_AC3,
-		EAC3 = AV_CODEC_ID_EAC3,
-		WAV = AV_CODEC_ID_WAVPACK,
+		A_MP3 = AV_CODEC_ID_MP3,
+		A_AAC = AV_CODEC_ID_AAC,
+		A_OPUS = AV_CODEC_ID_OPUS,
+		A_VORBIS = AV_CODEC_ID_VORBIS,
+		A_FLAC = AV_CODEC_ID_FLAC,
+		A_PCM_UNCOMPRESSED = AV_CODEC_ID_PCM_S16LE,
+		A_AC3 = AV_CODEC_ID_AC3,
+		A_EAC3 = AV_CODEC_ID_EAC3,
+		A_WAV = AV_CODEC_ID_WAVPACK,
+		A_MP2 = AV_CODEC_ID_MP2,
 	};
 	enum RENDERER_VIDEO_CODEC {
-		H264 = AV_CODEC_ID_H264,
-		H265 = AV_CODEC_ID_HEVC,
-		VP9 = AV_CODEC_ID_VP9,
-		MPEG4 = AV_CODEC_ID_MPEG4,
-		MPEG2 = AV_CODEC_ID_MPEG2VIDEO,
-		MPEG1 = AV_CODEC_ID_MPEG1VIDEO,
-		AV1 = AV_CODEC_ID_AV1,
-		VP8 = AV_CODEC_ID_VP8,
+		V_H264 = AV_CODEC_ID_H264,
+		V_HEVC = AV_CODEC_ID_HEVC, // H265
+		V_VP9 = AV_CODEC_ID_VP9,
+		V_MPEG4 = AV_CODEC_ID_MPEG4,
+		V_MPEG2 = AV_CODEC_ID_MPEG2VIDEO,
+		V_MPEG1 = AV_CODEC_ID_MPEG1VIDEO,
+		V_AV1 = AV_CODEC_ID_AV1,
+		V_VP8 = AV_CODEC_ID_VP8,
+		V_AMV = AV_CODEC_ID_AMV,
+		V_GOPRO_CINEFORM = AV_CODEC_ID_CFHD,
+		V_CINEPAK = AV_CODEC_ID_CINEPAK,
+		V_DIRAC = AV_CODEC_ID_DIRAC,
+		V_FLV1 = AV_CODEC_ID_FLV1,
+		V_GIF = AV_CODEC_ID_GIF,
+		V_H261 = AV_CODEC_ID_H261,
+		V_H263 = AV_CODEC_ID_H263,
+		V_H263p = AV_CODEC_ID_H263P,
+		V_THEORA = AV_CODEC_ID_THEORA,
+		V_WEBP = AV_CODEC_ID_WEBP,
+		V_DNXHD = AV_CODEC_ID_DNXHD,
+		V_MJPEG = AV_CODEC_ID_MJPEG,
+		V_PRORES = AV_CODEC_ID_PRORES,
+		V_RAWVIDEO = AV_CODEC_ID_RAWVIDEO,
+		V_YUV4 = AV_CODEC_ID_YUV4,
+	};
+	enum RENDERER_SUBTITLE_CODEC {
+		S_ASS =  AV_CODEC_ID_ASS,
+		S_MOV_TEXT = AV_CODEC_ID_MOV_TEXT,
+		S_SUBRIP = AV_CODEC_ID_SUBRIP,
+		S_TEXT = AV_CODEC_ID_TEXT,
+		S_TTML = AV_CODEC_ID_TTML,
+		S_WEBVTT = AV_CODEC_ID_WEBVTT,
+		S_XSUB = AV_CODEC_ID_XSUB,
 	};
 
 	~Renderer();
@@ -104,6 +130,9 @@ public:
 
 	inline void set_bit_rate(int a_bit_rate) { bit_rate = a_bit_rate; }
 	inline int get_bit_rate() { return bit_rate; }
+	
+	inline void set_gop_size(int a_gop_size) { gop_size = a_gop_size; }
+	inline int get_gop_size() { return gop_size; }
 
 	inline void set_render_audio(bool a_value) { render_audio = a_value; }
 	inline bool get_render_audio() { return render_audio; }
@@ -120,25 +149,52 @@ public:
 protected:
 	static inline void _bind_methods() {
 		/* AUDIO CODEC ENUMS */
-		BIND_ENUM_CONSTANT(MP3);
-		BIND_ENUM_CONSTANT(AAC);
-		BIND_ENUM_CONSTANT(OPUS);
-		BIND_ENUM_CONSTANT(VORBIS);
-		BIND_ENUM_CONSTANT(FLAC);
-		BIND_ENUM_CONSTANT(PCM_UNCOMPRESSED);
-		BIND_ENUM_CONSTANT(AC3);
-		BIND_ENUM_CONSTANT(EAC3);
-		BIND_ENUM_CONSTANT(WAV);
+		BIND_ENUM_CONSTANT(A_MP3);
+		BIND_ENUM_CONSTANT(A_AAC);
+		BIND_ENUM_CONSTANT(A_OPUS);
+		BIND_ENUM_CONSTANT(A_VORBIS);
+		BIND_ENUM_CONSTANT(A_FLAC);
+		BIND_ENUM_CONSTANT(A_PCM_UNCOMPRESSED);
+		BIND_ENUM_CONSTANT(A_AC3);
+		BIND_ENUM_CONSTANT(A_EAC3);
+		BIND_ENUM_CONSTANT(A_WAV);
+		BIND_ENUM_CONSTANT(A_MP2);
 
 		/* VIDEO CODEC ENUMS */
-		BIND_ENUM_CONSTANT(H264);
-		BIND_ENUM_CONSTANT(H265);
-		BIND_ENUM_CONSTANT(VP9);
-		BIND_ENUM_CONSTANT(MPEG4);
-		BIND_ENUM_CONSTANT(MPEG2);
-		BIND_ENUM_CONSTANT(MPEG1);
-		BIND_ENUM_CONSTANT(AV1);
-		BIND_ENUM_CONSTANT(VP8);
+		BIND_ENUM_CONSTANT(V_H264);
+		BIND_ENUM_CONSTANT(V_HEVC);
+		BIND_ENUM_CONSTANT(V_VP9);
+		BIND_ENUM_CONSTANT(V_MPEG4);
+		BIND_ENUM_CONSTANT(V_MPEG2);
+		BIND_ENUM_CONSTANT(V_MPEG1);
+		BIND_ENUM_CONSTANT(V_AV1);
+		BIND_ENUM_CONSTANT(V_VP8);
+		BIND_ENUM_CONSTANT(V_AMV);
+		BIND_ENUM_CONSTANT(V_GOPRO_CINEFORM);
+		BIND_ENUM_CONSTANT(V_CINEPAK);
+		BIND_ENUM_CONSTANT(V_DIRAC);
+		BIND_ENUM_CONSTANT(V_FLV1);
+		BIND_ENUM_CONSTANT(V_GIF);
+		BIND_ENUM_CONSTANT(V_H261);
+		BIND_ENUM_CONSTANT(V_H263);
+		BIND_ENUM_CONSTANT(V_H263p);
+		BIND_ENUM_CONSTANT(V_THEORA);
+		BIND_ENUM_CONSTANT(V_WEBP);
+		BIND_ENUM_CONSTANT(V_DNXHD);
+		BIND_ENUM_CONSTANT(V_MJPEG);
+		BIND_ENUM_CONSTANT(V_PRORES);
+		BIND_ENUM_CONSTANT(V_RAWVIDEO);
+		BIND_ENUM_CONSTANT(V_YUV4);
+
+		/* SUBTITLE CODEC ENUMS */
+		BIND_ENUM_CONSTANT(S_ASS);
+		BIND_ENUM_CONSTANT(S_MOV_TEXT);
+		BIND_ENUM_CONSTANT(S_SUBRIP);
+		BIND_ENUM_CONSTANT(S_TEXT);
+		BIND_ENUM_CONSTANT(S_TTML);
+		BIND_ENUM_CONSTANT(S_WEBVTT);
+		BIND_ENUM_CONSTANT(S_XSUB);
+
 
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_supported_codecs"), &Renderer::get_supported_codecs);
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_video_file_meta", "a_file_path"), &Renderer::get_video_file_meta);
@@ -163,6 +219,9 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_bit_rate", "a_bit_rate"), &Renderer::set_bit_rate);
 		ClassDB::bind_method(D_METHOD("get_bit_rate"), &Renderer::get_bit_rate);
 
+		ClassDB::bind_method(D_METHOD("set_gop_size", "a_gop_size"), &Renderer::set_gop_size);
+		ClassDB::bind_method(D_METHOD("get_gop_size"), &Renderer::get_gop_size);
+
 		ClassDB::bind_method(D_METHOD("set_render_audio", "a_value"), &Renderer::set_render_audio);
 		ClassDB::bind_method(D_METHOD("get_render_audio"), &Renderer::get_render_audio);
 
@@ -177,3 +236,4 @@ protected:
 
 VARIANT_ENUM_CAST(Renderer::RENDERER_VIDEO_CODEC);
 VARIANT_ENUM_CAST(Renderer::RENDERER_AUDIO_CODEC);
+VARIANT_ENUM_CAST(Renderer::RENDERER_SUBTITLE_CODEC);
