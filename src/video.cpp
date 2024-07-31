@@ -75,6 +75,13 @@ int Video::open_video(String a_path, bool a_load_audio) {
 		return 2;
 	}
 
+	// Open codec - Video
+	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
+		UtilityFunctions::printerr("Couldn't open video codec!");
+		close_video();
+		return 2;
+	}
+	
 	// Enable multi-threading for decoding - Video
 	av_codec_ctx_video->thread_count = 0;
 	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS)
@@ -83,13 +90,6 @@ int Video::open_video(String a_path, bool a_load_audio) {
 		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
 	else
 		av_codec_ctx_video->thread_count = 1; // Don't use multithreading
-
-	// Open codec - Video
-	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
-		UtilityFunctions::printerr("Couldn't open video codec!");
-		close_video();
-		return 2;
-	}
 
 	// Setup SWS context for converting frame from YUV to RGB
 	// Taking into account the pixel aspect ratio
@@ -235,6 +235,13 @@ bool Video::_get_audio() {
 		return false;
 	}
 
+	// Open codec - Audio
+	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
+		UtilityFunctions::printerr("Couldn't open audio codec!");
+		close_video();
+		return false;
+	}
+
 	// Enable multi-threading for decoding - Audio
 	// set codec to automatically determine how many threads suits best for the
 	// decoding job
@@ -245,13 +252,6 @@ bool Video::_get_audio() {
 		av_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
 	else
 		av_codec_ctx_audio->thread_count = 1; // don't use multithreading
-
-	// Open codec - Audio
-	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
-		UtilityFunctions::printerr("Couldn't open audio codec!");
-		close_video();
-		return false;
-	}
 
 	av_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 

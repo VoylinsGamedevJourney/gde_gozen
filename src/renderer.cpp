@@ -205,6 +205,13 @@ int Renderer::open() {
 	// if (codec->id == AV_CODEC_ID_H264)
 	//   av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
 
+	// Opening the video encoder codec
+	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
+	if (response < 0) {
+		UtilityFunctions::printerr("Couldn't open video codec!", get_av_error());
+		return -3;
+	}
+
 	// Enable multi-threading for encoding - Video
 	av_codec_ctx_video->thread_count = 0;
 	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS)
@@ -213,13 +220,6 @@ int Renderer::open() {
 		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
 	else
 		av_codec_ctx_video->thread_count = 1; // Don't use multithreading
-
-	// Opening the video encoder codec
-	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
-	if (response < 0) {
-		UtilityFunctions::printerr("Couldn't open video codec!", get_av_error());
-		return -3;
-	}
 
 	av_packet_video = av_packet_alloc();
 	if (!av_packet_video) {
@@ -255,6 +255,13 @@ int Renderer::open() {
 	}
 
 	if (render_audio) {
+		// Opening the audio encoder codec
+		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
+		if (response < 0) {
+			UtilityFunctions::printerr("Couldn't open audio codec!", get_av_error());
+			return -4;
+		}
+
 		// Enable multi-threading for encoding - Audio
 		// set codec to automatically determine how many threads suits best for the
 		// decoding job
@@ -265,13 +272,6 @@ int Renderer::open() {
 			av_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
 		else
 			av_codec_ctx_audio->thread_count = 1; // don't use multithreading
-		
-		// Opening the audio encoder codec
-		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
-		if (response < 0) {
-			UtilityFunctions::printerr("Couldn't open audio codec!", get_av_error());
-			return -4;
-		}
 
 		// Copy audio stream params to muxer
 		if (avcodec_parameters_from_context(av_stream_audio->codecpar, av_codec_ctx_audio)) {
