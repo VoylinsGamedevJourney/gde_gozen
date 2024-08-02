@@ -96,7 +96,7 @@ public:
 		V_YUV4 = AV_CODEC_ID_YUV4,
 	};
 	enum RENDERER_SUBTITLE_CODEC {
-		S_ASS =  AV_CODEC_ID_ASS,
+		S_ASS = AV_CODEC_ID_ASS,
 		S_MOV_TEXT = AV_CODEC_ID_MOV_TEXT,
 		S_SUBRIP = AV_CODEC_ID_SUBRIP,
 		S_TEXT = AV_CODEC_ID_TEXT,
@@ -106,8 +106,6 @@ public:
 	};
 
 	~Renderer();
-
-	static Dictionary get_video_file_meta(String a_file_path);
 
 	static Dictionary get_supported_codecs();
 	static bool is_video_codec_supported(RENDERER_VIDEO_CODEC a_codec);
@@ -130,7 +128,7 @@ public:
 
 	inline void set_bit_rate(int a_bit_rate) { bit_rate = a_bit_rate; }
 	inline int get_bit_rate() { return bit_rate; }
-	
+
 	inline void set_gop_size(int a_gop_size) { gop_size = a_gop_size; }
 	inline int get_gop_size() { return gop_size; }
 
@@ -194,7 +192,6 @@ protected:
 		BIND_ENUM_CONSTANT(S_TTML);
 		BIND_ENUM_CONSTANT(S_WEBVTT);
 		BIND_ENUM_CONSTANT(S_XSUB);
-
 
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_supported_codecs"), &Renderer::get_supported_codecs);
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_video_file_meta", "a_file_path"), &Renderer::get_video_file_meta);

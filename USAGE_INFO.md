@@ -27,6 +27,12 @@ As for how I handle the binary files, they are outside of the main Godot project
 
 Initialize a variable of Video and you are good to go following the documentation below.
 
+#### Getting video file meta
+
+**__Moved to this class from the Renderer class starting from the commits which happened after V2.0 release!__**
+
+This function, `get_video_file_meta()` is to check if a video file has been renderer successfully. Note that this function **will be dissapearing in future version** and will become a part of video playback instead. This is just here for testing if the video rendered successfully.
+
 ### Opening a video
 
 For opening a video use `open_video(FILE_PATH, BOOL_VALUE)`. The file path is the full path to the video file and the bool value is for if you want to load the audio or not. The reason for that bool value is related to GoZen as we need to load a video for every clip for seeking to work but this is not necessary for the audio.
@@ -160,6 +166,8 @@ Using the functin `get_supported_codecs()` will give you a dictionary of all sup
 `is_audio_codec_supported(AUDIO_CODEC_ENUM)` is for when you want to check against a single codec if there is encoding support for it or not.
 
 #### Getting video file meta
+
+**__Moved to the Video class starting from the commits which happened after V2.0 release!__**
 
 This function, `get_video_file_meta()` is to check if a video file has been renderer successfully. Note that this function **will be dissapearing in future version** and will become a part of video playback instead. This is just here for testing if the video rendered successfully.
 

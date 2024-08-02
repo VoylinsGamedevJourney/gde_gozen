@@ -5,6 +5,29 @@
 
 #include <cmath>
 
+Dictionary Renderer::get_video_file_meta(String a_file_path) {
+	AVFormatContext *l_av_format_ctx = NULL;
+	const AVDictionaryEntry *l_av_dic = NULL;
+	Dictionary l_dic = {};
+
+	if (avformat_open_input(&l_av_format_ctx, a_file_path.utf8(), NULL, NULL)) {
+		UtilityFunctions::printerr("Couldn't open file!");
+		return l_dic;
+	}
+
+	if (avformat_find_stream_info(l_av_format_ctx, NULL)) {
+		UtilityFunctions::printerr("Couldn't find stream info!");
+		avformat_close_input(&l_av_format_ctx);
+		return l_dic;
+	}
+
+	while ((l_av_dic = av_dict_iterate(l_av_format_ctx->metadata, l_av_dic)))
+		l_dic[l_av_dic->key] = l_av_dic->value;
+
+	avformat_close_input(&l_av_format_ctx);
+	return l_dic;
+}
+
 // possible return values:
 // 0: OK;
 // 1: Couldn't properly open file and collect stream data;

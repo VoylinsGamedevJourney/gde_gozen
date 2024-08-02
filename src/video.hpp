@@ -58,6 +58,8 @@ public:
 	Video() {}
 	~Video() { close_video(); }
 
+	static Dictionary get_video_file_meta(String a_file_path);
+
 	int open_video(String a_path = "", bool a_load_audio = true);
 	void close_video();
 
