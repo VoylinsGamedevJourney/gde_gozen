@@ -194,7 +194,6 @@ protected:
 		BIND_ENUM_CONSTANT(S_XSUB);
 
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_supported_codecs"), &Renderer::get_supported_codecs);
-		ClassDB::bind_static_method("Renderer", D_METHOD("get_video_file_meta", "a_file_path"), &Renderer::get_video_file_meta);
 		ClassDB::bind_static_method("Renderer", D_METHOD("is_video_codec_supported", "a_video_codec"), &Renderer::is_video_codec_supported);
 		ClassDB::bind_static_method("Renderer", D_METHOD("is_audio_codec_supported", "a_audio_codec"), &Renderer::is_audio_codec_supported);
 

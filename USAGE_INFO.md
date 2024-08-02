@@ -157,6 +157,20 @@ Before opening the renderer with the function `open()`, please make certain that
 
 Using the functin `get_supported_codecs()` will give you a dictionary of all supported codecs and if they have hardware support or not. Take in mind that this is only for encoding. There is no function yet which will tell you if there is hardware support for decoding!
 
+This function returns a dictionary with the following structure:
+```
+{ 
+    "audio": {
+        "MP3": {"supported": BOOL_VALUE, "codec_id": INT_VALUE, "hardware_accel": BOOL_VALUE},
+        ...
+    },
+    "video": {
+        "H264": {"supported": BOOL_VALUE, "codec_id": INT_VALUE, "hardware_accel": BOOL_VALUE},
+        ...
+    }
+}
+```
+
 #### Is video codec supported
 
 `is_video_codec_supported(VIDEO_CODEC_ENUM)` is for when you want to check against a single codec if there is encoding support for it or not.

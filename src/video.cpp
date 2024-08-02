@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-Dictionary Renderer::get_video_file_meta(String a_file_path) {
+Dictionary Video::get_video_file_meta(String a_file_path) {
 	AVFormatContext *l_av_format_ctx = NULL;
 	const AVDictionaryEntry *l_av_dic = NULL;
 	Dictionary l_dic = {};

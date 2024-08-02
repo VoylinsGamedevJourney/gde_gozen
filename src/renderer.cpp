@@ -8,7 +8,7 @@ Renderer::~Renderer() {
 }
 
 Dictionary Renderer::get_supported_codecs() {
-	std::pair<RENDERER_AUDIO_CODEC, String> audio_codecs[] = {
+	std::pair<RENDERER_AUDIO_CODEC, String> l_audio_codecs[] = {
 		{A_MP3, "MP3"},
 		{A_AAC, "AAC"},
 		{A_OPUS, "OPUS"},
@@ -20,7 +20,7 @@ Dictionary Renderer::get_supported_codecs() {
 		{A_WAV, "WAV"},
 		{A_MP2, "MP2"},
 	};
-	std::pair<RENDERER_VIDEO_CODEC, String> video_codecs[] = {
+	std::pair<RENDERER_VIDEO_CODEC, String> l_video_codecs[] = {
 		{V_H264, "H264"},
 		{V_HEVC, "HEVC"},
 		{V_VP9, "VP9"},
@@ -48,19 +48,19 @@ Dictionary Renderer::get_supported_codecs() {
 	};
 	Dictionary l_dic = {}, l_audio_dic = {}, l_video_dic = {};
 
-	for (const auto &l_audio_codec : audio_codecs) {
+	for (const auto &l_audio_codec : l_audio_codecs) {
 		const AVCodec *l_codec = avcodec_find_encoder(static_cast<AVCodecID>(l_audio_codec.first));
 		Dictionary l_entry = {};
 		l_entry["supported"] = is_audio_codec_supported(l_audio_codec.first);
-		l_entry["codec_id"] = l_audio_codec.second;
+		l_entry["codec_id"] = l_audio_codec.first;
 		l_entry["hardware_accel"] = l_codec->capabilities & AV_CODEC_CAP_HARDWARE;
 		l_audio_dic[l_audio_codec.second] = l_entry;
 	}
-	for (const auto &l_video_codec : video_codecs) {
+	for (const auto &l_video_codec : l_video_codecs) {
 		const AVCodec *l_codec = avcodec_find_encoder(static_cast<AVCodecID>(l_video_codec.first));
 		Dictionary l_entry = {};
 		l_entry["supported"] = is_video_codec_supported(l_video_codec.first);
-		l_entry["codec_id"] = l_video_codec.second;
+		l_entry["codec_id"] = l_video_codec.first;
 		l_entry["hardware_accel"] = l_codec->capabilities & AV_CODEC_CAP_HARDWARE;
 		l_video_dic[l_video_codec.second] = l_entry;
 	}
