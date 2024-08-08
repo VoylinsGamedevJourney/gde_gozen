@@ -23,7 +23,8 @@ ffmpeg_build_args += ' --disable-avfilter'
 ffmpeg_build_args += ' --quiet'
 ffmpeg_build_args += ' --disable-logging'
 ffmpeg_build_args += f' --arch={arch}'
-
+if ARGUMENTS.get('enable_gpl', 'no'):
+    ffmpeg_build_args += ' --enable-gpl --enable-libx265'
 
 if platform == 'linux':
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
