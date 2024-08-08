@@ -48,13 +48,13 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/include/libswresample'])
         env.Append(LIBPATH=['ffmpeg/bin/lib'])
-        
+
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
             os.chdir('ffmpeg')
             os.system('make distclean')
             time.sleep(5)
             # These may be needed when running into trouble compiling
-            # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux') 
+            # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
             os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} --target-os=linux')
             time.sleep(5)
 
@@ -63,7 +63,7 @@ if 'linux' in platform:
             os.chdir('..')
 
         os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}_{target}')
 elif 'windows' in platform:
     # Building FFmpeg
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
@@ -102,10 +102,10 @@ elif 'windows' in platform:
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
     os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}_{target}')
 
 
 src = Glob('src/*.cpp')
-libpath = '{}/{}/{}/lib{}{}{}'.format(folder_bin, platform, target, libname, env['suffix'], env['SHLIBSUFFIX'])
+libpath = '{}/{}_{}/lib{}{}{}'.format(folder_bin, platform, target, libname, env['suffix'], env['SHLIBSUFFIX'])
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
