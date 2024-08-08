@@ -177,9 +177,10 @@ int Renderer::open() {
 			av_codec_ctx_audio->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 	}
 
-	// TODO: Add options in render profile for these type of things
+	// Encoding options for different codecs
 	if (av_codec_video->id == AV_CODEC_ID_H264)
-		av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
+		av_opt_set(av_codec_ctx_video->priv_data, "preset", h264_preset.utf8(), 0);
+
 
 	// Opening the video encoder codec
 	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);

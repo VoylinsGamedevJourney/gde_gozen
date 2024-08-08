@@ -54,6 +54,7 @@ private:
 	AVCodecID av_codec_id_video, av_codec_id_audio;
 	Vector2i resolution = Vector2i(1920, 1080);
 	int framerate = 30, bit_rate = 400000, gop_size = 0;
+	String h264_preset = "medium";
 	bool render_audio = false;
 
 public:
@@ -104,6 +105,17 @@ public:
 		S_WEBVTT = AV_CODEC_ID_WEBVTT,
 		S_XSUB = AV_CODEC_ID_XSUB,
 	};
+	enum H264_PRESETS { // Only works for H.H264
+		H264_PRESET_ULTRAFAST,
+		H264_PRESET_SUPERFAST,
+		H264_PRESET_VERYFAST,
+		H264_PRESET_FASTER,
+		H264_PRESET_FAST,
+		H264_PRESET_MEDIUM, // default preset
+		H264_PRESET_SLOW,   // recommended
+		H264_PRESET_SLOWER,
+		H264_PRESET_VERYSLOW,
+	};
 
 	~Renderer();
 
@@ -134,6 +146,21 @@ public:
 
 	inline void set_render_audio(bool a_value) { render_audio = a_value; }
 	inline bool get_render_audio() { return render_audio; }
+
+	inline void set_h264_preset(int a_value) {
+		switch (a_value) {
+			case H264_PRESET_ULTRAFAST: h264_preset = "ultrafast";
+			case H264_PRESET_SUPERFAST: h264_preset = "superfast";
+			case H264_PRESET_VERYFAST: h264_preset = "veryfast";
+			case H264_PRESET_FASTER: h264_preset = "faster";
+			case H264_PRESET_FAST: h264_preset = "fast";
+			case H264_PRESET_MEDIUM: h264_preset = "medium";
+			case H264_PRESET_SLOW: h264_preset = "slow";
+			case H264_PRESET_SLOWER: h264_preset = "slower";
+			case H264_PRESET_VERYSLOW: h264_preset = "veryslow";
+		}
+	}
+	inline String get_h264_preset() { return h264_preset; }
 
 	inline char *get_av_error() { return av_make_error_string(error_str, AV_ERROR_MAX_STRING_SIZE, response); }
 
@@ -193,6 +220,18 @@ protected:
 		BIND_ENUM_CONSTANT(S_WEBVTT);
 		BIND_ENUM_CONSTANT(S_XSUB);
 
+		/* H264 PRESETS */
+		BIND_ENUM_CONSTANT(H264_PRESET_ULTRAFAST);
+		BIND_ENUM_CONSTANT(H264_PRESET_SUPERFAST);
+		BIND_ENUM_CONSTANT(H264_PRESET_VERYFAST);
+		BIND_ENUM_CONSTANT(H264_PRESET_FASTER);
+		BIND_ENUM_CONSTANT(H264_PRESET_FAST);
+		BIND_ENUM_CONSTANT(H264_PRESET_MEDIUM);
+		BIND_ENUM_CONSTANT(H264_PRESET_SLOW);
+		BIND_ENUM_CONSTANT(H264_PRESET_SLOWER);
+		BIND_ENUM_CONSTANT(H264_PRESET_VERYSLOW);
+
+
 		ClassDB::bind_static_method("Renderer", D_METHOD("get_supported_codecs"), &Renderer::get_supported_codecs);
 		ClassDB::bind_static_method("Renderer", D_METHOD("is_video_codec_supported", "a_video_codec"), &Renderer::is_video_codec_supported);
 		ClassDB::bind_static_method("Renderer", D_METHOD("is_audio_codec_supported", "a_audio_codec"), &Renderer::is_audio_codec_supported);
@@ -221,6 +260,9 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_render_audio", "a_value"), &Renderer::set_render_audio);
 		ClassDB::bind_method(D_METHOD("get_render_audio"), &Renderer::get_render_audio);
 
+		ClassDB::bind_method(D_METHOD("set_h264_preset", "a_value"), &Renderer::set_h264_preset);
+		ClassDB::bind_method(D_METHOD("get_h264_preset"), &Renderer::get_h264_preset);
+
 		ClassDB::bind_method(D_METHOD("ready_check"), &Renderer::ready_check);
 
 		ClassDB::bind_method(D_METHOD("open"), &Renderer::open);
@@ -233,3 +275,4 @@ protected:
 VARIANT_ENUM_CAST(Renderer::RENDERER_VIDEO_CODEC);
 VARIANT_ENUM_CAST(Renderer::RENDERER_AUDIO_CODEC);
 VARIANT_ENUM_CAST(Renderer::RENDERER_SUBTITLE_CODEC);
+VARIANT_ENUM_CAST(Renderer::H264_PRESETS);
