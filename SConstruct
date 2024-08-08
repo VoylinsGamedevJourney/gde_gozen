@@ -10,6 +10,7 @@ folder_bin = './bin'  # Where to compile to
 num_jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
 arch = ARGUMENTS.get('arch', 'x86_64')
+target = ARGUMENTS.get('target', 'template_debug')
 
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
@@ -61,8 +62,8 @@ if 'linux' in platform:
         os.system(f'make -j {num_jobs} install')
         os.chdir('..')
 
-        os.makedirs(f'{folder_bin}/{platform}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/')
+        os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+        os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/{target}')
 elif 'windows' in platform:
     # Building FFmpeg
     extra_args = ''
@@ -100,10 +101,11 @@ elif 'windows' in platform:
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
-    os.makedirs(f'{folder_bin}/{platform}', exist_ok=True)
-    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}')
+    os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}/{target}')
+
 
 src = Glob('src/*.cpp')
-libpath = '{}/{}/lib{}{}{}'.format(folder_bin, platform, libname, env['suffix'], env['SHLIBSUFFIX'])
+libpath = '{}/{}/{}/lib{}{}{}'.format(folder_bin, platform, target, libname, env['suffix'], env['SHLIBSUFFIX'])
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
