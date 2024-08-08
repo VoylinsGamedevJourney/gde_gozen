@@ -1,3 +1,4 @@
+#ifdef EXPORT_RENDERER
 #include "renderer.hpp"
 #include <libavcodec/packet.h>
 
@@ -405,3 +406,4 @@ int Renderer::close() {
 
 	return OK;
 }
+#endif

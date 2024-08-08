@@ -35,3 +35,12 @@ Using the command line is pretty straightforward. Use `scons` with any of the st
 
 `use_system=` is talking about the FFmpeg install on your system. This is only required for Linux builds, default is to use the system FFmpeg (this only works when the FFmpeg which is installed is over version 6). If you want to include the FFmpeg libraries you'll need to set this to `no`, else don't use this tag or say `yes`. 
 
+### Enable GPL
+
+`enable_gpl=` set to `yes` or `no`. Some codecs and extra features need GPL to be enabled. For GoZen we will have this enabled as GoZen is a GPL licensed project. But when you want to have a closed source version it'll be better to leave this off. Default is `no`.
+
+### Include Renderer
+
+`include_renderer=` with `yes`, the rendering class will get included. If you don't need rendering capabilities, you could use set this to `no`. Default is `no`.
+
+

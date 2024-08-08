@@ -59,12 +59,17 @@ if __name__ == '__main__':
             case '2': extra_args = 'use_system=no'
             case _: extra_args = 'use_system=yes'
 
-    extra_args = ' '
     print('Enable GPL:')
     print('1. no; (default)')
     print('2. Yes. (Requires the use of the GPL license!)')
     match input('> '):
-        case '2.': 'enable_gpl=yes'
+        case '2.': ' enable_gpl=yes'
+
+    print('Include renderer:')
+    print('1. no; (default)')
+    print('2. Yes.')
+    match input('> '):
+        case '2.': ' include_renderer=yes'
 
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():

@@ -57,4 +57,9 @@ Any other response is an FFmpeg error code which has to do with sending, receivi
 - -1: Audio rendering is not enabled;
 - -2: Audio codec isn't open;
 
-###
+### close
+
+- 0: OK;
+- -1: Codec is not open;
+
+

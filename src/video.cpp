@@ -1,9 +1,4 @@
 #include "video.hpp"
-#include "godot_cpp/classes/gd_extension_manager.hpp"
-#include "godot_cpp/classes/global_constants.hpp"
-#include "godot_cpp/variant/utility_functions.hpp"
-
-#include <cmath>
 
 Dictionary Video::get_video_file_meta(String a_file_path) {
 	AVFormatContext *l_av_format_ctx = NULL;

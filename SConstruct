@@ -23,10 +23,15 @@ ffmpeg_build_args += ' --disable-avfilter'
 ffmpeg_build_args += ' --quiet'
 ffmpeg_build_args += ' --disable-logging'
 ffmpeg_build_args += f' --arch={arch}'
-if ARGUMENTS.get('enable_gpl', 'no'):
-    ffmpeg_build_args += ' --enable-gpl --enable-libx265'
+if ARGUMENTS.get('enable_gpl', 'no') == 'yes':
+    ffmpeg_build_args += ' --enable-gpl'
+if ARGUMENTS.get('include_renderer', 'no') == 'yes':
+    env.Append(CPPFLAGS=['-DEXPORT_RENDERER'])
+else:
+    platform += '_video_only'
 
-if platform == 'linux':
+
+if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
@@ -56,8 +61,9 @@ if platform == 'linux':
         os.system(f'make -j {num_jobs} install')
         os.chdir('..')
 
+        os.makedirs(f'{folder_bin}/{platform}', exist_ok=True)
         os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/')
-elif platform == 'windows':
+elif 'windows' in platform:
     # Building FFmpeg
     extra_args = ''
     if os_platform.system().lower() == 'linux':
@@ -93,8 +99,9 @@ elif platform == 'windows':
             'swresample.lib'])
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
-    os.system('cp ffmpeg/bin/bin/*.dll bin/windows/')
 
+    os.makedirs(f'{folder_bin}/{platform}', exist_ok=True)
+    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}')
 
 src = Glob('src/*.cpp')
 libpath = '{}/{}/lib{}{}{}'.format(folder_bin, platform, libname, env['suffix'], env['SHLIBSUFFIX'])
