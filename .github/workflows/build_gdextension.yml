@@ -53,7 +53,7 @@ jobs:
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-build
+          name: gde_gozen-linux-full-debug
           path: bin/linux_video_only_full_template_debug/*
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
@@ -97,7 +97,7 @@ jobs:
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-build
+          name: gde_gozen-windows-debug
           path: bin/windows_video_only_template_debug/*
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
