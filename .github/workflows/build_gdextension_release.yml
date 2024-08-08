@@ -35,57 +35,63 @@ jobs:
         run: pip install scons
       - name: Install Yasm
         run: sudo apt-get update && sudo apt-get install -y yasm
+        
+      # DEBUG BUILDS
       - name: Build Linux Debug video only
         run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=yes
+      - name: Build Linux Debug
+        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
+      - name: Build Linux full Debug video only
+        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
+      - name: Build Linux full Debug
+        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-debug-video-only
           path: bin/linux_video_only_template_debug/*
-      - name: Build Linux Release video only
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes
-      - name: Uploading GDExtension artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen-linux-release-video-only
-          path: bin/linux_video_only_template_release/*
-      - name: Build Linux Debug
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-debug
           path: bin/linux_template_debug/*
-      - name: Build Linux Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes include_renderer=yes
-      - name: Uploading GDExtension artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen-linux-release
-          path: bin/linux_template_release/*
-      - name: Build Linux full Debug video only
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-build-video-only
           path: bin/linux_video_only_full_template_debug/*
-      - name: Build Linux full Release video only
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no
-      - name: Uploading GDExtension artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen-linux-full-release-video-only
-          path: bin/linux_video_only_full_template_release/*
-      - name: Build Linux full Debug
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-build
           path: bin/linux_full_template_debug/*
+          
+      # RELEASE builds
+      - name: Build Linux Release video only
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes
+      - name: Build Linux Release
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes include_renderer=yes
+      - name: Build Linux full Release video only
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no enable_small=yes
       - name: Build Linux full Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+
+      - name: Uploading GDExtension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen-linux-release-video-only
+          path: bin/linux_video_only_template_release/*
+      - name: Uploading GDExtension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen-linux-release
+          path: bin/linux_template_release/*
+      - name: Uploading GDExtension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen-linux-full-release-video-only
+          path: bin/linux_video_only_full_template_release/*
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
@@ -114,29 +120,31 @@ jobs:
           sudo update-alternatives --config x86_64-w64-mingw32-g++ <<< "1"
       - name: Install Yasm
         run: sudo apt-get install -y yasm
+
       - name: Build Windows Debug video only
-        run: scons -Q -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes
+        run: scons -Q -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
+      - name: Build Windows Debug
+        run: scons -Q -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+      - name: Build Windows Release video only
+        run: scons -Q -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no enable_small=yes
+      - name: Build Windows Release
+        run: scons -Q -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-windows-build-video_only
           path: bin/windows_video_only_template_debug/*
-      - name: Build Windows Release video only
-        run: scons -Q -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no
+      - name: Uploading GDExtension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen-windows-build
+          path: bin/windows_template_debug/*
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-windows-release-video-only
           path: bin/windows_video_only_template_release/*
-      - name: Build Windows Debug
-        run: scons -Q -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes
-      - name: Uploading GDExtension artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen-windows-build
-          path: bin/window_template_debug/*
-      - name: Build Windows Release
-        run: scons -Q -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:

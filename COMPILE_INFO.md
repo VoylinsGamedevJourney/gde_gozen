@@ -47,3 +47,6 @@ Using the command line is pretty straightforward. Use `scons` with any of the st
 
 `recompile_ffmpeg=` is set to yes by default, but when making consequential builds, you probably don't need this to happen so for the second run of the same OS you could set this to `no`. This is helpful when building the template_debug and template_release directly after each other.
 
+### Enable small
+
+`enable_small=` is a command which will make FFmpeg take longer to compile but will save in space as the libraries will be smaller in size. Set this to `yes` to use it.

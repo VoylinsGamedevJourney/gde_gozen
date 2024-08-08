@@ -30,6 +30,8 @@ if ARGUMENTS.get('include_renderer', 'no') == 'yes':
     env.Append(CPPFLAGS=['-DEXPORT_RENDERER'])
 else:
     platform += '_video_only'
+if ARGUMENTS.get('enable_small', 'no') == 'yes':
+    ffmpeg_build_args += ' --enable-small'
 
 
 if 'linux' in platform:

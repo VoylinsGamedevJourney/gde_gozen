@@ -80,6 +80,14 @@ if __name__ == '__main__':
         print('2. No.')
         match input('> '):
             case '2.': ' recompile_ffmpeg=no'
+
+        print('Enable small: (takes longer to compile FFmpeg but libs are smaller)')
+        print('1. No; (default)')
+        print('2. Yes.')
+        match input('> '):
+            case '2.': ' enable_small=yes'
+
+
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():
         jobs = int(user_input)
