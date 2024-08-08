@@ -62,7 +62,7 @@ if 'linux' in platform:
             os.system(f'make -j {num_jobs} install')
             os.chdir('..')
 
-        os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+        os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
         os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}_{target}')
 elif 'windows' in platform:
     # Building FFmpeg
@@ -101,7 +101,7 @@ elif 'windows' in platform:
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
-    os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+    os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
     os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}_{target}')
 
 
