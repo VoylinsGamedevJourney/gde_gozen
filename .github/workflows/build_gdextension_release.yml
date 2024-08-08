@@ -33,6 +33,8 @@ jobs:
         run: echo "FFMPEG_INCLUDES=/usr/include/x86_64-linux-gnu" >> $GITHUB_ENV
       - name: Setup SCons
         run: pip install scons
+      - name: Install Yasm
+        run: sudo apt-get update && sudo apt-get install -y yasm
       - name: Build Linux Debug video only
         run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=yes
       - name: Uploading GDExtension artifact
@@ -61,21 +63,6 @@ jobs:
         with:
           name: gde_gozen-linux-release
           path: bin/linux_template_release/*
-  linux-build-full:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Setup SCons
-        run: pip install scons
-      - name: Install Yasm
-        run: sudo apt-get update && sudo apt-get install -y yasm
       - name: Build Linux full Debug video only
         run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes
       - name: Uploading GDExtension artifact
