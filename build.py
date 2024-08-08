@@ -51,13 +51,16 @@ if __name__ == '__main__':
         case '2': target = 'release'
 
     extra_args = ''
+    use_system = False
     if platform == 'linux':
         print('Use system FFmpeg:')
         print('1. Yes; (default)')
         print('2. No.')
         match input('> '):
             case '2': extra_args = 'use_system=no'
-            case _: extra_args = 'use_system=yes'
+            case _:
+                extra_args = 'use_system=yes'
+                use_system = True
 
     print('Enable GPL:')
     print('1. no; (default)')
@@ -71,6 +74,12 @@ if __name__ == '__main__':
     match input('> '):
         case '2.': ' include_renderer=yes'
 
+    if use_system:
+        print('Recompile FFmpeg:')
+        print('1. Yes; (default)')
+        print('2. No.')
+        match input('> '):
+            case '2.': ' recompile_ffmpeg=no'
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():
         jobs = int(user_input)

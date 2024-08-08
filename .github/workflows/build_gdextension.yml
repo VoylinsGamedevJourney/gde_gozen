@@ -40,7 +40,6 @@ jobs:
           path: bin/linux_video_only/template_debug/*
       - name: Build Linux Release
         run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes
-        # TODO: Need to probably clean out the debug executable before uploading release artifacts
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
@@ -69,8 +68,7 @@ jobs:
           name: gdextension-linux-full-build
           path: bin/linux_video_only_full/template_debug/*
       - name: Build Linux full Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes
-        # TODO: Need to probably clean out the debug executable before uploading release artifacts
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
@@ -91,16 +89,15 @@ jobs:
         run: pip install scons
       - name: Install Yasm
         run: sudo apt-get update && sudo apt-get install -y yasm
-      - name: Build Linux Debug
+      - name: Build Windows Debug
         run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gdextension-windows-build
           path: bin/windows/template_debug/*
-      - name: Build Linux Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes
-        # TODO: Need to probably clean out the debug executable before uploading release artifacts
+      - name: Build Windows Release
+        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:

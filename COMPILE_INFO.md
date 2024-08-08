@@ -43,4 +43,7 @@ Using the command line is pretty straightforward. Use `scons` with any of the st
 
 `include_renderer=` with `yes`, the rendering class will get included. If you don't need rendering capabilities, you could use set this to `no`. Default is `no`.
 
+### Recompile FFmpeg
+
+`recompile_ffmpeg=` is set to yes by default, but when making consequential builds, you probably don't need this to happen so for the second run of the same OS you could set this to `no`. This is helpful when building the template_debug and template_release directly after each other.
 

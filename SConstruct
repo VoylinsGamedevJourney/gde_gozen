@@ -48,47 +48,47 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/include/libswresample'])
         env.Append(LIBPATH=['ffmpeg/bin/lib'])
+        
+        if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+            os.chdir('ffmpeg')
+            os.system('make distclean')
+            time.sleep(5)
+            # These may be needed when running into trouble compiling
+            # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux') 
+            os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} --target-os=linux')
+            time.sleep(5)
 
-        os.chdir('ffmpeg')
-
-        os.system('make distclean')
-        time.sleep(5)
-        # These may be needed when running into trouble compiling
-        # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux') 
-        os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} --target-os=linux')
-        time.sleep(5)
-
-        os.system(f'make -j {num_jobs}')
-        os.system(f'make -j {num_jobs} install')
-        os.chdir('..')
+            os.system(f'make -j {num_jobs}')
+            os.system(f'make -j {num_jobs} install')
+            os.chdir('..')
 
         os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
         os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}/{target}')
 elif 'windows' in platform:
     # Building FFmpeg
-    extra_args = ''
-    if os_platform.system().lower() == 'linux':
-        os.environ['PATH'] = '/opt/bin/' + os.environ['PATH']
-        extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32 --enable-cross-compile'
+    if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+        extra_args = ''
+        if os_platform.system().lower() == 'linux':
+            extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32 --enable-cross-compile'
 
-        # TEST: Testing if adding this makes it so copying files is no longer needed
-        extra_args += ' --extra-ldflags="-static"'
-        # Copying necessary files
-        # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/')
-        # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/')
-    else:
-        extra_args = ' --target-os=windows'
+            # TEST: Testing if adding this makes it so copying files is no longer needed
+            extra_args += ' --extra-ldflags="-static"'
+            # Copying necessary files
+            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/')
+            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/')
+        else:
+            extra_args = ' --target-os=windows'
 
-    os.chdir('ffmpeg')
-    os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
+        os.chdir('ffmpeg')
+        os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
 
-    os.system('make distclean')
-    time.sleep(5)
-    os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} {extra_args}')
-    time.sleep(5)
-    os.system(f'make -j {num_jobs}')
-    os.system(f'make -j {num_jobs} install')
-    os.chdir('..')
+        os.system('make distclean')
+        time.sleep(5)
+        os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} {extra_args}')
+        time.sleep(5)
+        os.system(f'make -j {num_jobs}')
+        os.system(f'make -j {num_jobs} install')
+        os.chdir('..')
 
     if os_platform.system().lower() == 'windows':
         env.Append(LIBS=[
