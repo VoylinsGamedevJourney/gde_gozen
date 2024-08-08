@@ -1,7 +1,6 @@
 #include "renderer.hpp"
 #include <libavcodec/packet.h>
 
-// TODO: Set proper return errors and document them!
 
 Renderer::~Renderer() {
 	close();
@@ -119,7 +118,7 @@ int Renderer::open() {
 	av_stream_video = avformat_new_stream(av_format_ctx, NULL);
 	if (!av_stream_video) {
 		UtilityFunctions::printerr("Couldn't create stream!");
-		return -3;
+		return -7;
 	}
 
 	av_codec_ctx_video->codec_id = av_codec_id_video;
@@ -137,25 +136,25 @@ int Renderer::open() {
 		av_codec_audio = avcodec_find_encoder(av_codec_id_audio);
 		if (!av_codec_audio) {
 			UtilityFunctions::printerr("Audio codec not found!");
-			return -3;
+			return -4;
 		}
 
 		av_codec_ctx_audio = avcodec_alloc_context3(av_codec_audio);
 		if (!av_codec_ctx_audio) {
 			UtilityFunctions::printerr("Couldn't allocate audio codec context!");
-			return -3;
+			return -4;
 		}
 
 		av_packet_audio = av_packet_alloc();
 		if (!av_packet_audio) {
 			UtilityFunctions::printerr("Couldn't allocate packet!");
-			return -3;
+			return -7;
 		}
 
 		av_stream_audio = avformat_new_stream(av_format_ctx, NULL);
 		if (!av_stream_audio) {
 			UtilityFunctions::printerr("Couldn't create new stream!");
-			return -3;
+			return -6;
 		}
 
 		av_codec_ctx_audio->sample_fmt = (*av_codec_audio).sample_fmts ? (*av_codec_audio).sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
@@ -179,8 +178,8 @@ int Renderer::open() {
 	}
 
 	// TODO: Add options in render profile for these type of things
-	// if (codec->id == AV_CODEC_ID_H264)
-	//   av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
+	if (av_codec_video->id == AV_CODEC_ID_H264)
+		av_opt_set(p_codec_context->priv_data, "preset", "slow", 0);
 
 	// Opening the video encoder codec
 	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
@@ -201,19 +200,19 @@ int Renderer::open() {
 	av_packet_video = av_packet_alloc();
 	if (!av_packet_video) {
 		UtilityFunctions::printerr("Couldn't allocate packet!");
-		return -3;
+		return -7;
 	}
 	av_frame_video = av_frame_alloc();
 	if (!av_frame_video) {
 		UtilityFunctions::printerr("Couldn't allocate frame!");
-		return -3;
+		return -8;
 	}
 	av_frame_video->format = AV_PIX_FMT_YUV420P;
 	av_frame_video->width = resolution.x;
 	av_frame_video->height = resolution.y;
 	if (av_frame_get_buffer(av_frame_video, 0)) {
 		UtilityFunctions::printerr("Couldn't allocate frame data!");
-		return -3;
+		return -8;
 	}
 
 	sws_ctx = sws_getContext(
@@ -222,13 +221,13 @@ int Renderer::open() {
 		SWS_BILINEAR, NULL, NULL, NULL); // TODO: Option to change SWS_BILINEAR
 	if (!sws_ctx) {
 		UtilityFunctions::printerr("Couldn't get sws context!");
-		return -7;
+		return -9;
 	}
 
 	// Copy video stream params to muxer
 	if (avcodec_parameters_from_context(av_stream_video->codecpar, av_codec_ctx_video) < 0) {
 		UtilityFunctions::printerr("Couldn't copy video stream params!");
-		return -3;
+		return -5;
 	}
 
 	if (render_audio) {
@@ -260,7 +259,7 @@ int Renderer::open() {
 		swr_ctx = swr_alloc();
 		if (!swr_ctx) {
 			UtilityFunctions::printerr("Couldn't allocate swr!");
-			return -4;
+			return -10;
 		}
 
 		// Setting audio options
@@ -274,7 +273,7 @@ int Renderer::open() {
 		// Initialize resampling context
 		if ((response = swr_init(swr_ctx)) < 0) {
 			UtilityFunctions::printerr("Failed to initialize resampling context!");
-			return -4;
+			return -10;
 		}
 	}
 
@@ -285,7 +284,7 @@ int Renderer::open() {
 		response = avio_open(&av_format_ctx->pb, file_path.utf8(), AVIO_FLAG_WRITE);
 		if (response < 0) {
 			UtilityFunctions::printerr("Couldn't open output file!", get_av_error());
-			return -5;
+			return -11;
 		}
 	}
 
@@ -293,14 +292,13 @@ int Renderer::open() {
 	response = avformat_write_header(av_format_ctx, NULL);
 	if (response < 0) {
 		UtilityFunctions::printerr("Error when writing header!", get_av_error());
-		return -6;
+		return -12;
 	}
 	av_packet_free(&av_packet_video);
 	i = 0; // Reset i for send_frame
-	return 0;
+	return OK;
 }
 
-// TODO: Make argument int frame_nr, this could allow for multi-threaded rendering ... maybe
 int Renderer::send_frame(Ref<Image> a_frame_image) {
 	if (!av_codec_ctx_video) {
 		UtilityFunctions::printerr("Video codec isn't open!");
@@ -323,7 +321,7 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 	response = avcodec_send_frame(av_codec_ctx_video, av_frame_video);
 	if (response < 0) {
 		UtilityFunctions::printerr("Error sending video frame!", get_av_error());
-		return -1;
+		return -3;
 	}
 
 	av_packet_video = av_packet_alloc();
@@ -379,12 +377,12 @@ int Renderer::send_audio(Ref<AudioStreamWAV> a_wav) {
 	// i += av_frame_audio->nb_samples;
 	// while loop end to repeat
 
-	return 0;
+	return OK;
 }
 
 int Renderer::close() {
 	if (av_codec_ctx_video == nullptr)
-		return 1;
+		return -1;
 
 	av_write_trailer(av_format_ctx);
 
@@ -404,5 +402,5 @@ int Renderer::close() {
 		avio_closep(&av_format_ctx->pb);
 	avformat_free_context(av_format_ctx);
 
-	return 0;
+	return OK;
 }

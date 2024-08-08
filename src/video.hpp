@@ -69,7 +69,7 @@ public:
 	Ref<Image> next_frame();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
-	bool _get_audio();
+	int _get_audio();
 
 	inline float get_framerate() { return framerate; }
 
