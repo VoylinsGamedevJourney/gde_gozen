@@ -1,3 +1,4 @@
+[![Release build](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_gdextension_release.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_gdextension_release.yml)
 ![Static Badge](https://img.shields.io/badge/Linux-badge?style=plastic&logoSize=auto&label=Status&labelColor=black&color=7FFF00)
  ![Static Badge](https://img.shields.io/badge/Windows-badge?style=flat-square&logoSize=auto&label=Status&labelColor=black&color=7FFF00)
  ![Static Badge](https://img.shields.io/badge/MacOS-badge?style=plastic&logoSize=auto&label=Status&labelColor=black&color=red)
