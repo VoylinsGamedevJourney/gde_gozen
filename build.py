@@ -66,26 +66,26 @@ if __name__ == '__main__':
     print('1. no; (default)')
     print('2. Yes.')
     match input('> '):
-        case '2.': ' include_renderer=yes'
+        case '2': extra_args += ' include_renderer=yes'
 
     if not use_system:
         print('Recompile FFmpeg:')
         print('1. Yes; (default)')
         print('2. No.')
         match input('> '):
-            case '2.': ' recompile_ffmpeg=no'
+            case '2': extra_args += ' recompile_ffmpeg=no'
 
         print('Enable GPL:')
         print('1. no; (default)')
         print('2. Yes. (Requires the use of the GPL license!)')
         match input('> '):
-            case '2.': ' enable_gpl=yes'
+            case '2': extra_args += ' enable_gpl=yes'
 
         print('Enable small: (takes longer to compile FFmpeg but libs are smaller)')
         print('1. No; (default)')
         print('2. Yes.')
         match input('> '):
-            case '2.': ' enable_small=yes'
+            case '2': extra_args += ' enable_small=yes'
 
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():
