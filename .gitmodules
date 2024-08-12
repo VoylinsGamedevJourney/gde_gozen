@@ -2,6 +2,7 @@
 	path = ffmpeg
 	url = git@github.com:FFmpeg/FFmpeg.git
 	branch = release/6.1
+	ignore = dirty
 [submodule "godot-cpp"]
 	path = godot_cpp
 	url = git@github.com:godotengine/godot-cpp.git
