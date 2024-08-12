@@ -6,18 +6,18 @@ reloadable = true
 
 [libraries]
 
-linux.debug.x86_64 = "res://../bin/linux/libgozen.linux.template_debug.x86_64.so"
-linux.release.x86_64 = "res://../bin/linux/libgozen.linux.template_release.x86_64.so"
+linux.debug.x86_64 = "res://../bin/linux_template_debug/libgozen.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "res://../bin/linux_template_release/libgozen.linux.template_release.x86_64.so"
 linux.debug.arm64 = "res://../bin/linux/libgozen.linux.template_debug.arm64.so"
-linux.release.arm64 = "res://../bin/linux/libgozen.linux.template_release.arm64.so"
-linux.debug.rv64 = "res://../bin/linux/libgozen.linux.template_debug.rv64.so"
-linux.release.rv64 = "res://../bin/linux/libgozen.linux.template_release.rv64.so"
+linux.release.arm64 = "res://../bin/linux_template_release/libgozen.linux.template_release.arm64.so"
+linux.debug.rv64 = "res://../bin/linux_template_release/libgozen.linux.template_debug.rv64.so"
+linux.release.rv64 = "res://../bin/linux_template_release/libgozen.linux.template_release.rv64.so"
 
-windows.debug.x86_32 = "res://../bin/windows/libgozen.windows.template_debug.x86_32.dll"
-windows.release.x86_32 = "res://../bin/windows/libgozen.windows.template_release.x86_32.dll"
-windows.debug.x86_64 = "res://../bin/windows/libgozen.windows.template_debug.x86_64.dll"
-windows.release.x86_64 = "res://../bin/windows/libgozen.windows.template_release.x86_64.dll"
+windows.debug.x86_32 = "res://../bin/windows_template_debug/libgozen.windows.template_debug.x86_32.dll"
+windows.release.x86_32 = "res://../bin/windows_template_release/libgozen.windows.template_release.x86_32.dll"
+windows.debug.x86_64 = "res://../bin/windows_template_debug/libgozen.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "res://../bin/windows_template_release/libgozen.windows.template_release.x86_64.dll"
 
-macos.debug = "res://../bin/macos/libgozen.macos.template_debug.framework"
-macos.release = "res://../bin/macos/libgozen.macos.template_release.framework"
+macos.debug = "res://../bin/macos_template_debug/libgozen.macos.template_debug.framework"
+macos.release = "res://../bin/macos_template_release/libgozen.macos.template_release.framework"
 

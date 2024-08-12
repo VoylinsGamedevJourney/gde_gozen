@@ -53,7 +53,7 @@ int Video::open_video(String a_path, bool a_load_audio) {
 			continue;
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			av_stream_audio = av_format_ctx->streams[i];
-			if (a_load_audio && !(response = _get_audio()))
+			if (a_load_audio && (response = _get_audio()) != 0)
 				return response;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
 			av_stream_video = av_format_ctx->streams[i];
