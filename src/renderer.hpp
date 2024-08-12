@@ -53,7 +53,8 @@ private:
 	String file_path = "";
 	AVCodecID av_codec_id_video, av_codec_id_audio;
 	Vector2i resolution = Vector2i(1920, 1080);
-	int framerate = 30, bit_rate = 400000, gop_size = 0;
+	float framerate = 30;
+	int bit_rate = 400000, gop_size = 0;
 	String h264_preset = "medium";
 	bool render_audio = false;
 
@@ -135,8 +136,8 @@ public:
 	inline void set_resolution(Vector2i a_resolution) { resolution = a_resolution; }
 	inline Vector2i get_resolution() { return resolution; }
 
-	inline void set_framerate(int a_framerate) { framerate = a_framerate; }
-	inline int get_framerate() { return framerate; }
+	inline void set_framerate(float a_framerate) { framerate = a_framerate; }
+	inline float get_framerate() { return framerate; }
 
 	inline void set_bit_rate(int a_bit_rate) { bit_rate = a_bit_rate; }
 	inline int get_bit_rate() { return bit_rate; }
