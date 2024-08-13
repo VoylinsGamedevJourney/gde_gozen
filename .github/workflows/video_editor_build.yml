@@ -4,16 +4,16 @@ on: [workflow_dispatch]
 jobs:
   linux-build:
     runs-on: ubuntu-latest
-    container: voylin/gde_gozen:latest
+    container: archlinux:base
     steps:
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+      - name: Installing stuff
+        run: |
+          pacman -Syu
+          pacman -S --noconfirm ffmpeg git bash yasm python python-pip scons
       - name: Installing dependencies and building
         run: |
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
