@@ -4,6 +4,7 @@ on: [workflow_dispatch]
 jobs:
   linux-build:
     runs-on: ubuntu-latest
+    container: voylin/gde_gozen:latest
     steps:
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -15,19 +16,6 @@ jobs:
           python-version: '3.x'
       - name: Installing dependencies and building
         run: |
-          sudo add-apt-repository ppa:ubuntuhandbook1/ffmpeg6
-          sudo apt-get update
-          sudo apt-get install ffmpeg
-          sudo apt-get install libswscale-dev
-          sudo apt-get install libswresample-dev
-          sudo apt-get install libavutil-dev
-          sudo apt-get install libavformat-dev
-          sudo apt-get install libavfilter-dev
-          sudo apt-get install libavdevice-dev
-          sudo apt-get install libavcodec-dev
-          echo "FFMPEG_INCLUDES=/usr/include/x86_64-linux-gnu" >> $GITHUB_ENV
-          pip install scons
-          sudo apt-get update && sudo apt-get install -y yasm
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
       - name: Uploading GDExtension artifact
