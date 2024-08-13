@@ -55,8 +55,8 @@ if 'linux' in platform:
             os.chdir('ffmpeg')
             os.system('make distclean')
             time.sleep(5)
-            # These may be needed when running into trouble compiling
-            # --extra-cflags="-fPIC" --extra-ldflags="-fpic" --target-os=linux')
+
+            ffmpeg_build_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
             os.system(f'./configure --prefix={folder_bin} {ffmpeg_build_args} --target-os=linux')
             time.sleep(5)
 
