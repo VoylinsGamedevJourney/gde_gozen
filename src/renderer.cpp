@@ -355,6 +355,9 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		av_packet_unref(av_packet_video);
 	}
 
+	av_packet_free(&av_packet_video);
+	return 0;
+
 failed:
 	av_packet_free(&av_packet_video);
 	return response;
