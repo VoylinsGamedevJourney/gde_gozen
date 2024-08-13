@@ -38,7 +38,7 @@ if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
-        env.Append(LIBPATH=['/usr/bin/ffmpeg/', '/bin/ffmpeg'])
+        env.Append(LIBPATH=['/usr/bin/ffmpeg', '/bin/ffmpeg'])
     else:  # For people needing FFmpeg binaries
         print("Full linux build")
         platform += '_full'
