@@ -1,5 +1,5 @@
-name: Build GDE GoZen - Video + Renderer
-run-name: Build Video + Renderer
+name: Video editor build
+run-name: GoZen Video Editor gdextension build
 on: [workflow_dispatch]
 jobs:
   linux-build:
@@ -35,36 +35,40 @@ jobs:
         run: pip install scons
       - name: Install Yasm
         run: sudo apt-get update && sudo apt-get install -y yasm
-
+        
+      # DEBUG BUILDS
       - name: Build Linux Debug
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes
       - name: Build Linux full Debug
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
-      - name: Build Linux Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=yes include_renderer=yes
-      - name: Build Linux full Release
-        run: scons -Q -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
 
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-debug
-          path: bin/linux_template_debug/*
+          path: bin/linux_template_debug
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-debug
-          path: bin/linux_full_template_debug/*
+          path: bin/linux_full_template_debug
+          
+      # RELEASE builds
+      - name: Build Linux Release
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes include_renderer=yes
+      - name: Build Linux full Release
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-release
-          path: bin/linux_template_release/*
+          path: bin/linux_template_release
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-release
-          path: bin/linux_full_template_release/*
+          path: bin/linux_full_template_release
   windows-build:
     runs-on: ubuntu-latest
     steps:
@@ -79,7 +83,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Setup SCons
-        run: pip install scons
+        run: pip install scons  
       - name: Install Mingw
         run: |
           sudo apt-get update
@@ -90,17 +94,17 @@ jobs:
         run: sudo apt-get install -y yasm
 
       - name: Build Windows Debug
-        run: scons -Q -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=yes include_renderer=yes enable_small=yes
       - name: Build Windows Release
-        run: scons -Q -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
 
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-windows-debug
-          path: bin/windows_template_debug/*
+          path: bin/windows_template_debug
       - name: Uploading GDExtension artifact
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-windows-release
-          path: bin/windows_template_release/*
+          path: bin/windows_template_release
