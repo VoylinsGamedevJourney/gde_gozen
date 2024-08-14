@@ -1,4 +1,4 @@
-# Godot 
+# Godot
 .godot/
 
 # Imported translations (automatically generated from CSV files)
@@ -47,4 +47,5 @@ ffmpeg_bin/
 test_exports/
 
 *.tar.gz
+*.zip
 ffmpeg_examples
