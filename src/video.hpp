@@ -47,7 +47,7 @@ private:
 	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
 	double average_frame_duration = 0, stream_time_base_video = 0;
 
-	Ref<AudioStreamWAV> audio = memnew(AudioStreamWAV);
+	AudioStreamWAV* audio = memnew(AudioStreamWAV);
 
 	bool is_open = false, variable_framerate = false;
 	int64_t video_duration = 0;

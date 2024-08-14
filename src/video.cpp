@@ -1,4 +1,5 @@
 #include "video.hpp"
+#include "godot_cpp/core/memory.hpp"
 
 Dictionary Video::get_video_file_meta(String a_file_path) {
 	AVFormatContext *l_av_format_ctx = NULL;
@@ -192,9 +193,8 @@ int Video::open_video(String a_path, bool a_load_audio) {
 }
 
 void Video::close_video() {
+	memdelete(audio);
 	is_open = false;
-	if (!audio.is_null())
-		audio.unref();
 
 	if (av_format_ctx)
 		avformat_close_input(&av_format_ctx);
