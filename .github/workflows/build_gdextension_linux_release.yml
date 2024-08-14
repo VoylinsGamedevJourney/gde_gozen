@@ -34,7 +34,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-debug-video-only
+          name: linux_video_only_template_debug
           path: bin/linux_video_only_template_debug
 
       - name: Build Linux Debug
@@ -44,7 +44,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-debug
+          name: linux_template_debug
           path: bin/linux_template_debug
           
       # RELEASE builds
@@ -55,7 +55,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-release-video-only
+          name: linux_video_only_template_release
           path: bin/linux_video_only_template_release
 
       - name: Build Linux Release
@@ -65,5 +65,5 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-release
+          name: linux_template_release
           path: bin/linux_template_release

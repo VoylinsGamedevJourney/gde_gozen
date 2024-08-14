@@ -33,7 +33,7 @@ jobs:
       - name: Uploading GDExtension artifact full debug video only
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-debug-video-only
+          name: linux_video_only_full_template_debug
           path: bin/linux_video_only_full_template_debug
 
       - name: Build Linux full Debug
@@ -42,7 +42,7 @@ jobs:
       - name: Uploading GDExtension artifact full debug
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-debug
+          name: linux_full_template_debug
           path: bin/linux_full_template_debug
 
       # RELEASE BUILDS
@@ -53,7 +53,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-release-video-only
+          name: linux_video_only_full_template_release
           path: bin/linux_video_only_full_template_release
 
       - name: Build Linux full Release
@@ -63,5 +63,5 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-release
+          name: linux_full_template_release
           path: bin/linux_full_template_release

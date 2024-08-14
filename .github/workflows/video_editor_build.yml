@@ -44,7 +44,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-debug
+          name: linux_template_debug
           path: bin/linux_template_debug
 
       - name: Building debug Linux full
@@ -54,7 +54,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-debug
+          name: linux_template_debug_full
           path: bin/linux_full_template_debug
 
         # RELEASE BUILDS
@@ -65,7 +65,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-release
+          name: linux_template_release
           path: bin/linux_template_release
 
       - name: Building release Linux full
@@ -75,7 +75,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-linux-full-release
+          name: linux_template_release_full
           path: bin/linux_full_template_release
 
   windows-build:
@@ -100,7 +100,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-debug
+          name: windows_template_debug
           path: bin/windows_template_debug
 
         # RELEASE BUILD
@@ -112,5 +112,5 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-release
+          name: windows_template_release
           path: bin/windows_template_release

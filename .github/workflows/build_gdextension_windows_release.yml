@@ -34,7 +34,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-debug-video_only
+          name: windows_video_only_template_debug
           path: bin/windows_video_only_template_debug
 
       - name: Build Windows Debug
@@ -44,7 +44,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-debug
+          name: windows_template_debug
           path: bin/windows_template_debug
 
       # RELEASE BUILDS
@@ -55,7 +55,7 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-release-video-only
+          name: windows_video_only_template_release 
           path: bin/windows_video_only_template_release
 
       - name: Build Windows Release
@@ -65,5 +65,5 @@ jobs:
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen-windows-release
+          name: windows_template_release
           path: bin/windows_template_release
