@@ -75,12 +75,6 @@ if __name__ == '__main__':
         match input('> '):
             case '2': extra_args += ' recompile_ffmpeg=no'
 
-        print('Enable GPL:')
-        print('1. no; (default)')
-        print('2. Yes. (Requires the use of the GPL license!)')
-        match input('> '):
-            case '2': extra_args += ' enable_gpl=yes'
-
         print('Enable small: (takes longer to compile FFmpeg but libs are smaller)')
         print('1. No; (default)')
         print('2. Yes.')

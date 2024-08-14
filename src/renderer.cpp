@@ -1,6 +1,5 @@
 #ifdef EXPORT_RENDERER
 #include "renderer.hpp"
-#include <libavcodec/packet.h>
 
 
 Renderer::~Renderer() {
@@ -37,7 +36,6 @@ Dictionary Renderer::get_supported_codecs() {
 		{V_GIF, "GIF"},
 		{V_H261, "H261"},
 		{V_H263, "H263"},
-		{V_H263p, "H263p"},
 		{V_THEORA, "THEORA"},
 		{V_WEBP, "WEBP"},
 		{V_DNXHD, "DNXHD"},
@@ -53,7 +51,8 @@ Dictionary Renderer::get_supported_codecs() {
 		Dictionary l_entry = {};
 		l_entry["supported"] = is_audio_codec_supported(l_audio_codec.first);
 		l_entry["codec_id"] = l_audio_codec.first;
-		l_entry["hardware_accel"] = l_codec->capabilities & AV_CODEC_CAP_HARDWARE;
+		//l_entry["hardware_accel"] = (l_codec && (l_codec->capabilities & AV_CODEC_CAP_HARDWARE));
+		l_entry["hardware_accel"] = l_codec ? static_cast<bool>(l_codec->capabilities & AV_CODEC_CAP_HARDWARE) : false;
 		l_audio_dic[l_audio_codec.second] = l_entry;
 	}
 	for (const auto &l_video_codec : l_video_codecs) {
@@ -61,7 +60,8 @@ Dictionary Renderer::get_supported_codecs() {
 		Dictionary l_entry = {};
 		l_entry["supported"] = is_video_codec_supported(l_video_codec.first);
 		l_entry["codec_id"] = l_video_codec.first;
-		l_entry["hardware_accel"] = l_codec->capabilities & AV_CODEC_CAP_HARDWARE;
+		//l_entry["hardware_accel"] = (l_codec && (l_codec->capabilities & AV_CODEC_CAP_HARDWARE));
+		l_entry["hardware_accel"] = l_codec ? static_cast<bool>(l_codec->capabilities & AV_CODEC_CAP_HARDWARE) : false;
 		l_video_dic[l_video_codec.second] = l_entry;
 	}
 

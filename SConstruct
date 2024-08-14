@@ -17,15 +17,10 @@ env.Append(CPPPATH=['src'])
 env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swscale', 'swresample'])
 
 ffmpeg_build_args = '--enable-shared'
-ffmpeg_build_args += ' --disable-programs'
-ffmpeg_build_args += ' --disable-doc'
 ffmpeg_build_args += ' --disable-postproc'
 ffmpeg_build_args += ' --disable-avfilter'
 ffmpeg_build_args += ' --quiet'
-ffmpeg_build_args += ' --disable-logging'
 ffmpeg_build_args += f' --arch={arch}'
-if ARGUMENTS.get('enable_gpl', 'no') == 'yes':
-    ffmpeg_build_args += ' --enable-gpl'
 if ARGUMENTS.get('include_renderer', 'no') == 'yes':
     env.Append(CPPFLAGS=['-DEXPORT_RENDERER'])
 else:
@@ -74,10 +69,11 @@ elif 'windows' in platform:
             extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32 --enable-cross-compile'
 
             # TEST: Testing if adding this makes it so copying files is no longer needed
-            extra_args += ' --extra-ldflags="-static"'
+            # extra_args += ' --extra-ldflags="-static"'
             # Copying necessary files
-            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/')
-            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/')
+            os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
+            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}_{target}/')
+            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}_{target}/')
         else:
             extra_args = ' --target-os=windows'
 
