@@ -84,6 +84,7 @@ public:
 
 protected:
 	static inline void _bind_methods() {
+		ClassDB::bind_static_method("Video", D_METHOD("get_video_file_meta", "a_path"), &Video::get_video_file_meta);
 		ClassDB::bind_method(D_METHOD("open_video", "a_path", "a_load_audio"),
 							 &Video::open_video, DEFVAL(""), DEFVAL(true));
 		ClassDB::bind_method(D_METHOD("close_video"), &Video::close_video);
