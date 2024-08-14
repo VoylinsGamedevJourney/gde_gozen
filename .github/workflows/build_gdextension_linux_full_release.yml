@@ -1,70 +1,74 @@
 name: Release build linux full
 run-name: Release build for Linux + FFmpeg
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Select the build target'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - both
+
 jobs:
   linux-build:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
     steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm ffmpeg git bash yasm python python-pip scons gcc diffutils make
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup Python
-        uses: actions/setup-python@v5
+
+      - name: Cache SCons build artifacts
+        uses: actions/cache@v4
         with:
-          python-version: '3.x'
-      - name: Install FFmpeg
-        run: |
-          sudo add-apt-repository ppa:ubuntuhandbook1/ffmpeg6
-          sudo apt-get update
-          sudo apt-get install ffmpeg
-      - name: Install FFmpeg devs
-        run: |
-          sudo apt-get install libswscale-dev
-          sudo apt-get install libswresample-dev
-          sudo apt-get install libavutil-dev
-          sudo apt-get install libavformat-dev
-          sudo apt-get install libavfilter-dev
-          sudo apt-get install libavdevice-dev
-          sudo apt-get install libavcodec-dev
-      - name: Check FFmpeg Version
-        run: ffmpeg -version
-      - name: Add FFmpeg libs
-        run: echo "FFMPEG_INCLUDES=/usr/include/x86_64-linux-gnu" >> $GITHUB_ENV
-      - name: Setup SCons
-        run: pip install scons
-      - name: Install Yasm
-        run: sudo apt-get update && sudo apt-get install -y yasm
-        
+          path: gde_gozen/
+          key: ${{ runner.os }}-gde-gozen-${{ github.sha }}-linux
+          restore-keys: |
+            ${{ runner.os }}-gde-gozen-
+ 
       # DEBUG BUILDS
       - name: Build Linux full Debug video only
+        if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
-      - name: Build Linux full Debug
-        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
-
-      - name: Uploading GDExtension artifact
+      - name: Uploading GDExtension artifact full debug video only
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-debug-video-only
           path: bin/linux_video_only_full_template_debug
-      - name: Uploading GDExtension artifact
+
+      - name: Build Linux full Debug
+        if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
+        run: scons -Q -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+      - name: Uploading GDExtension artifact full debug
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-debug
           path: bin/linux_full_template_debug
-          
-      # RELEASE builds
-      - name: Build Linux full Release video only
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no enable_small=yes
-      - name: Build Linux full Release
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes recompile_ffmpeg=no include_renderer=yes enable_small=yes
 
-      - name: Uploading GDExtension artifact
+      # RELEASE BUILDS
+      - name: Build Linux full Release video only
+        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
+      - name: Uploading GDExtension artifact full release video only
+        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-release-video-only
           path: bin/linux_video_only_full_template_release
-      - name: Uploading GDExtension artifact
+
+      - name: Build Linux full Release
+        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+      - name: Uploading GDExtension artifact full release
+        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen-linux-full-release
