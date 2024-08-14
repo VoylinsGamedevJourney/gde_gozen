@@ -217,6 +217,8 @@ void Video::print_av_error(const char *a_message) {
 }
 
 int Video::_get_audio() {
+	audio = memnew(AudioStreamWAV);
+
 	// Audio Decoder Setup
 	const AVCodec *av_codec_audio = avcodec_find_decoder(av_stream_audio->codecpar->codec_id);
 	if (!av_codec_audio) {
