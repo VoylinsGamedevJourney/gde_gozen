@@ -12,12 +12,8 @@ Dictionary Renderer::get_supported_codecs() {
 		{A_AAC, "AAC"},
 		{A_OPUS, "OPUS"},
 		{A_VORBIS, "VORBIS"},
-		{A_FLAC, "FLAC"},
 		{A_PCM_UNCOMPRESSED, "PCM_UNCOMPRESSED"},
-		{A_AC3, "AC3"},
-		{A_EAC3, "EAC3"},
 		{A_WAV, "WAV"},
-		{A_MP2, "MP2"},
 	};
 	std::pair<RENDERER_VIDEO_CODEC, String> l_video_codecs[] = {
 		{V_H264, "H264"},
@@ -29,20 +25,13 @@ Dictionary Renderer::get_supported_codecs() {
 		{V_AV1, "AV1"},
 		{V_VP8, "VP8"},
 		{V_AMV, "AMV"},
-		{V_GOPRO_CINEFORM, "GOPRO_CINEFORM"},
-		{V_CINEPAK, "CINEPAK"},
-		{V_DIRAC, "DIRAC"},
-		{V_FLV1, "FLV1"},
 		{V_GIF, "GIF"},
-		{V_H261, "H261"},
-		{V_H263, "H263"},
 		{V_THEORA, "THEORA"},
 		{V_WEBP, "WEBP"},
 		{V_DNXHD, "DNXHD"},
 		{V_MJPEG, "MJPEG"},
 		{V_PRORES, "PRORES"},
 		{V_RAWVIDEO, "RAWVIDEO"},
-		{V_YUV4, "YUV4"},
 	};
 	Dictionary l_dic = {}, l_audio_dic = {}, l_video_dic = {};
 
