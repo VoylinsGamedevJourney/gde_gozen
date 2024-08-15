@@ -29,7 +29,7 @@ jobs:
       # DEBUG BUILDS
       - name: Build Linux full Debug video only
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes dev_build=yes
       - name: Uploading GDExtension artifact full debug video only
         uses: actions/upload-artifact@v4
         with:
@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Linux full Debug
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes dev_build=yes
       - name: Uploading GDExtension artifact full debug
         uses: actions/upload-artifact@v4
         with:

@@ -51,15 +51,18 @@ if __name__ == '__main__':
         case '2': target = 'release'
 
     extra_args = ''
+    if target == 'debug':
+        extra_args += ' dev_build=yes'
+
     use_system = False
     if platform == 'linux':
         print('Use system FFmpeg:')
         print('1. Yes; (default)')
         print('2. No.')
         match input('> '):
-            case '2': extra_args = 'use_system=no'
+            case '2': extra_args += ' use_system=no'
             case _:
-                extra_args = 'use_system=yes'
+                extra_args += ' use_system=yes'
                 use_system = True
 
     print('Include renderer:')
