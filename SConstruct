@@ -14,7 +14,6 @@ target = ARGUMENTS.get('target', 'template_debug')
 
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
-env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swscale', 'swresample'])
 
 ffmpeg_build_args = '--enable-shared'
 ffmpeg_build_args += ' --disable-postproc'
@@ -30,6 +29,7 @@ if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
+        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swscale', 'swresample'])
     else:  # For people needing FFmpeg binaries
         print("Full linux build")
         platform += '_full'
