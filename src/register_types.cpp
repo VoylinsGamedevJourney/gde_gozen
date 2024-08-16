@@ -3,9 +3,7 @@
 using namespace godot;
 
 #include "video.hpp"
-#ifdef EXPORT_RENDERER
 #include "renderer.hpp"
-#endif
 
 
 void initialize_gozen_library_init_module(ModuleInitializationLevel p_level) {
@@ -13,9 +11,7 @@ void initialize_gozen_library_init_module(ModuleInitializationLevel p_level) {
 		return;
 	
 	ClassDB::register_class<Video>();
-	#ifdef EXPORT_RENDERER
 	ClassDB::register_class<Renderer>();
-	#endif
 }
 
 

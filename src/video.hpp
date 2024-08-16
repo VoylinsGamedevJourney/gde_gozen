@@ -8,23 +8,8 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include "godot_cpp/classes/gd_extension_manager.hpp"
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavdevice/avdevice.h>
-#include <libavcodec/packet.h>
-#include <libavformat/avformat.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/avutil.h>
-#include <libavutil/dict.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/opt.h>
-#include <libavutil/pixdesc.h>
-#include <libswresample/swresample.h>
-#include <libswscale/swscale.h>
-#include <libavutil/error.h>
-#include <libavutil/frame.h>
-#include <libavutil/rational.h>
-}
+#include "ffmpeg_includes.hpp"
+
 
 using namespace godot;
 

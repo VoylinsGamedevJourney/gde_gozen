@@ -1,4 +1,3 @@
-#ifdef EXPORT_RENDERER
 #include "renderer.hpp"
 
 
@@ -38,20 +37,47 @@ Dictionary Renderer::get_supported_codecs() {
 	for (const auto &l_audio_codec : l_audio_codecs) {
 		const AVCodec *l_codec = avcodec_find_encoder(static_cast<AVCodecID>(l_audio_codec.first));
 		Dictionary l_entry = {};
-		l_entry["supported"] = is_audio_codec_supported(l_audio_codec.first);
 		l_entry["codec_id"] = l_audio_codec.first;
-		//l_entry["hardware_accel"] = (l_codec && (l_codec->capabilities & AV_CODEC_CAP_HARDWARE));
-		l_entry["hardware_accel"] = l_codec ? static_cast<bool>(l_codec->capabilities & AV_CODEC_CAP_HARDWARE) : false;
+		if (!l_codec) {
+			l_entry["supported"] = false;
+			l_entry["hardware_accel"] = false;
+		}
+		else {
+			l_entry["supported"] = true;
+			if (l_codec->capabilities & (AV_CODEC_CAP_HARDWARE | AV_CODEC_CAP_HYBRID))
+				l_entry["hardware_accel"] = true;
+			else {
+				const AVCodecHWConfig* l_config_0 = avcodec_get_hw_config(l_codec, 0);
+				if (l_config_0)
+					l_entry["hardware_accel"] = true;
+				else
+					l_entry["hardware_accel"] = false;
+			}
+		}
 		l_audio_dic[l_audio_codec.second] = l_entry;
 	}
+
 	for (const auto &l_video_codec : l_video_codecs) {
 		const AVCodec *l_codec = avcodec_find_encoder(static_cast<AVCodecID>(l_video_codec.first));
 		Dictionary l_entry = {};
-		l_entry["supported"] = is_video_codec_supported(l_video_codec.first);
 		l_entry["codec_id"] = l_video_codec.first;
-		//l_entry["hardware_accel"] = (l_codec && (l_codec->capabilities & AV_CODEC_CAP_HARDWARE));
-		l_entry["hardware_accel"] = l_codec ? static_cast<bool>(l_codec->capabilities & AV_CODEC_CAP_HARDWARE) : false;
-		l_video_dic[l_video_codec.second] = l_entry;
+		if (!l_codec) {
+			l_entry["supported"] = false;
+			l_entry["hardware_accel"] = false;
+		}
+		else { 
+			l_entry["supported"] = true;
+			if (l_codec->capabilities & (AV_CODEC_CAP_HARDWARE | AV_CODEC_CAP_HYBRID))
+				l_entry["hardware_accel"] = true;
+			else {
+				const AVCodecHWConfig* l_config_0 = avcodec_get_hw_config(l_codec, 0);
+				if (l_config_0)
+					l_entry["hardware_accel"] = true;
+				else
+					l_entry["hardware_accel"] = false;
+			}
+		}
+		l_video_dic[l_codec->name] = l_entry;
 	}
 
 	l_dic["audio"] = l_audio_dic;
@@ -398,4 +424,3 @@ int Renderer::close() {
 
 	return OK;
 }
-#endif

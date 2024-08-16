@@ -27,18 +27,9 @@ jobs:
           submodules: recursive
 
       # DEBUG BUILDS
-      - name: Build Linux full Debug video only
-        if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes dev_build=yes
-      - name: Uploading GDExtension artifact full debug video only
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_video_only_full_template_debug
-          path: bin/linux_video_only_full_template_debug
-
       - name: Build Linux full Debug
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes dev_build=yes
       - name: Uploading GDExtension artifact full debug
         uses: actions/upload-artifact@v4
         with:
@@ -46,19 +37,9 @@ jobs:
           path: bin/linux_full_template_debug
 
       # RELEASE BUILDS
-      - name: Build Linux full Release video only
-        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
-      - name: Uploading GDExtension artifact full release video only
-        if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_video_only_full_template_release
-          path: bin/linux_video_only_full_template_release
-
       - name: Build Linux full Release
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes enable_small=yes
       - name: Uploading GDExtension artifact full release
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4

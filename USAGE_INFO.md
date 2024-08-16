@@ -15,9 +15,9 @@ reloadable = true
 
 [libraries]
 
-linux.debug.x86_64 = "res://../bin/linux/libgozen.linux.template_debug.x86_64.so"
+linux.debug.x86_64 = "res://../bin/linux/libgozen.linux.template_debug.dev.x86_64.so"
 linux.release.x86_64 = "res://../bin/linux/libgozen.linux.template_release.x86_64.so"
-windows.debug.x86_64 = "res://../bin/windows/libgozen.windows.template_debug.x86_64.dll"
+windows.debug.x86_64 = "res://../bin/windows/libgozen.windows.template_debug.dev.x86_64.dll"
 windows.release.x86_64 = "res://../bin/windows/libgozen.windows.template_release.x86_64.dll"
 ```
 

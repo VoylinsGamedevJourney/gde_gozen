@@ -65,12 +65,6 @@ if __name__ == '__main__':
                 extra_args += ' use_system=yes'
                 use_system = True
 
-    print('Include renderer:')
-    print('1. no; (default)')
-    print('2. Yes.')
-    match input('> '):
-        case '2': extra_args += ' include_renderer=yes'
-
     if not use_system:
         print('Recompile FFmpeg:')
         print('1. Yes; (default)')

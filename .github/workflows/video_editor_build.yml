@@ -39,7 +39,7 @@ jobs:
       # DEBUG BUILDS
       - name: Building debug Linux
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes include_renderer=yes dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
       - name: Uploading GDExtension artifact debug
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
@@ -49,7 +49,7 @@ jobs:
 
       - name: Building debug Linux full
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
       - name: Uploading GDExtension artifact full debug
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
@@ -60,7 +60,7 @@ jobs:
         # RELEASE BUILDS
       - name: Building release Linux
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes include_renderer=yes
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
       - name: Uploading GDExtension artifact release
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
@@ -70,7 +70,7 @@ jobs:
 
       - name: Building release Linux full
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_small=yes
       - name: Uploading GDExtension artifact full release
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
@@ -95,7 +95,7 @@ jobs:
       - name: Building debug Windows
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         run: |
-          scons -j4 target=template_debug platform=windows arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes dev_build=yes
+          scons -j4 target=template_debug platform=windows arch=x86_64 use_system=no dev_build=yes
       - name: Uploading GDExtension artifact debug
         if: ${{ github.event.inputs.build_target == 'debug' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
@@ -107,7 +107,7 @@ jobs:
       - name: Building release Windows
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         run: |
-          scons -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_gpl=yes include_renderer=yes enable_small=yes
+          scons -j4 target=template_release platform=windows arch=x86_64 use_system=no enable_small=yes
       - name: Uploading GDExtension artifact release
         if: ${{ github.event.inputs.build_target == 'release' || github.event.inputs.build_target == 'both' }}
         uses: actions/upload-artifact@v4
