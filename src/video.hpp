@@ -40,6 +40,8 @@ private:
 	float framerate = 0.0;
 	double expected_pts = 0.0, actual_pts = 0.0;
 
+	String path = "";
+
 public:
 	Video() {}
 	~Video() { close_video(); }
@@ -62,6 +64,8 @@ public:
 	inline bool is_framerate_variable() { return variable_framerate; }
 	inline int get_total_frame_nr() { return total_frame_number; };
 
+	inline String get_video_path() { return path; }
+
 	void print_av_error(const char *a_message);
 
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
@@ -82,6 +86,8 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
+
+		ClassDB::bind_method(D_METHOD("get_video_path"), &Video::get_video_path);
 
 		ClassDB::bind_method(D_METHOD("is_framerate_variable"), &Video::is_framerate_variable);
 		ClassDB::bind_method(D_METHOD("get_total_frame_nr"), &Video::get_total_frame_nr);

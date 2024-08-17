@@ -189,12 +189,14 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	av_frame_free(&av_frame);
 
 	is_open = true;
+	path = a_path;
 	return OK;
 }
 
 void Video::close_video() {
 	if (audio)
 		memdelete(audio);
+
 	is_open = false;
 
 	if (av_format_ctx)
