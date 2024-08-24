@@ -21,8 +21,99 @@ var fast_forward: bool = false
 var task_id: int = -1
 
 
+var path: String = "/storage/Youtube/02 - Gamedev Journey/Videos/2. SPONSOR_READ/Sponsor_read_full.mp4"
+
 
 func _ready() -> void:
+	var y: PackedByteArray = PackedByteArray(
+		[235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235,
+		 235, 235, 235, 235, 235, 235, 235, 235, 235, 235])
+	var u: PackedByteArray = (
+		[128, 128, 128, 128, 128,
+		 128, 128, 128, 128, 128,
+		 128, 128, 128, 128, 128,
+		 128, 128, 128, 128, 128,
+		 128, 128, 128, 128, 128])
+	var v: PackedByteArray = (
+		[255, 255, 255, 255, 255,
+		 255, 255, 255, 255, 255,
+		 255, 255, 255, 255, 255,
+		 255, 255, 255, 255, 255,
+		 255, 255, 255, 255, 255])
+	var rgb: PackedByteArray = []
+	rgb.resize(y.size()*4) 
+
+	var l_rendering_server: RenderingDevice= RenderingServer.create_local_rendering_device()
+	var l_shader_file: RDShaderFile = load("res://shaders/yuv_to_rgb.glsl")
+	var l_shader_spirv: RDShaderSPIRV = l_shader_file.get_spirv()
+	var l_shader: RID = l_rendering_server.shader_create_from_spirv(l_shader_spirv)
+	
+	var l_y_buffer: RID = l_rendering_server.storage_buffer_create(y.size(), y)
+	var l_u_buffer: RID = l_rendering_server.storage_buffer_create(u.size(), u)
+	var l_v_buffer: RID = l_rendering_server.storage_buffer_create(v.size(), v)
+	var l_rgb_buffer: RID = l_rendering_server.storage_buffer_create(rgb.size(), rgb)
+
+	var l_y_uniform: RDUniform = RDUniform.new()
+	l_y_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	l_y_uniform.binding = 0
+	l_y_uniform.add_id(l_y_buffer)
+	var l_y_uniform_set: RID = l_rendering_server.uniform_set_create([l_y_uniform], l_shader, 0)
+
+	var l_u_uniform: RDUniform = RDUniform.new()
+	l_u_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	l_u_uniform.binding = 0
+	l_u_uniform.add_id(l_u_buffer)
+	var l_u_uniform_set: RID = l_rendering_server.uniform_set_create([l_u_uniform], l_shader, 1)
+
+	var l_v_uniform: RDUniform = RDUniform.new()
+	l_v_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	l_v_uniform.binding = 0
+	l_v_uniform.add_id(l_v_buffer)
+	var l_v_uniform_set: RID = l_rendering_server.uniform_set_create([l_v_uniform], l_shader, 2)
+
+	var l_rgb_uniform: RDUniform = RDUniform.new()
+	l_rgb_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	l_rgb_uniform.binding = 0
+	l_rgb_uniform.add_id(l_rgb_buffer)
+	var l_rgb_uniform_set: RID = l_rendering_server.uniform_set_create([l_rgb_uniform], l_shader, 3)
+
+	var l_pipeline: RID = l_rendering_server.compute_pipeline_create(l_shader)
+	var l_compute_list: int = l_rendering_server.compute_list_begin()
+	l_rendering_server.compute_list_bind_compute_pipeline(l_compute_list, l_pipeline)
+	l_rendering_server.compute_list_bind_uniform_set(l_compute_list, l_y_uniform_set, 0)
+	l_rendering_server.compute_list_bind_uniform_set(l_compute_list, l_u_uniform_set, 1)
+	l_rendering_server.compute_list_bind_uniform_set(l_compute_list, l_v_uniform_set, 2)
+	l_rendering_server.compute_list_bind_uniform_set(l_compute_list, l_rgb_uniform_set, 3)
+	l_rendering_server.compute_list_dispatch(l_compute_list, ceili(10/8.0), ceili(10/8.0), 1)
+	l_rendering_server.compute_list_end()
+
+	l_rendering_server.submit()
+	l_rendering_server.sync()
+
+	var l_output_bytes: PackedByteArray = l_rendering_server.buffer_get_data(l_rgb_buffer)
+	var l_output:= l_output_bytes.to_int32_array()
+	print("input: ", y)
+	print("output: ", l_output)
+
+
+
+
+	#%TR.s
+
+
+
+	return
+
+
+	(%VideoPlayback as VideoPlayback).set_video_path(path)
 	if OS.get_cmdline_args().size() > 1:
 		video = Video.new()
 		video.open_video(OS.get_cmdline_args()[1], true)
