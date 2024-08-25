@@ -9,6 +9,7 @@
 #include "godot_cpp/classes/gd_extension_manager.hpp"
 
 #include "ffmpeg_includes.hpp"
+#include "yuv.hpp"
 
 
 using namespace godot;
@@ -42,6 +43,9 @@ private:
 
 	String path = "";
 
+	PackedByteArray y = PackedByteArray(), u = PackedByteArray(), v = PackedByteArray();
+	Vector2i size = Vector2i(0, 0);
+
 public:
 	Video() {}
 	~Video() { close_video(); }
@@ -65,6 +69,12 @@ public:
 	inline int get_total_frame_nr() { return total_frame_number; };
 
 	inline String get_video_path() { return path; }
+	
+	inline PackedByteArray get_y() { return y; }
+	inline PackedByteArray get_u() { return u; }
+	inline PackedByteArray get_v() { return v; }
+
+	inline Vector2i get_size() { return size; }
 
 	void print_av_error(const char *a_message);
 
@@ -88,6 +98,12 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 
 		ClassDB::bind_method(D_METHOD("get_video_path"), &Video::get_video_path);
+
+		ClassDB::bind_method(D_METHOD("get_y"), &Video::get_y);
+		ClassDB::bind_method(D_METHOD("get_u"), &Video::get_u);
+		ClassDB::bind_method(D_METHOD("get_v"), &Video::get_v);
+
+		ClassDB::bind_method(D_METHOD("get_size"), &Video::get_size);
 
 		ClassDB::bind_method(D_METHOD("is_framerate_variable"), &Video::is_framerate_variable);
 		ClassDB::bind_method(D_METHOD("get_total_frame_nr"), &Video::get_total_frame_nr);

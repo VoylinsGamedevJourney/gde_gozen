@@ -5,16 +5,41 @@
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 // YUV Planes
-layout(set = 0, binding = 0, std430) restrict buffer YData { float data[]; } y_data;
-layout(set = 1, binding = 0, std430) restrict buffer UData { float data[]; } u_data;
-layout(set = 2, binding = 0, std430) restrict buffer VData { float data[]; } v_data;
+layout(set = 0, binding = 0, std430) restrict buffer YData { uint data[]; } y_data;
+layout(set = 1, binding = 0, std430) restrict buffer UData { uint data[]; } u_data;
+layout(set = 2, binding = 0, std430) restrict buffer VData { uint data[]; } v_data;
 
 // A binding to the buffer we create in our script
-layout(set = 3, binding = 0, std430) buffer RGBData { int data[]; } rgb_data;
+layout(set = 3, binding = 0, std430) buffer RGBData { uint data[]; } rgb_data;
+
+// data
+layout(set = 4, binding = 0) buffer Parameters {
+    int width;
+    int height;
+} params;
 
 
 void main() {
-	//rgb_data.data[gl_GlobalInvocationID.x] = int(gl_GlobalInvocationID.x);// y_data.data[0];
-	uint index = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
-    rgb_data.data[index] = int(index);
+	int x = int(gl_GlobalInvocationID.x);
+	int y = int(gl_GlobalInvocationID.y);
+	if (x >= params.width || y >= params.height) {
+        return; // Out of bounds
+    }
+
+	int y_index = y * params.width + x;
+	int u_index = (y / 2) * (params.width / 2) + (x / 2);
+	int v_index = (y / 2) * (params.width / 2) + (x / 2);
+	uint Y = y_data.data[y_index];
+	uint U = u_data.data[u_index];
+	uint V = v_data.data[v_index];
+	int C = int(Y) - 16;
+	int D = int(U) - 128;
+	int E = int(V) - 128;
+
+	int R = clamp((298 * C + 409 * E + 128) >> 8, 0, 255);
+	int G = clamp((298 * C - 100 * D - 208 * E + 128) >> 8, 0, 255);
+	int B = clamp((298 * C + 516 * D + 128) >> 8, 0, 255);
+	
+	int rgb_index = (y * params.width + x) * 3;
+	rgb_data.data[rgb_index] = R | (G << 8) | (B << 16);
 }

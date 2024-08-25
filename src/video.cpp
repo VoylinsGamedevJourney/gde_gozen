@@ -102,6 +102,9 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	// Setup SWS context for converting frame from YUV to RGB
 	// Taking into account the pixel aspect ratio
 	video_width = av_codec_ctx_video->width;
+	size.x = av_codec_ctx_video->width;
+	size.y = av_codec_ctx_video->height;
+
 	float l_aspect_ratio = av_q2d(av_stream_video->codecpar->sample_aspect_ratio);
 	if (l_aspect_ratio > 1.0) {
 		video_width = static_cast<int>(std::round(video_width * l_aspect_ratio));
@@ -401,8 +404,20 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 		// Skip to actual requested frame
 		if ((long)(current_pts * stream_time_base_video) / 10000 < frame_timestamp / 10000)
 			continue;
+	
+		UtilityFunctions::print("tet");
+		y.resize(av_frame->linesize[0]*size.y);
+		u.resize(y.size()/2);
+		v.resize(y.size()/2);
+		memcpy(y.ptrw(), av_frame->data[0], y.size());
+		memcpy(u.ptrw(), av_frame->data[1], u.size());
+		memcpy(v.ptrw(), av_frame->data[2], v.size());
 
-		_decode_video_frame(l_image);
+		l_image = Yuv::yuv420p_to_rgb(
+				av_frame->data[0], av_frame->data[1], av_frame->data[2],
+				av_frame->linesize[0], av_frame->linesize[1], av_frame->linesize[2],
+				video_width, av_frame->height);
+		//_decode_video_frame(l_image);
 		break;
 	}
 

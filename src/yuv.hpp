@@ -7,34 +7,28 @@
 
 using namespace godot;
 
-class Yuv : public Object {
-	GDCLASS(Yuv, Object);
+class Yuv {
 
 public:
-	inline static Ref<Image> yuv420p_to_rgb(uint8_t* a_yuv_data[8], int a_linesize[8], int a_width, int a_height) {
+	inline static Ref<Image> yuv420p_to_rgb(uint8_t* a_y_plane, uint8_t* a_u_plane, uint8_t* a_v_plane, int a_y_linesize, int a_u_linesize, int a_v_linesize, int a_width, int a_height) {
 		Ref<Image> l_image = memnew(Image);
 		PackedByteArray l_rgb_data = PackedByteArray();
-		int l_frame_size = a_width * a_height;
-		int l_uv_width = a_width / 2;
-		int l_uv_height = a_height / 2;
+		
+		const int l_frame_size = a_width * a_height;
 
 		l_rgb_data.resize(l_frame_size * 3);
-
-		uint8_t* y_plane = a_yuv_data[0];
-		uint8_t* u_plane = a_yuv_data[1];
-		uint8_t* v_plane = a_yuv_data[2];
-		int y_stride = a_linesize[0];
-		int u_stride = a_linesize[1];
-		int v_stride = a_linesize[2];
+		UtilityFunctions::print("linesize");
+		UtilityFunctions::print(a_u_linesize);
+		UtilityFunctions::print(a_v_linesize);
 
 		for (int l_y = 0; l_y < a_height; ++l_y) {
 			for (int l_x = 0; l_x < a_width; ++l_x) {
-				int l_y_index = l_y * y_stride + l_x;
-				int l_u_index = (l_y / 2) * u_stride + (l_x / 2);
-				int l_v_index = (l_y / 2) * v_stride + (l_x / 2);
-				uint8_t l_Y = y_plane[l_y_index];
-				uint8_t l_U = u_plane[l_u_index];
-				uint8_t l_V = v_plane[l_v_index];
+				int l_y_index = l_y * a_y_linesize + l_x;
+				int l_u_index = (l_y / 2) * a_u_linesize + (l_x / 2);
+				int l_v_index = (l_y / 2) * a_v_linesize + (l_x / 2);
+				uint8_t l_Y = a_y_plane[l_y_index];
+				uint8_t l_U = a_u_plane[l_u_index];
+				uint8_t l_V = a_v_plane[l_v_index];
 				int l_C = l_Y - 16;
 				int l_D = l_U - 128;
 				int l_E = l_V - 128;
@@ -89,8 +83,5 @@ public:
 //		}
 //	}
 
-
-protected:
-	static inline void _bind_methods() {}
 };
 
