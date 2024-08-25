@@ -407,8 +407,8 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 	
 		UtilityFunctions::print("tet");
 		y.resize(av_frame->linesize[0]*size.y);
-		u.resize(y.size()/2);
-		v.resize(y.size()/2);
+		u.resize((av_frame->linesize[0] / 2) * (size.y / 2));
+		v.resize((av_frame->linesize[0] / 2) * (size.y / 2));
 		memcpy(y.ptrw(), av_frame->data[0], y.size());
 		memcpy(u.ptrw(), av_frame->data[1], u.size());
 		memcpy(v.ptrw(), av_frame->data[2], v.size());

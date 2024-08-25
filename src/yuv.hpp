@@ -17,7 +17,7 @@ public:
 		const int l_frame_size = a_width * a_height;
 
 		l_rgb_data.resize(l_frame_size * 3);
-		UtilityFunctions::print("linesize");
+		UtilityFunctions::print(a_y_linesize);
 		UtilityFunctions::print(a_u_linesize);
 		UtilityFunctions::print(a_v_linesize);
 
