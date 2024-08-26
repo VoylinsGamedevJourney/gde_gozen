@@ -109,11 +109,10 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	if (l_aspect_ratio > 1.0) {
 		video_width = static_cast<int>(std::round(video_width * l_aspect_ratio));
 	}
-	sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, (AVPixelFormat)av_stream_video->codecpar->format,
-							 video_width, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
-	if (!sws_ctx) {
-		UtilityFunctions::printerr("Couldn't get SWS context!");
-		close_video();
+
+	if ((AVPixelFormat)av_stream_video->codecpar->format != AV_PIX_FMT_YUV420P) {
+		UtilityFunctions::printerr("Video has unsupported format!");
+		UtilityFunctions::printerr(av_stream_video->codecpar->format);
 		return -4;
 	}
 
@@ -187,6 +186,9 @@ int Video::open_video(String a_path, bool a_load_audio) {
 		av_stream_video->duration = video_duration;
 	}
 	total_frame_number = (static_cast<double>(video_duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
+	y.resize(av_frame->linesize[0]*size.y);
+	u.resize((av_frame->linesize[0] / 2) * (size.y / 2));
+	v.resize((av_frame->linesize[0] / 2) * (size.y / 2));
 
 	av_packet_free(&av_packet);
 	av_frame_free(&av_frame);
@@ -206,9 +208,6 @@ void Video::close_video() {
 		avformat_close_input(&av_format_ctx);
 	if (av_codec_ctx_video)
 		avcodec_free_context(&av_codec_ctx_video);
-
-	if (sws_ctx)
-		sws_freeContext(sws_ctx);
 
 	if (av_frame)
 		av_frame_free(&av_frame);
@@ -369,12 +368,10 @@ int Video::_get_audio() {
 	return OK;
 }
 
-Ref<Image> Video::seek_frame(int a_frame_nr) {
-	Ref<Image> l_image = memnew(Image);
-
+void Video::seek_frame(int a_frame_nr) {
 	if (!is_open) {
 		UtilityFunctions::printerr("Video isn't open yet!");
-		return l_image;
+		return;
 	}
 
 	av_packet = av_packet_alloc();
@@ -386,7 +383,7 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 	response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_BACKWARD);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek video file!");
-		return l_image;
+		return;
 	}
 
 	while (true) {
@@ -405,47 +402,35 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 		if ((long)(current_pts * stream_time_base_video) / 10000 < frame_timestamp / 10000)
 			continue;
 	
-		UtilityFunctions::print("tet");
-		y.resize(av_frame->linesize[0]*size.y);
-		u.resize((av_frame->linesize[0] / 2) * (size.y / 2));
-		v.resize((av_frame->linesize[0] / 2) * (size.y / 2));
 		memcpy(y.ptrw(), av_frame->data[0], y.size());
 		memcpy(u.ptrw(), av_frame->data[1], u.size());
 		memcpy(v.ptrw(), av_frame->data[2], v.size());
 
-		l_image = Yuv::yuv420p_to_rgb(
-				av_frame->data[0], av_frame->data[1], av_frame->data[2],
-				av_frame->linesize[0], av_frame->linesize[1], av_frame->linesize[2],
-				video_width, av_frame->height);
-		//_decode_video_frame(l_image);
 		break;
 	}
 
 	// Cleanup
 	av_frame_free(&av_frame);
 	av_packet_free(&av_packet);
-
-	return l_image;
 }
 
-Ref<Image> Video::next_frame() {
-	Ref<Image> l_image = memnew(Image);
-
+void Video::next_frame() {
 	if (!is_open) {
 		UtilityFunctions::printerr("Video isn't open yet!");
-		return l_image;
+		return;
 	}
 
 	av_packet = av_packet_alloc();
 	av_frame = av_frame_alloc();
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
-	_decode_video_frame(l_image);
+
+	memcpy(y.ptrw(), av_frame->data[0], y.size());
+	memcpy(u.ptrw(), av_frame->data[1], u.size());
+	memcpy(v.ptrw(), av_frame->data[2], v.size());
 
 	// Cleanup
 	av_frame_free(&av_frame);
 	av_packet_free(&av_packet);
-
-	return l_image;
 }
 
 void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
@@ -474,13 +459,3 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 	}
 }
 
-void Video::_decode_video_frame(Ref<Image> a_image) {
-	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
-	sws_scale(sws_ctx, av_frame->data, av_frame->linesize, 0, av_frame->height, l_dest_data, src_linesize);
-	a_image->set_data(video_width, av_frame->height, 0, a_image->FORMAT_RGB8, byte_array);
-
-	// Cleanup
-	av_frame_unref(av_frame);
-	av_frame_free(&av_frame);
-	av_packet_free(&av_packet);
-}

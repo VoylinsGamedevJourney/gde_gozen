@@ -9,7 +9,6 @@
 #include "godot_cpp/classes/gd_extension_manager.hpp"
 
 #include "ffmpeg_includes.hpp"
-#include "yuv.hpp"
 
 
 using namespace godot;
@@ -24,8 +23,6 @@ private:
 
 	AVFrame *av_frame = nullptr;
 	AVPacket *av_packet = nullptr;
-
-	struct SwsContext *sws_ctx = nullptr;
 
 	PackedByteArray byte_array; // Only for video frames
 
@@ -57,8 +54,8 @@ public:
 
 	inline bool is_video_open() { return is_open; }
 
-	Ref<Image> seek_frame(int a_frame_nr);
-	Ref<Image> next_frame();
+	void seek_frame(int a_frame_nr);
+	void next_frame();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 	int _get_audio();
