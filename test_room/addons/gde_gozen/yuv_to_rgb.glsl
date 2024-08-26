@@ -15,7 +15,6 @@ layout(set = 3, binding = 0, std430) restrict writeonly buffer RGBData { uint da
 // data
 layout(set = 4, binding = 0) buffer Parameters {
     int width;
-    int height;
 } params;
 
 

@@ -95,7 +95,7 @@ func set_video_path(a_path: String) -> void:
 	buffers[2] = GoZenServer.create_storage_buffer(video.get_v())
 	buffers[3] = GoZenServer.create_storage_buffer(rgb_data)
 	buffers[4] = GoZenServer.create_storage_buffer(
-			PackedInt32Array([video.get_width(), video.get_height()]).to_byte_array())
+			PackedInt32Array([video.get_width()]).to_byte_array())
 
 	_free_uniform_sets()
 	uniform_sets[0] = GoZenServer.create_uniform_storage_buffer(buffers[0], 0)
