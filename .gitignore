@@ -1,5 +1,6 @@
 # Godot
 .godot/
+*.import
 
 # Imported translations (automatically generated from CSV files)
 *.translation
