@@ -1,0 +1,72 @@
+[gd_scene load_steps=3 format=3 uid="uid://ofgyo6swwqyn"]
+
+[ext_resource type="Script" path="res://test_3.gd" id="1_mvukw"]
+[ext_resource type="Script" path="res://addons/gde_gozen/video_playback.gd" id="1_urypi"]
+
+[node name="Test3" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mvukw")
+
+[node name="VideoPlayback" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_urypi")
+path = "/storage/Videos/30fps.mp4"
+
+[node name="VideoPlayback2" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_urypi")
+path = "/storage/Videos/30fps.mp4"
+
+[node name="VideoPlayback3" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_urypi")
+path = "/storage/Videos/30fps.mp4"
+
+[node name="VideoPlayback4" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_urypi")
+path = "/storage/Videos/30fps.mp4"
+
+[node name="VideoPlayback5" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_urypi")
+path = "/storage/Videos/30fps.mp4"
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_right = 136.0
+offset_bottom = 89.0
+text = "gggggg
+"
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

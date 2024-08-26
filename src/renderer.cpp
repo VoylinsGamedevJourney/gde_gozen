@@ -316,7 +316,7 @@ int Renderer::open() {
 	return OK;
 }
 
-int Renderer::send_frame(Ref<Image> a_frame_image) {
+int Renderer::send_frame(PackedByteArray a_y, PackedByteArray a_u, PackedByteArray a_v) {
 	if (!av_codec_ctx_video) {
 		UtilityFunctions::printerr("Video codec isn't open!");
 		return -1;
@@ -327,9 +327,13 @@ int Renderer::send_frame(Ref<Image> a_frame_image) {
 		return -2;
 	}
 
-	uint8_t *l_src_data[4] = {a_frame_image->get_data().ptrw(), NULL, NULL, NULL};
-	int l_src_linesize[4] = {av_frame_video->width * byte_per_pixel, 0, 0, 0};
-	sws_scale(sws_ctx, l_src_data, l_src_linesize, 0, av_frame_video->height, av_frame_video->data, av_frame_video->linesize);
+	av_frame_video->data[0] = a_y.ptrw();
+	av_frame_video->data[1] = a_u.ptrw();
+	av_frame_video->data[2] = a_v.ptrw();
+
+	av_frame_video->linesize[0] = resolution.x;
+	av_frame_video->linesize[1] = resolution.x / 2;
+	av_frame_video->linesize[2] = resolution.x / 2;
 
 	av_frame_video->pts = i;
 	i++;

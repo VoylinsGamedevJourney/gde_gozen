@@ -1,7 +1,7 @@
 #include "video.hpp"
 
 
-Dictionary Video::get_video_file_meta(String a_file_path) {
+Dictionary Video::get_file_meta(String a_file_path) {
 	AVFormatContext *l_av_format_ctx = NULL;
 	const AVDictionaryEntry *l_av_dic = NULL;
 	Dictionary l_dic = {};
@@ -24,26 +24,38 @@ Dictionary Video::get_video_file_meta(String a_file_path) {
 	return l_dic;
 }
 
-int Video::open_video(String a_path, bool a_load_audio) {
+Video Video::open_new(String a_path, bool a_load_audio) {
+	Video l_video = Video();
+	l_video.open(a_path, a_load_audio);
+	return l_video;
+}
+
+
+void Video::open(String a_path, bool a_load_audio) {
+	if (loaded)
+		close();
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
 	if (!av_format_ctx) {
 		UtilityFunctions::printerr("Couldn't allocate av format context!");
-		return -1;
+		response = -1;
+		return;
 	}
 
 	// Open file with avformat
 	if (avformat_open_input(&av_format_ctx, a_path.utf8(), NULL, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video file!");
-		close_video();
-		return -1;
+		close();
+		response = -1;
+		return;
 	}
 
 	// Find stream information
 	if (avformat_find_stream_info(av_format_ctx, NULL)) {
 		UtilityFunctions::printerr("Couldn't find stream info!");
-		close_video();
-		return -1;
+		close();
+		response = -1;
+		return;
 	}
 
 	// Getting the audio and video stream
@@ -54,8 +66,9 @@ int Video::open_video(String a_path, bool a_load_audio) {
 			continue;
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			av_stream_audio = av_format_ctx->streams[i];
-			if (a_load_audio && (response = _get_audio()) != 0)
-				return response;
+			if (a_load_audio && (response = _get_audio()) != 0) {
+				return;
+			}
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
 			av_stream_video = av_format_ctx->streams[i];
 	}
@@ -64,30 +77,34 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	const AVCodec *av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 	if (!av_codec_video) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for video!");
-		close_video();
-		return -3;
+		close();
+		response = -3;
+		return;
 	}
 
 	// Allocate codec context for decoder
 	av_codec_ctx_video = avcodec_alloc_context3(av_codec_video);
 	if (av_codec_ctx_video == NULL) {
 		UtilityFunctions::printerr("Couldn't allocate codec context for video!");
-		close_video();
-		return -3;
+		close();
+		response = -3;
+		return;
 	}
 
 	// Copying parameters
 	if (avcodec_parameters_to_context(av_codec_ctx_video, av_stream_video->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize video codec context!");
-		close_video();
-		return -3;
+		close();
+		response = -3;
+		return;
 	}
 
 	// Open codec - Video
 	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video codec!");
-		close_video();
-		return -3;
+		close();
+		response = -3;
+		return;
 	}
 	
 	// Enable multi-threading for decoding - Video
@@ -98,27 +115,25 @@ int Video::open_video(String a_path, bool a_load_audio) {
 		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
 	else
 		av_codec_ctx_video->thread_count = 1; // Don't use multithreading
-
-	// Setup SWS context for converting frame from YUV to RGB
-	// Taking into account the pixel aspect ratio
-	video_width = av_codec_ctx_video->width;
-	size.x = av_codec_ctx_video->width;
-	size.y = av_codec_ctx_video->height;
+	
+	resolution.x = av_codec_ctx_video->width;
+	resolution.y = av_codec_ctx_video->height;
 
 	float l_aspect_ratio = av_q2d(av_stream_video->codecpar->sample_aspect_ratio);
 	if (l_aspect_ratio > 1.0) {
-		video_width = static_cast<int>(std::round(video_width * l_aspect_ratio));
+		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
 	}
 
 	if ((AVPixelFormat)av_stream_video->codecpar->format != AV_PIX_FMT_YUV420P) {
 		UtilityFunctions::printerr("Video has unsupported format!");
 		UtilityFunctions::printerr(av_stream_video->codecpar->format);
-		return -4;
+		response = -4;
+		return;
 	}
 
 	// Byte_array setup
-	byte_array.resize(video_width * av_codec_ctx_video->height * 3);
-	src_linesize[0] = video_width * 3;
+	byte_array.resize(resolution.x * resolution.y * 3);
+	src_linesize[0] = resolution.x * 3;
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -129,17 +144,20 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
 	if (l_duration_from_bitrate) {
 		UtilityFunctions::printerr("This video file is not usable!");
-		return -5;
+		response = -5;
+		return;
 	}
 	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_ANY);
 	if (response < 0) {
 		print_av_error("Seeking to beginning error: ");
-		return -5;
+		response = -5;
+		return;
 	}
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
-		return -5;
+		response = -5;
+		return;
 	}
 
 	// Checking for interlacing and what type of interlacing
@@ -150,7 +168,8 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	framerate = av_q2d(av_guess_frame_rate(av_format_ctx, av_stream_video, av_frame));
 	if (framerate == 0) {
 		UtilityFunctions::printerr("Invalid frame-rate for video found!");
-		return -6;
+		response = -6;
+		return;
 	}
 
 	// Setting variables
@@ -164,7 +183,8 @@ int Video::open_video(String a_path, bool a_load_audio) {
 			variable_framerate = false;
 		} else {
 			UtilityFunctions::printerr("Variable framerate detected, aborting! (not supported)");
-			return -6;
+			response = -6;
+			return;
 		}
 	}
 
@@ -173,36 +193,40 @@ int Video::open_video(String a_path, bool a_load_audio) {
 	if (response)
 		print_av_error("Something went wrong getting second frame!");
 
-	video_duration = av_format_ctx->duration;
+	duration = av_format_ctx->duration;
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
-		if (video_duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
+		if (duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
 			UtilityFunctions::printerr("Video file is not usable!");
-			return -7;
+			response = -7;
+			return;
 		} else {
 			AVRational l_temp_rational = AVRational{1, AV_TIME_BASE};
 			if (l_temp_rational.num != av_stream_video->time_base.num || l_temp_rational.num != av_stream_video->time_base.num)
-				video_duration = std::ceil(static_cast<double>(video_duration) * av_q2d(l_temp_rational) / av_q2d(av_stream_video->time_base));
+				duration = std::ceil(static_cast<double>(duration) * av_q2d(l_temp_rational) / av_q2d(av_stream_video->time_base));
 		}
-		av_stream_video->duration = video_duration;
+		av_stream_video->duration = duration;
 	}
-	total_frame_number = (static_cast<double>(video_duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
-	y.resize(av_frame->linesize[0]*size.y);
-	u.resize((av_frame->linesize[0] / 2) * (size.y / 2));
-	v.resize((av_frame->linesize[0] / 2) * (size.y / 2));
+
+	frame_duration = (static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
+	y.resize(av_frame->linesize[0] * resolution.y);
+	u.resize((av_frame->linesize[0] / 2) * (resolution.y / 2));
+	v.resize((av_frame->linesize[0] / 2) * (resolution.y / 2));
 
 	av_packet_free(&av_packet);
 	av_frame_free(&av_frame);
 
-	is_open = true;
+	loaded = true;
 	path = a_path;
-	return OK;
+	response = OK;
+
+	return;
 }
 
-void Video::close_video() {
+void Video::close() {
 	if (audio)
 		memdelete(audio);
 
-	is_open = false;
+	loaded = false;
 
 	if (av_format_ctx)
 		avformat_close_input(&av_format_ctx);
@@ -228,7 +252,7 @@ int Video::_get_audio() {
 	const AVCodec *av_codec_audio = avcodec_find_decoder(av_stream_audio->codecpar->codec_id);
 	if (!av_codec_audio) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for audio!");
-		close_video();
+		close();
 		return -2;
 	}
 
@@ -236,21 +260,21 @@ int Video::_get_audio() {
 	AVCodecContext *av_codec_ctx_audio = avcodec_alloc_context3(av_codec_audio);
 	if (av_codec_ctx_audio == NULL) {
 		UtilityFunctions::printerr("Couldn't allocate codec context for audio!");
-		close_video();
+		close();
 		return -2;
 	}
 
 	// Copying parameters
 	if (avcodec_parameters_to_context(av_codec_ctx_audio, av_stream_audio->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize audio codec context!");
-		close_video();
+		close();
 		return -2;
 	}
 
 	// Open codec - Audio
 	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
 		UtilityFunctions::printerr("Couldn't open audio codec!");
-		close_video();
+		close();
 		return -2;
 	}
 
@@ -275,18 +299,18 @@ int Video::_get_audio() {
 		nullptr);
 	if (response < 0) {
 		print_av_error("Failed to obtain SWR context!");
-		close_video();
+		close();
 		return -8;
 	} else if (!swr_ctx) {
 		UtilityFunctions::printerr("Could not allocate re-sampler context!");
-		close_video();
+		close();
 		return -8;
 	}
 
 	response = swr_init(swr_ctx);
 	if (response < 0) {
 		print_av_error("Couldn't initialize SWR!");
-		close_video();
+		close();
 		return -8;
 	}
 
@@ -369,7 +393,7 @@ int Video::_get_audio() {
 }
 
 void Video::seek_frame(int a_frame_nr) {
-	if (!is_open) {
+	if (!loaded) {
 		UtilityFunctions::printerr("Video isn't open yet!");
 		return;
 	}
@@ -415,7 +439,7 @@ void Video::seek_frame(int a_frame_nr) {
 }
 
 void Video::next_frame() {
-	if (!is_open) {
+	if (!loaded) {
 		UtilityFunctions::printerr("Video isn't open yet!");
 		return;
 	}

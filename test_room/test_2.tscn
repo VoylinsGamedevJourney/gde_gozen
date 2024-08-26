@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://test_2.gd" id="1_2amsh"]
 
-[sub_resource type="ImageTexture" id="ImageTexture_m7vj5"]
+[sub_resource type="Texture2DRD" id="Texture2DRD_87ptn"]
 
 [node name="Test2" type="Control"]
 layout_mode = 3
@@ -21,4 +21,4 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = SubResource("ImageTexture_m7vj5")
+texture = SubResource("Texture2DRD_87ptn")
