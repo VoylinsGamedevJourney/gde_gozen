@@ -1,0 +1,14 @@
+[configuration]
+
+entry_symbol = "gozen_library_init"
+compatibility_minimum = "4.3"
+reloadable = true
+
+[libraries]
+
+linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_template_debug/libgozen.linux.template_debug.dev.x86_64.so"
+linux.release.x86_64 = "res://addons/gde_gozen/bin/linux/linux_template_release/libgozen.linux.template_release.x86_64.so"
+
+windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows_template_debug/libgozen.windows.template_debug.dev.x86_64.dll"
+windows.release.x86_64 = "res://addons/gde_gozen/bin/windows_template_release/libgozen.windows.template_release.x86_64.dll"
+
