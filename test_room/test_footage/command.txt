@@ -1,1 +1,0 @@
-ffmpeg -f lavfi -i testsrc=duration=10:size=1280x720:rate=30 -vcodec mjpeg test.mjpg

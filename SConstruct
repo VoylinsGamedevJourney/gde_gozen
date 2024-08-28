@@ -3,7 +3,6 @@ import os
 import platform as os_platform
 import time
 
-
 libname = 'gozen'
 folder_bin = './bin'  # Where to compile to
 
@@ -29,7 +28,7 @@ if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
-        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swscale', 'swresample'])
+        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
     else:  # For people needing FFmpeg binaries
         print("Full linux build")
         platform += '_full'
@@ -39,7 +38,6 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libavformat',
             'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
-            'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/lib'])
 
@@ -57,7 +55,11 @@ if 'linux' in platform:
             os.chdir('..')
 
         os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/*.so* {folder_bin}/{platform}_{target}')
+        os.system(f'cp ffmpeg/bin/lib/avcodec*.so* {folder_bin}/{platform}_{target}')
+        os.system(f'cp ffmpeg/bin/lib/avformat*.so* {folder_bin}/{platform}_{target}')
+        os.system(f'cp ffmpeg/bin/lib/avdevice*.so* {folder_bin}/{platform}_{target}')
+        os.system(f'cp ffmpeg/bin/lib/avutil*.so* {folder_bin}/{platform}_{target}')
+        os.system(f'cp ffmpeg/bin/lib/swresample*.so* {folder_bin}/{platform}_{target}')
 elif 'windows' in platform:
     # Building FFmpeg
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
@@ -91,13 +93,16 @@ elif 'windows' in platform:
             'avformat.lib',
             'avdevice.lib',
             'avutil.lib',
-            'swscale.lib',
             'swresample.lib'])
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
     os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
-    os.system(f'cp ffmpeg/bin/bin/*.dll {folder_bin}/{platform}_{target}')
+    os.system(f'cp ffmpeg/bin/bin/avcodec*.dll {folder_bin}/{platform}_{target}')
+    os.system(f'cp ffmpeg/bin/bin/avformat*.dll {folder_bin}/{platform}_{target}')
+    os.system(f'cp ffmpeg/bin/bin/avdevice*.dll {folder_bin}/{platform}_{target}')
+    os.system(f'cp ffmpeg/bin/bin/avutil*.dll {folder_bin}/{platform}_{target}')
+    os.system(f'cp ffmpeg/bin/bin/swresample*.dll {folder_bin}/{platform}_{target}')
 
 
 src = Glob('src/*.cpp')
