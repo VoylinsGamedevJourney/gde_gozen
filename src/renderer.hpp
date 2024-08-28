@@ -17,7 +17,6 @@ private:
 	static constexpr AVChannelLayout chlayout_stereo = AV_CHANNEL_LAYOUT_STEREO;
 	AVFormatContext *av_format_ctx = nullptr;
 	const AVOutputFormat *av_out_format = nullptr;
-	struct SwsContext *sws_ctx = nullptr;
 	struct SwrContext *swr_ctx = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr, *av_codec_ctx_audio = nullptr;
 	const AVCodec *av_codec_video = nullptr, *av_codec_audio = nullptr;

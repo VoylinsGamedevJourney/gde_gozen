@@ -142,8 +142,8 @@ int Renderer::open() {
 	av_codec_ctx_video->pix_fmt = AV_PIX_FMT_YUV420P;
 	av_codec_ctx_video->width = resolution.x;
 	av_codec_ctx_video->height = resolution.y;
-	av_codec_ctx_video->time_base = (AVRational){1, framerate};
-	av_codec_ctx_video->framerate = (AVRational){framerate, 1};
+	av_codec_ctx_video->time_base = (AVRational){1, (int)framerate};
+	av_codec_ctx_video->framerate = (AVRational){(int)framerate, 1};
 	av_codec_ctx_video->gop_size = gop_size;
 	av_codec_ctx_video->max_b_frames = 1;
 
@@ -230,15 +230,6 @@ int Renderer::open() {
 	if (av_frame_get_buffer(av_frame_video, 0)) {
 		UtilityFunctions::printerr("Couldn't allocate frame data!");
 		return -8;
-	}
-
-	sws_ctx = sws_getContext(
-		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_RGBA, // 24, //AV_PIX_FMT_RGBA
-		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_YUV420P,
-		SWS_BILINEAR, NULL, NULL, NULL); // TODO: Option to change SWS_BILINEAR
-	if (!sws_ctx) {
-		UtilityFunctions::printerr("Couldn't get sws context!");
-		return -9;
 	}
 
 	// Copy video stream params to muxer
@@ -413,7 +404,6 @@ int Renderer::close() {
 	avcodec_free_context(&av_codec_ctx_video);
 	av_frame_free(&av_frame_video);
 	av_packet_free(&av_packet_video);
-	sws_freeContext(sws_ctx);
 
 	if (render_audio) {
 		avcodec_free_context(&av_codec_ctx_audio);
