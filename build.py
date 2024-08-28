@@ -85,3 +85,4 @@ if __name__ == '__main__':
         jobs = 1
 
     subprocess.run(f'scons -j{jobs} target=template_{target} platform={platform} arch={arch} {extra_args}', shell=True, cwd='./')
+

@@ -29,6 +29,7 @@ if 'linux' in platform:
         print("Normal linux build")
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
         env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
+        os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
     else:  # For people needing FFmpeg binaries
         print("Full linux build")
         platform += '_full'
@@ -54,12 +55,12 @@ if 'linux' in platform:
             os.system(f'make -j {num_jobs} install')
             os.chdir('..')
 
-        os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/avcodec*.so* {folder_bin}/{platform}_{target}')
-        os.system(f'cp ffmpeg/bin/lib/avformat*.so* {folder_bin}/{platform}_{target}')
-        os.system(f'cp ffmpeg/bin/lib/avdevice*.so* {folder_bin}/{platform}_{target}')
-        os.system(f'cp ffmpeg/bin/lib/avutil*.so* {folder_bin}/{platform}_{target}')
-        os.system(f'cp ffmpeg/bin/lib/swresample*.so* {folder_bin}/{platform}_{target}')
+        os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+        os.system(f'cp ffmpeg/bin/lib/avcodec*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/avformat*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/avdevice*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/avutil*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/swresample*.so* {folder_bin}/{platform}/{target}')
 elif 'windows' in platform:
     # Building FFmpeg
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
@@ -70,9 +71,9 @@ elif 'windows' in platform:
             # TEST: Testing if adding this makes it so copying files is no longer needed
             # extra_args += ' --extra-ldflags="-static"'
             # Copying necessary files
-            os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
-            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}_{target}/')
-            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}_{target}/')
+            os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/{target}/')
+            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/{target}/')
         else:
             extra_args = ' --target-os=windows'
 
@@ -97,15 +98,16 @@ elif 'windows' in platform:
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
-    os.makedirs(f'{folder_bin}/{platform}_{target}', exist_ok=True)
-    os.system(f'cp ffmpeg/bin/bin/avcodec*.dll {folder_bin}/{platform}_{target}')
-    os.system(f'cp ffmpeg/bin/bin/avformat*.dll {folder_bin}/{platform}_{target}')
-    os.system(f'cp ffmpeg/bin/bin/avdevice*.dll {folder_bin}/{platform}_{target}')
-    os.system(f'cp ffmpeg/bin/bin/avutil*.dll {folder_bin}/{platform}_{target}')
-    os.system(f'cp ffmpeg/bin/bin/swresample*.dll {folder_bin}/{platform}_{target}')
+    os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+    os.system(f'cp ffmpeg/bin/bin/avcodec*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/avformat*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/avdevice*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/avutil*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/swresample*.dll {folder_bin}/{platform}/{target}')
 
 
 src = Glob('src/*.cpp')
-libpath = '{}/{}_{}/lib{}{}{}'.format(folder_bin, platform, target, libname, env['suffix'], env['SHLIBSUFFIX'])
+libpath = '{}/{}/{}/lib{}{}{}'.format(folder_bin, platform, target, libname, env['suffix'], env['SHLIBSUFFIX'])
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
+
