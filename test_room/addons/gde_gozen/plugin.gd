@@ -1,8 +1,9 @@
 @tool
 class_name GoZenServer
 extends EditorPlugin
+## GoZenServer is a helping class which makes the VideoPlayback script easier to run and maintain. In here we have several functions for interacting with the RenderingDevice. All frames are handled through our shader, this has been done to improve performance but makes it so that the Addon can only be used when not selecting the Compatibility render mode for your project. If requests would follow to make a Compatibility useable addon, I might consider putting some time into getting that done.
 
-static var rd: RenderingDevice = RenderingServer.create_local_rendering_device()
+static var rd: RenderingDevice = RenderingServer.get_rendering_device()
 static var shader_file: RDShaderFile = preload("yuv_to_rgb.glsl")
 static var shader_spirv: RDShaderSPIRV
 static var shader: RID
@@ -12,12 +13,14 @@ static var running: bool = false
 
 func _enter_tree() -> void:
 	add_custom_type("VideoPlayback", "Control", preload("video_playback.gd"), preload("icon.svg"))
+	startup()
 
 
 func _exit_tree() -> void:
 	remove_custom_type("VideoPlayback")
 
 
+## We need several things to be setup such as the shader so we can display the images which we get from the video files. This is needed as most video files don't use RGB but YUV.
 static func startup() -> void:
 	if running:
 		return
@@ -27,6 +30,7 @@ static func startup() -> void:
 	running = true
 
 
+## This function is needed to prevent a memory leak from happening.
 static func shutdown() -> void:
 	if rd.compute_pipeline_is_valid(pipeline):
 		rd.free_rid(pipeline)
@@ -41,9 +45,21 @@ static func buffer_update(a_rid: RID, a_data: PackedByteArray) -> void:
 	rd.buffer_update(a_rid, 0, a_data.size(), a_data)
 
 
+static func create_image(a_tex_fmt: RDTextureFormat) -> RID:
+	return rd.texture_create(a_tex_fmt, RDTextureView.new(), [])
+	 
+
 static func create_uniform_storage_buffer(a_buffer: RID, a_set: int) -> RID:
 	var l_uniform: RDUniform = RDUniform.new()
 	l_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER
+	l_uniform.binding = 0
+	l_uniform.add_id(a_buffer)
+	return rd.uniform_set_create([l_uniform], shader, a_set)
+
+
+static func create_uniform_image(a_buffer: RID, a_set: int) -> RID:
+	var l_uniform: RDUniform = RDUniform.new()
+	l_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
 	l_uniform.binding = 0
 	l_uniform.add_id(a_buffer)
 	return rd.uniform_set_create([l_uniform], shader, a_set)
@@ -59,9 +75,6 @@ static func cl_bind_uniform_set(a_cl_id: int, a_uniform_set: RID, a_set_id: int)
 	rd.compute_list_bind_uniform_set(a_cl_id, a_uniform_set, a_set_id)
 
 
-static func cl_submit(a_cl_id: int, a_x: int, a_y: int, a_z: int, a_sync: bool = true) -> void:
-	rd.compute_list_dispatch(a_cl_id, ceili(a_x/16.0), ceili(a_y/16.0), a_z)
+static func cl_dispatch(a_cl_id: int, a_x: int, a_y: int, a_z: int) -> void:
+	rd.compute_list_dispatch(a_cl_id, ceili(a_x/8.0), ceili(a_y/8.0), a_z)
 	rd.compute_list_end()
-	rd.submit()
-	if a_sync:
-		rd.sync()
