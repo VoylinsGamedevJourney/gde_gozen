@@ -24,38 +24,36 @@ Dictionary Video::get_file_meta(String a_file_path) {
 	return l_dic;
 }
 
-Video Video::open_new(String a_path, bool a_load_audio) {
-	Video l_video = Video();
-	l_video.open(a_path, a_load_audio);
+Ref<Video> Video::open_new(String a_path, bool a_load_audio) {
+	Ref<Video> l_video = memnew(Video);
+	l_video->open(a_path, a_load_audio);
 	return l_video;
 }
 
 
-void Video::open(String a_path, bool a_load_audio) {
+int Video::open(String a_path, bool a_load_audio) {
 	if (loaded)
 		close();
+
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
 	if (!av_format_ctx) {
 		UtilityFunctions::printerr("Couldn't allocate av format context!");
-		response = -1;
-		return;
+		return -1;
 	}
 
 	// Open file with avformat
 	if (avformat_open_input(&av_format_ctx, a_path.utf8(), NULL, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video file!");
 		close();
-		response = -1;
-		return;
+		return -1;
 	}
 
 	// Find stream information
 	if (avformat_find_stream_info(av_format_ctx, NULL)) {
 		UtilityFunctions::printerr("Couldn't find stream info!");
 		close();
-		response = -1;
-		return;
+		return -1;
 	}
 
 	// Getting the audio and video stream
@@ -67,44 +65,45 @@ void Video::open(String a_path, bool a_load_audio) {
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			av_stream_audio = av_format_ctx->streams[i];
 			if (a_load_audio && (response = _get_audio()) != 0) {
-				return;
+				close();
+				return response;
 			}
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
 			av_stream_video = av_format_ctx->streams[i];
 	}
 
+	// TODO: Implement hardware decoding
+	//	hw_strings->append("vaapi")qsv", "vulkan", "vdpau", "nvdec"});
+	//
 	// Setup Decoder codec context
 	const AVCodec *av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 	if (!av_codec_video) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for video!");
 		close();
-		response = -3;
-		return;
+		return -3;
 	}
+	
 
 	// Allocate codec context for decoder
 	av_codec_ctx_video = avcodec_alloc_context3(av_codec_video);
 	if (av_codec_ctx_video == NULL) {
 		UtilityFunctions::printerr("Couldn't allocate codec context for video!");
 		close();
-		response = -3;
-		return;
+		return -3;
 	}
 
 	// Copying parameters
 	if (avcodec_parameters_to_context(av_codec_ctx_video, av_stream_video->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize video codec context!");
 		close();
-		response = -3;
-		return;
+		return -3;
 	}
 
 	// Open codec - Video
 	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video codec!");
 		close();
-		response = -3;
-		return;
+		return -3;
 	}
 	
 	// Enable multi-threading for decoding - Video
@@ -127,13 +126,9 @@ void Video::open(String a_path, bool a_load_audio) {
 	if ((AVPixelFormat)av_stream_video->codecpar->format != AV_PIX_FMT_YUV420P) {
 		UtilityFunctions::printerr("Video has unsupported format!");
 		UtilityFunctions::printerr(av_stream_video->codecpar->format);
-		response = -4;
-		return;
+		close();
+		return -4;
 	}
-
-	// Byte_array setup
-	byte_array.resize(resolution.x * resolution.y * 3);
-	src_linesize[0] = resolution.x * 3;
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -144,20 +139,20 @@ void Video::open(String a_path, bool a_load_audio) {
 	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
 	if (l_duration_from_bitrate) {
 		UtilityFunctions::printerr("This video file is not usable!");
-		response = -5;
-		return;
+		close();
+		return -5;
 	}
 	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_ANY);
 	if (response < 0) {
 		print_av_error("Seeking to beginning error: ");
-		response = -5;
-		return;
+		close();
+		return -5;
 	}
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
-		response = -5;
-		return;
+		close();
+		return -5;
 	}
 
 	// Checking for interlacing and what type of interlacing
@@ -168,8 +163,8 @@ void Video::open(String a_path, bool a_load_audio) {
 	framerate = av_q2d(av_guess_frame_rate(av_format_ctx, av_stream_video, av_frame));
 	if (framerate == 0) {
 		UtilityFunctions::printerr("Invalid frame-rate for video found!");
-		response = -6;
-		return;
+		close();
+		return -6;
 	}
 
 	// Setting variables
@@ -183,8 +178,8 @@ void Video::open(String a_path, bool a_load_audio) {
 			variable_framerate = false;
 		} else {
 			UtilityFunctions::printerr("Variable framerate detected, aborting! (not supported)");
-			response = -6;
-			return;
+			close();
+			return -6;
 		}
 	}
 
@@ -197,8 +192,8 @@ void Video::open(String a_path, bool a_load_audio) {
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
 		if (duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
 			UtilityFunctions::printerr("Video file is not usable!");
-			response = -7;
-			return;
+			close();
+			return -7;
 		} else {
 			AVRational l_temp_rational = AVRational{1, AV_TIME_BASE};
 			if (l_temp_rational.num != av_stream_video->time_base.num || l_temp_rational.num != av_stream_video->time_base.num)
@@ -219,7 +214,7 @@ void Video::open(String a_path, bool a_load_audio) {
 	path = a_path;
 	response = OK;
 
-	return;
+	return OK;
 }
 
 void Video::close() {
@@ -438,19 +433,20 @@ void Video::seek_frame(int a_frame_nr) {
 	av_packet_free(&av_packet);
 }
 
-void Video::next_frame() {
+void Video::next_frame(bool a_skip) {
 	if (!loaded) {
 		UtilityFunctions::printerr("Video isn't open yet!");
 		return;
 	}
-
 	av_packet = av_packet_alloc();
 	av_frame = av_frame_alloc();
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
-
-	memcpy(y.ptrw(), av_frame->data[0], y.size());
-	memcpy(u.ptrw(), av_frame->data[1], u.size());
-	memcpy(v.ptrw(), av_frame->data[2], v.size());
+	
+	if (!a_skip) {
+		memcpy(y.ptrw(), av_frame->data[0], y.size());
+		memcpy(u.ptrw(), av_frame->data[1], u.size());
+		memcpy(v.ptrw(), av_frame->data[2], v.size());
+	}
 
 	// Cleanup
 	av_frame_free(&av_frame);

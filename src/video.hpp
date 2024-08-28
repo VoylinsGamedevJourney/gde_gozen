@@ -5,10 +5,11 @@
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "godot_cpp/classes/gd_extension_manager.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "ffmpeg_includes.hpp"
+//#include "hw_devices.hpp"
 
 
 using namespace godot;
@@ -20,14 +21,14 @@ private:
 	AVFormatContext *av_format_ctx = nullptr;
 	AVStream *av_stream_video = nullptr, *av_stream_audio = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
+	AVBufferRef *hw_device_ctx = nullptr;
 
 	AVFrame *av_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
-	PackedByteArray byte_array; // Only for video frames
 	PackedByteArray y = PackedByteArray(), u = PackedByteArray(), v = PackedByteArray();
 
-	int response = 0, src_linesize[4] = {0, 0, 0, 0};
+	int response = 0;
 	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
 	double average_frame_duration = 0, stream_time_base_video = 0;
 
@@ -47,15 +48,15 @@ public:
 	~Video() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
-	static Video open_new(String a_path = "", bool a_load_audio = true);
+	static Ref<Video> open_new(String a_path = "", bool a_load_audio = true);
 
-	void open(String a_path = "", bool a_load_audio = true);
+	int open(String a_path = "", bool a_load_audio = true);
 	void close();
 
 	inline bool is_open() { return loaded; }
 
 	void seek_frame(int a_frame_nr);
-	void next_frame();
+	void next_frame(bool a_skip = false);
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 	int _get_audio();
@@ -75,8 +76,6 @@ public:
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
 
-	inline int get_error() { return response; }
-
 	void print_av_error(const char *a_message);
 
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
@@ -93,7 +92,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
-		ClassDB::bind_method(D_METHOD("next_frame"), &Video::next_frame);
+		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame, DEFVAL(false));
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
@@ -110,7 +109,5 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("is_framerate_variable"), &Video::is_framerate_variable);
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
-
-		ClassDB::bind_method(D_METHOD("get_error"), &Video::get_error);
 	}
 };
