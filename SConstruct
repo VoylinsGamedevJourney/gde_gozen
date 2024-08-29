@@ -27,12 +27,17 @@ ffmpeg_build_args += ' --enable-gpl'
 if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
         print("Normal linux build")
+
+        env.Append(LINKFLAGS=['-static-libstdc++'])
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
         env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
+
         os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
     else:  # For people needing FFmpeg binaries
         print("Full linux build")
         platform += '_full'
+
+        env.Append(LINKFLAGS=['-static-libstdc++'])
         env.Append(CPPFLAGS=['-Iffmpeg/bin', '-Iffmpeg/bin/include'])
         env.Append(LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
@@ -67,11 +72,11 @@ elif 'windows' in platform:
             extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32 --enable-cross-compile'
 
             # TEST: Testing if adding this makes it so copying files is no longer needed
-            # extra_args += ' --extra-ldflags="-static"'
+            extra_args += ' --extra-ldflags="-static"'
             # Copying necessary files
-            os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/{target}/')
-            os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/{target}/')
+            # os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
+            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {folder_bin}/{platform}/{target}/')
+            # os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {folder_bin}/{platform}/{target}/')
         else:
             extra_args = ' --target-os=windows'
 
