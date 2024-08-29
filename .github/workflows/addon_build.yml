@@ -1,6 +1,13 @@
 name: Addon build
 run-name: Building addon
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      artifact:
+        description: 'Get artifacts'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -10,32 +17,29 @@ jobs:
     steps:
       - name: Installing dependencies
         run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
-
+      
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      
-      - name: Build Linux Debug
+
+      - name: Build Linux
         run: |
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
-
-      - name: Build Linux Release
-        run: |
           scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
           scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_small=yes
 
-      - name: Build Windows Debug
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 enable_gpl=yes dev_build=yes
-
-      - name: Build Windows Release
-        run: scons -j4 target=template_release platform=windows arch=x86_64 enable_gpl=yes enable_small=yes
+      - name: Build Windows
+        run: |
+          scons -j4 target=template_debug platform=windows arch=x86_64 enable_gpl=yes dev_build=yes
+          scons -j4 target=template_release platform=windows arch=x86_64 enable_gpl=yes enable_small=yes
 
       - name: Copying libs
         run: cp -r bin/* test_room/addons/gde_gozen/bin/
 
       - name: Uploading Addon build
+        if: ${{ github.event.inputs.artifact }}
         uses: actions/upload-artifact@v4
         with:
           name: Addon_GDE_GoZen
