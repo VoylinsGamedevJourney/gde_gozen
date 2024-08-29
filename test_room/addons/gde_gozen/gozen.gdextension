@@ -6,8 +6,8 @@ reloadable = true
 
 [libraries]
 
-linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux/template_debug/libgozen.linux.template_debug.dev.x86_64.so"
-linux.release.x86_64 = "res://addons/gde_gozen/bin/linux/template_release/libgozen.linux.template_release.x86_64.so"
+linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_full/template_debug/libgozen.linux.template_debug.dev.x86_64.so"
+linux.release.x86_64 = "res://addons/gde_gozen/bin/linux_full/template_release/libgozen.linux.template_release.x86_64.so"
 
 windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows/template_debug/libgozen.windows.template_debug.dev.x86_64.dll"
 windows.release.x86_64 = "res://addons/gde_gozen/bin/windows/template_release/libgozen.windows.template_release.x86_64.dll"
