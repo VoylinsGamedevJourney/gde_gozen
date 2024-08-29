@@ -56,10 +56,7 @@ if 'linux' in platform:
             os.chdir('..')
 
         os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/avcodec*.so* {folder_bin}/{platform}/{target}')
-        os.system(f'cp ffmpeg/bin/lib/avformat*.so* {folder_bin}/{platform}/{target}')
-        os.system(f'cp ffmpeg/bin/lib/avdevice*.so* {folder_bin}/{platform}/{target}')
-        os.system(f'cp ffmpeg/bin/lib/avutil*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/av*.so* {folder_bin}/{platform}/{target}')
         os.system(f'cp ffmpeg/bin/lib/swresample*.so* {folder_bin}/{platform}/{target}')
 elif 'windows' in platform:
     # Building FFmpeg
@@ -95,14 +92,14 @@ elif 'windows' in platform:
             'avdevice.lib',
             'avutil.lib',
             'swresample.lib'])
+    else:
+        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
+
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
 
     os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-    os.system(f'cp ffmpeg/bin/bin/avcodec*.dll {folder_bin}/{platform}/{target}')
-    os.system(f'cp ffmpeg/bin/bin/avformat*.dll {folder_bin}/{platform}/{target}')
-    os.system(f'cp ffmpeg/bin/bin/avdevice*.dll {folder_bin}/{platform}/{target}')
-    os.system(f'cp ffmpeg/bin/bin/avutil*.dll {folder_bin}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/av*.dll {folder_bin}/{platform}/{target}')
     os.system(f'cp ffmpeg/bin/bin/swresample*.dll {folder_bin}/{platform}/{target}')
 
 
