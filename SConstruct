@@ -54,10 +54,11 @@ if 'linux' in platform:
             os.system(f'make -j {num_jobs}')
             os.system(f'make -j {num_jobs} install')
             os.chdir('..')
+        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
 
         os.makedirs(f'{folder_bin}/{platform}/{target}', exist_ok=True)
-        os.system(f'cp ffmpeg/bin/lib/av*.so* {folder_bin}/{platform}/{target}')
-        os.system(f'cp ffmpeg/bin/lib/swresample*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/libav*.so* {folder_bin}/{platform}/{target}')
+        os.system(f'cp ffmpeg/bin/lib/libswresample*.so* {folder_bin}/{platform}/{target}')
 elif 'windows' in platform:
     # Building FFmpeg
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
