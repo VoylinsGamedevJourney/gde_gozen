@@ -1,0 +1,36 @@
+name: Check Windows build
+run-name: Check build for Windows
+on: 
+  workflow_dispatch:
+    inputs:
+      artifact:
+        description: 'Get artifacts'
+        required: true
+        default: false
+        type: boolean
+        
+jobs:
+  windows-build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm ffmpeg git bash yasm python python-pip scons gcc diffutils make mingw-w64
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build Windows Debug
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 enable_gpl=yes dev_build=yes
+      - name: Build Windows Release
+        run: scons -j4 target=template_release platform=windows arch=x86_64 enable_gpl=yes enable_small=yes
+
+      - name: Uploading GDExtension artifact release
+        if: ${{ github.event.inputs.artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_windows_build
+          path: bin/windows/

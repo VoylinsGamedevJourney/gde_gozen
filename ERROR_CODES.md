@@ -6,13 +6,13 @@
 
 No error code but returns an empty dictionary when nothing was able to be read.
 
-### open_video
+### open
 
 - 0: OK;
 - -1: Couldn't open video file; 
 - -2: Failed setting up of audio decoder;
 - -3: Failed setting up of video decoder;
-- -4: Failed setting up of SWS;
+- -4: Unsupported pixel format;
 - -5: Video file is not usable due to limitations;
 - -6: Invalid frame-rate found in video;
 - -7: Could not establish the total amount of frames in video files;
@@ -36,7 +36,6 @@ No error code but returns an empty picture when an error occured.
 - -6: Failed to setup audio stream;
 - -7: Couldn't create packet;
 - -8: Couldn't create frame;
-- -9: Couldn't create SWS;
 - -10: Couldn't create SWR;
 - -11: Failed to open video file;
 - -12: Failed to write stream header;
@@ -50,7 +49,6 @@ No error code but returns an empty picture when an error occured.
 
 Any other response is an FFmpeg error code which has to do with sending, receiving, and writing frames.
 
-
 ### send_audio
 
 - 0: OK;
@@ -61,5 +59,4 @@ Any other response is an FFmpeg error code which has to do with sending, receivi
 
 - 0: OK;
 - -1: Codec is not open;
-
 

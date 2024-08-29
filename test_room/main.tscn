@@ -1,11 +1,13 @@
 [gd_scene load_steps=7 format=3 uid="uid://b1e501df8faw"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_kus11"]
-[ext_resource type="Texture2D" uid="uid://dms0pea5t8h7e" path="res://icons/fast_rewind_48dp_FILL1_wght400_GRAD0_opsz48.png" id="2_qnc5d"]
+[ext_resource type="Script" path="res://addons/gde_gozen/video_playback.gd" id="2_p7wtn"]
 [ext_resource type="Texture2D" uid="uid://cnmcxoy57tr0" path="res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png" id="3_vr00e"]
-[ext_resource type="Texture2D" uid="uid://dmx51y6qr8c14" path="res://icons/fast_forward_48dp_FILL1_wght400_GRAD0_opsz48.png" id="4_dy0wb"]
 
 [sub_resource type="ImageTexture" id="ImageTexture_w3bnw"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fiepf"]
+bg_color = Color(0.408329, 0.408329, 0.408329, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ae1f1"]
 content_margin_left = 7.0
@@ -52,36 +54,38 @@ text = "Loading ..."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Timeline" type="HSlider" parent="VBox"]
+[node name="VideoPlayback" type="Control" parent="VBox/FramePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_p7wtn")
+path = null
+
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="VBox"]
+layout_mode = 2
+
+[node name="BottomPanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_fiepf")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/BottomPanel"]
+layout_mode = 2
+
+[node name="Timeline" type="HSlider" parent="VBox/BottomPanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 min_value = 1.0
 value = 1.0
 
-[node name="ButtonsHBox" type="HBoxContainer" parent="VBox"]
+[node name="ButtonsHBox" type="HBoxContainer" parent="VBox/BottomPanel/VBox"]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 alignment = 1
 
-[node name="FastRewindButton" type="TextureButton" parent="VBox/ButtonsHBox"]
-custom_minimum_size = Vector2(30, 30)
-layout_mode = 2
-texture_normal = ExtResource("2_qnc5d")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="PlayPauseButton" type="TextureButton" parent="VBox/ButtonsHBox"]
+[node name="PlayPauseButton" type="TextureButton" parent="VBox/BottomPanel/VBox/ButtonsHBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
 texture_normal = ExtResource("3_vr00e")
-ignore_texture_size = true
-stretch_mode = 5
-
-[node name="FastForwardButton" type="TextureButton" parent="VBox/ButtonsHBox"]
-custom_minimum_size = Vector2(30, 30)
-layout_mode = 2
-texture_normal = ExtResource("4_dy0wb")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -152,26 +156,7 @@ size_flags_horizontal = 3
 text = "0.0"
 horizontal_alignment = 2
 
-[node name="FrameTimeLabel" type="Label" parent="Debug/DebugPanel/DebugGrid"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Frame time:"
-
-[node name="FrameTimeValue" type="Label" parent="Debug/DebugPanel/DebugGrid"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-text = "0.0"
-horizontal_alignment = 2
-
-[node name="AudioStream1" type="AudioStreamPlayer" parent="."]
-
-[connection signal="drag_ended" from="VBox/Timeline" to="." method="_on_timeline_drag_ended"]
-[connection signal="drag_started" from="VBox/Timeline" to="." method="_on_timeline_drag_started"]
-[connection signal="value_changed" from="VBox/Timeline" to="." method="_on_timeline_value_changed"]
-[connection signal="button_down" from="VBox/ButtonsHBox/FastRewindButton" to="." method="_on_fast_rewind_button_button_down"]
-[connection signal="button_up" from="VBox/ButtonsHBox/FastRewindButton" to="." method="_on_fast_rewind_button_button_up"]
-[connection signal="pressed" from="VBox/ButtonsHBox/PlayPauseButton" to="." method="_on_play_pause_button_pressed"]
-[connection signal="button_down" from="VBox/ButtonsHBox/FastForwardButton" to="." method="_on_fast_forward_button_button_down"]
-[connection signal="button_up" from="VBox/ButtonsHBox/FastForwardButton" to="." method="_on_fast_forward_button_button_up"]
-[connection signal="finished" from="AudioStream1" to="." method="_on_audio_stream_1_finished"]
+[connection signal="drag_ended" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_drag_ended"]
+[connection signal="drag_started" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_drag_started"]
+[connection signal="value_changed" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_value_changed"]
+[connection signal="pressed" from="VBox/BottomPanel/VBox/ButtonsHBox/PlayPauseButton" to="." method="_on_play_pause_button_pressed"]

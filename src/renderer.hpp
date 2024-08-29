@@ -17,7 +17,6 @@ private:
 	static constexpr AVChannelLayout chlayout_stereo = AV_CHANNEL_LAYOUT_STEREO;
 	AVFormatContext *av_format_ctx = nullptr;
 	const AVOutputFormat *av_out_format = nullptr;
-	struct SwsContext *sws_ctx = nullptr;
 	struct SwrContext *swr_ctx = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr, *av_codec_ctx_audio = nullptr;
 	const AVCodec *av_codec_video = nullptr, *av_codec_audio = nullptr;
@@ -135,7 +134,7 @@ public:
 	bool ready_check();
 
 	int open();
-	int send_frame(Ref<Image> a_frame_image);
+	int send_frame(PackedByteArray a_y, PackedByteArray a_u, PackedByteArray a_v);
 	int send_audio(Ref<AudioStreamWAV> a_wav);
 	int close();
 
@@ -222,7 +221,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("ready_check"), &Renderer::ready_check);
 
 		ClassDB::bind_method(D_METHOD("open"), &Renderer::open);
-		ClassDB::bind_method(D_METHOD("send_frame", "a_frame_image"), &Renderer::send_frame);
+		ClassDB::bind_method(D_METHOD("send_frame", "a_y", "a_u", "a_v"), &Renderer::send_frame);
 		ClassDB::bind_method(D_METHOD("send_audio", "a_wav"), &Renderer::send_audio);
 		ClassDB::bind_method(D_METHOD("close"), &Renderer::close);
 	}

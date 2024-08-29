@@ -1,199 +1,66 @@
 extends Control
 
+@onready var video_playback = %VideoPlayback
 
-var video: Video
-
-var is_playing: bool = false
+var is_dragging: bool = false
 var was_playing: bool = false
-
-var current_frame: int = 1: set = set_current_frame
-var framerate: float = 0
-var max_frame: int = 0: set = set_max_frame
-var frame_time: float = 0: set = set_frame_time
-
-var time_elapsed: float = 0.0
-var dragging: bool = false
-
-var fast_speed: int = 4
-var fast_rewind: bool = false
-var fast_forward: bool = false
-
-var task_id: int = -1
-
 
 
 func _ready() -> void:
 	if OS.get_cmdline_args().size() > 1:
-		video = Video.new()
-		video.open_video(OS.get_cmdline_args()[1], true)
-		after_video_open()
+		open_video(OS.get_cmdline_args()[1])
 	get_window().files_dropped.connect(on_video_drop)
+	video_playback._current_frame_changed.connect(
+			func(a_value: int) -> void: 
+				%Timeline.value = a_value
+				%CurrentFrameValue.text = str(a_value)
+				%EditorFPSValue.text = str(Engine.get_frames_per_second()))
 
 
 func on_video_drop(a_files: PackedStringArray) -> void:
-	if a_files[0].split('.')[-1].to_lower() in ["webm" ,"mkv" ,"flv" ,"vob" ,"ogv" ,"ogg" ,"mng" ,"avi" ,"mts" ,"m2ts" ,"ts" ,"mov" ,"qt" ,"wmv" ,"yuv" ,"rm" ,"rmvb" ,"viv" ,"asf" ,"amv" ,"mp4" ,"m4p" ,"mp2" ,"mpe" ,"mpv" ,"mpg" ,"mpeg" ,"m2v" ,"m4v" ,"svi" ,"3gp" ,"3g2" ,"mxf" ,"roq" ,"nsv" ,"flv" ,"f4v" ,"f4p" ,"f4a" ,"f4b"]: 
-		%LoadingLabel.visible = true
-		video = Video.new()
-		task_id = WorkerThreadPool.add_task(video.open_video.bind(a_files[0]))
+	if a_files[0].get_extension().to_lower() in ["webm" ,"mkv" ,"flv" ,"vob" ,"ogv" ,"ogg" ,"mng" ,"avi" ,"mts" ,"m2ts" ,"ts" ,"mov" ,"qt" ,"wmv" ,"yuv" ,"rm" ,"rmvb" ,"viv" ,"asf" ,"amv" ,"mp4" ,"m4p" ,"mp2" ,"mpe" ,"mpv" ,"mpg" ,"mpeg" ,"m2v" ,"m4v" ,"svi" ,"3gp" ,"3g2" ,"mxf" ,"roq" ,"nsv" ,"flv" ,"f4v" ,"f4p" ,"f4a" ,"f4b"]: 
+		open_video(a_files[0])
 	else:
 		print("Not a valid video file!");
 
 
 func open_video(a_file: String) -> void:
-	video.open_video(a_file, true)
+	video_playback.set_video_path(a_file)
+	after_video_open()
 
 
 func after_video_open() -> void:
-	$AudioStream1.stream = video.get_audio()
-	is_playing = false
-	framerate = video.get_framerate()
-	max_frame = video.get_total_frame_nr()
-	frame_time = 1.0 / framerate
-	seek_frame(0)
-	%Timeline.max_value = max_frame
-	%LoadingLabel.visible = false
+	%Timeline.max_value = video_playback.get_frame_duration()
 	%PlayPauseButton.texture_normal = preload("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png")
-	%FPSValue.text = str(framerate).left(5)
-
-
-func is_video_open() -> bool:
-	if !video:
-		return false
-	return video.is_video_open()
-
-
-func _process(a_delta) -> void:
-	if task_id != -1 and WorkerThreadPool.is_task_completed(task_id):
-		WorkerThreadPool.wait_for_task_completion(task_id)
-		task_id = -1
-		%LoadingLabel.visible = false
-		if !is_video_open():
-			printerr("Couldn't open video!")
-		after_video_open()
-
-	elif !is_video_open():
-		return
-	
-	if is_playing:
-		time_elapsed += a_delta
-		if time_elapsed < frame_time:
-			return
-		
-		while time_elapsed >= frame_time:
-			time_elapsed -= frame_time
-			current_frame += 1
-		%EditorFPSValue.text = str(Engine.get_frames_per_second()).left(6)
-		
-		if current_frame >= max_frame:
-			if dragging:
-				return
-			is_playing = !is_playing
-			seek_frame(0)
-			$AudioStream1.set_stream_paused(true)
-		else:
-			var l_frame: Image = video.next_frame()
-			if !l_frame.is_empty():
-				%FrameImage.texture.set_image(l_frame)
-			if !dragging:
-				%Timeline.value = current_frame
-	elif fast_rewind:
-		seek_frame(current_frame - fast_speed)
-	elif fast_forward:
-		seek_frame(current_frame + fast_speed)
-
-
-func seek_frame(a_frame_nr: int) -> void:
-	if !is_video_open():
-		return
-	current_frame = clampi(a_frame_nr, 0, max_frame - 1)
-	if !is_playing:
-		$AudioStream1.set_stream_paused(false)
-	$AudioStream1.seek(current_frame/framerate)
-	if !is_playing:
-		$AudioStream1.set_stream_paused(true)
-	var l_frame: Image = video.seek_frame(current_frame)
-	if l_frame != null and !l_frame.is_empty():
-		%FrameImage.texture.set_image(l_frame)
-	else:
-		printerr("Seek returned an empty image!")
-	if !dragging:
-		%Timeline.value = current_frame
-
-
-func _on_fast_forward_button_button_up() -> void:
-	is_playing = was_playing
-	$AudioStream1.set_stream_paused(!was_playing)
-	fast_forward = false
-
-
-func _on_fast_forward_button_button_down() -> void:
-	was_playing = is_playing
-	is_playing = false
-	$AudioStream1.set_stream_paused(!is_playing)
-	fast_forward = true
+	%MaxFrameValue.text = str(video_playback.get_frame_duration())
+	%FPSValue.text = str(video_playback.get_framerate()).left(5)
 
 
 func _on_play_pause_button_pressed() -> void:
-	if !is_video_open():
+	if !video_playback.is_open():
 		return
-	is_playing = !is_playing
-	if is_playing:
-		$AudioStream1.play($AudioStream1.get_playback_position())
-		seek_frame(current_frame)
-		%PlayPauseButton.texture_normal = preload("res://icons/pause_48dp_FILL1_wght400_GRAD0_opsz48.png")
-	else:
+
+	if video_playback.is_playing:
+		video_playback.pause()
 		%PlayPauseButton.texture_normal = preload("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png")
-	$AudioStream1.set_stream_paused(!is_playing)
-
-
-func _on_fast_rewind_button_button_up() -> void:
-	is_playing = was_playing
-	$AudioStream1.set_stream_paused(!was_playing)
-	fast_rewind = false
-
-
-func _on_fast_rewind_button_button_down() -> void:
-	was_playing = is_playing
-	is_playing = false
-	$AudioStream1.set_stream_paused(!is_playing)
-	fast_forward = true
+	else:
+		video_playback.play()
+		%PlayPauseButton.texture_normal = preload("res://icons/pause_48dp_FILL1_wght400_GRAD0_opsz48.png")
 
 
 func _on_timeline_value_changed(_value:float) -> void:
-	if dragging:
-		seek_frame(%Timeline.value)
+	if is_dragging:
+		video_playback.seek_frame(%Timeline.value)
 
 
 func _on_timeline_drag_started() -> void:
-	dragging = true
-	if is_playing:
-		$AudioStream1.set_stream_paused(true)
+	is_dragging = true
+	was_playing = video_playback.is_playing
+	video_playback.pause()
 
 
 func _on_timeline_drag_ended(_value:bool) -> void:
-	dragging = false
-	if is_playing:
-		$AudioStream1.set_stream_paused(false)
-		$AudioStream1.seek(%Timeline.value/framerate)
-
-
-# Setters
-
-func set_current_frame(a_value: int) -> void:
-	current_frame = a_value
-	%CurrentFrameValue.text = str(a_value)
-
-
-func set_max_frame(a_value: int) -> void:
-	max_frame = a_value
-	%MaxFrameValue.text = str(a_value)
-
-
-func set_frame_time(a_value: float) -> void:
-	frame_time = a_value
-	%FrameTimeValue.text = str(a_value).left(4)
-
-
-func _on_audio_stream_1_finished():
-	print("Audio stream finished playing!")
+	is_dragging = false
+	if was_playing:
+		video_playback.play()
 
