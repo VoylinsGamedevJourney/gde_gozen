@@ -1,11 +1,19 @@
 class_name VideoPlayback extends Control
-## To use this node, just add it anywhere and resize it to the desired size. Use the function `set_video_path(a_path)` and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function `update_video()` before the moment that you'd like to use it.
+## Video playback and seeking inside of Godot.
+##
+## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(a_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
+## [br][br]
+## There is a small limitation right now as FFmpeg requires a path to the video file so you can't make the video's part of the exported project and the [code]res://[/code] paths also don't work. This is just the nature of the beast and not something I can easily solve, but luckily there are solutions! First of all, the video path should be the full path, for testing this is easy as you can make the path whatever you want it to be, for exported projects ... Well, chances of the path being in the exact same location as on your pc are quite low.
+## [br][br]
+## The solution for exported projects is to create a folder inside of your exported projects in which you keep the video files, inside of your code you can check if the project is run from the editor or not with: [code]OS.has_feature(“editor”)[/code]. To get the path of your running project to find the folder where your video's are stored you can use [code]OS.get_executable_path()[/code]. So it requires a bit of code to get things properly working but everything should work without issues this way.
+
+
 
 
 signal _current_frame_changed(frame_nr) ## Getting the current frame might be usefull if you want certain events to happen at a certain frame number. In the test project we use it for making the timeline move along with the video
 
 
-@export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically.
+@export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
@@ -86,7 +94,7 @@ func _free_textures() -> void:
 
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(a_path: String) -> void:
-	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which update_video() get's run and set's all the buffers for our shader which will help to display the current frame image.
+	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's all the buffers for our shader which will help to display the current frame image.
 	path = a_path
 	if !is_node_ready():
 		return
@@ -146,7 +154,7 @@ func update_video(a_video: Video) -> void:
 
 
 func seek_frame(a_frame_nr: int) -> void:
-	## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use next_frame().
+	## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
 	if !is_open():
 		return
 
