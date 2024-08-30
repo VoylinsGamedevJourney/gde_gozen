@@ -6,9 +6,12 @@
 
 GDE GoZen is part of the GoZen project, a video editor made with Godot, which works thanks to FFmpeg! This GDExtension for Godot provides functionality for video and audio playback. This GDExtension is mainly available as an addon through my [ko-fi page](https://ko-fi.com/s/c6ec85052b) and [itch.io](https://voylin.itch.io/gde-gozen_video-playback-addon-for-godot)   Since version 2 we also have video rendering capabilities. These are still something which need some work and improvements, which will happen over time as the progress of GoZen, our video editor made in Godot, becomes more and more advanced.
 
+## Download compiled version
+The addon is available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). Source code stay's available for free so you can technically compile everything yourself, but if you also want to support the work which I've put into this and the future work which I'll put into this I'd really appreciate getting the compiled version from my ko-fi page.
+
 ## Compiling the GDExtension
 
-For all compiling information you can go to [Compiling info readme](https://github.com/VoylinsGamedevJourney/gde_gozen/blob/master/COMPILE_INFO.md).
+Feeling more adventurous and want to compile by yoursel? For all compiling information you can go to [Compiling info readme](https://github.com/VoylinsGamedevJourney/gde_gozen/blob/master/COMPILE_INFO.md).
 
 ## Usage of the GDExtension
 
