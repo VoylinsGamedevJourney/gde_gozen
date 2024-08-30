@@ -19,7 +19,7 @@ ffmpeg_build_args += ' --disable-postproc'
 ffmpeg_build_args += ' --disable-avfilter'
 ffmpeg_build_args += ' --quiet'
 ffmpeg_build_args += f' --arch={arch}'
-if ARGUMENTS.get('enable_small', 'no') == 'yes':
+if ARGUMENTS.get('enable_small', 'yes') == 'yes':
     ffmpeg_build_args += ' --enable-small'
 ffmpeg_build_args += ' --enable-gpl'
 
