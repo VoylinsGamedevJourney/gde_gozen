@@ -73,7 +73,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// TODO: Implement hardware decoding
-	//	hw_strings->append("vaapi")qsv", "vulkan", "vdpau", "nvdec"});
+	//	"vaapi", "qsv", "vulkan", "vdpau", "nvdec"
 	//
 	// Setup Decoder codec context
 	const AVCodec *av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
