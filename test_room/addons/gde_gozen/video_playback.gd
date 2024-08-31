@@ -1,4 +1,4 @@
-class_name VideoPlayback extends Control
+extends Control
 ## Video playback and seeking inside of Godot.
 ##
 ## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(a_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
@@ -8,9 +8,12 @@ class_name VideoPlayback extends Control
 ## The solution for exported projects is to create a folder inside of your exported projects in which you keep the video files, inside of your code you can check if the project is run from the editor or not with: [code]OS.has_feature(“editor”)[/code]. To get the path of your running project to find the folder where your video's are stored you can use [code]OS.get_executable_path()[/code]. So it requires a bit of code to get things properly working but everything should work without issues this way.
 
 
-
-
 signal _current_frame_changed(frame_nr) ## Getting the current frame might be usefull if you want certain events to happen at a certain frame number. In the test project we use it for making the timeline move along with the video
+signal _video_ended ## Get's called when last frame has been shown.
+signal _on_play_pressed ## Called when the play command has been used with an open video.
+signal _on_pause_pressed ## Called when the pause command has been used with an open video.
+signal _on_video_playback_ready ## Get's called when the video playback node is completely loaded, video is open and ready for playback.
+signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called when the number changes, but frame skipping may occur to provide smooth playback, with this signal you can check when an actual new frame is being shown.
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
@@ -151,6 +154,7 @@ func update_video(a_video: Video) -> void:
 	_uniform_sets[4] = GoZenServer.create_uniform_image(_textures[0], 4)
 
 	_compute_list_dispatch()
+	_on_video_loaded.emit()
 
 
 func seek_frame(a_frame_nr: int) -> void:
@@ -174,6 +178,7 @@ func next_frame(a_skip: bool = false) -> void:
 
 	if !a_skip:
 		_update_frame()
+		_on_next_frame_called.emit(current_frame)
 
 
 func _update_frame() -> void:
@@ -199,6 +204,7 @@ func _process(a_delta: float) -> void:
 	if is_playing:
 		_time_elapsed += a_delta
 		if _time_elapsed < _frame_time:
+			_video_ended.emit()
 			return
 		_handle_update()
 
@@ -226,6 +232,7 @@ func play() -> void:
 		return
 	is_playing = true
 	seek_frame(current_frame)
+	_on_play_pressed.emit()
 
 
 func pause() -> void:
@@ -234,6 +241,7 @@ func pause() -> void:
 		return
 	is_playing = false
 	audio_player.set_stream_paused(true)
+	_on_pause_pressed.emit()
 
 
 #------------------------------------------------ SETTERS
