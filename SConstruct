@@ -35,8 +35,12 @@ if 'linux' in platform:
     else:  # For people needing FFmpeg binaries
         platform += '_full'
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
-            os.chdir('ffmpeg')
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
+
+            os.chdir('ffmpeg')
+            os.system('make distclean')
+            time.sleep(5)
+
             os.system(f'./configure --prefix=./bin {ffmpeg_args} --target-os=linux')
             time.sleep(5)
 
@@ -74,6 +78,9 @@ elif 'windows' in platform:
             ffmpeg_args += ' --target-os=windows'
 
         os.chdir('ffmpeg')
+        os.system('make distclean')
+        time.sleep(5)
+
         os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
         os.system(f'./configure --prefix=./bin {ffmpeg_args}')
         time.sleep(5)
