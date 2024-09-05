@@ -102,10 +102,7 @@ elif 'windows' in platform:
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
     os.system(f'cp ffmpeg/bin/bin/*.dll bin/{platform}/{target}')
-    print("showing inside of ffmpeg/bin/bin")
-    os.system('ls -alh ffmpeg/bin/bin/')
-    print("showing tree of ffmpeg/bin/")
-    os.system('tree')
+
 
 src = Glob('src/*.cpp')
 libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])
