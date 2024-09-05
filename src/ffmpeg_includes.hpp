@@ -26,4 +26,5 @@ extern "C" {
 	#include <libavutil/timestamp.h>
 	
 	#include <libswresample/swresample.h>
+	#include <libswscale/swscale.h>
 }

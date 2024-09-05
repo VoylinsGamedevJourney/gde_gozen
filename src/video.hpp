@@ -26,12 +26,14 @@ private:
 	AVFrame *av_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
-	PackedByteArray y = PackedByteArray(), u = PackedByteArray(), v = PackedByteArray();
+	struct SwsContext *sws_ctx = nullptr;
 
 	int response = 0;
 	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
 	double average_frame_duration = 0, stream_time_base_video = 0;
 
+	PackedByteArray byte_array;
+	int src_linesize[4] = {0, 0, 0, 0};
 	Vector2i resolution = Vector2i(0, 0);
 	bool loaded = false, variable_framerate = false;
 	int64_t duration = 0, frame_duration = 0;
@@ -55,8 +57,8 @@ public:
 
 	inline bool is_open() { return loaded; }
 
-	void seek_frame(int a_frame_nr);
-	void next_frame(bool a_skip = false);
+	Ref<Image> seek_frame(int a_frame_nr);
+	Ref<Image> next_frame();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 	int _get_audio();
@@ -68,10 +70,6 @@ public:
 
 	inline String get_path() { return path; }
 	
-	inline PackedByteArray get_y() { return y; }
-	inline PackedByteArray get_u() { return u; }
-	inline PackedByteArray get_v() { return v; }
-
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
@@ -79,6 +77,7 @@ public:
 	void print_av_error(const char *a_message);
 
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
+	void _decode_video_frame(Ref<Image> a_image);
 
 protected:
 	static inline void _bind_methods() {
@@ -92,16 +91,12 @@ protected:
 		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
-		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame, DEFVAL(false));
+		ClassDB::bind_method(D_METHOD("next_frame"), &Video::next_frame);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 
 		ClassDB::bind_method(D_METHOD("get_path"), &Video::get_path);
-
-		ClassDB::bind_method(D_METHOD("get_y"), &Video::get_y);
-		ClassDB::bind_method(D_METHOD("get_u"), &Video::get_u);
-		ClassDB::bind_method(D_METHOD("get_v"), &Video::get_v);
 
 		ClassDB::bind_method(D_METHOD("get_resolution"), &Video::get_resolution);
 		ClassDB::bind_method(D_METHOD("get_width"), &Video::get_width);
