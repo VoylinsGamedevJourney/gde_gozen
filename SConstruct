@@ -66,12 +66,12 @@ if 'linux' in platform:
 elif 'windows' in platform:
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
         if os_platform.system().lower() == 'linux':
-            ffmpeg_args += '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
+            ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
             ffmpeg_args += ' --enable-cross-compile'
             ffmpeg_args += ' --extra-ldflags="-static"'
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
         else:
-            ffmpeg_args = ' --target-os=windows'
+            ffmpeg_args += ' --target-os=windows'
 
         os.chdir('ffmpeg')
         os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
