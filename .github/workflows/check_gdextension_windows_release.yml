@@ -28,6 +28,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
+            .cache
             godot_cpp
             ffmpeg
           key: windows_debug
@@ -38,6 +39,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
+            .cache
             godot_cpp
             ffmpeg
           key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
@@ -47,6 +49,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
+            .cache
             godot_cpp
             ffmpeg
           key: windows_release
@@ -57,6 +60,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
+            .cache
             godot_cpp
             ffmpeg
           key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
