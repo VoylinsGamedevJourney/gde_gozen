@@ -16,7 +16,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm ffmpeg git bash yasm python python-pip scons gcc diffutils make mingw-w64
+        run: pacman -Syu --noconfirm ffmpeg git bash yasm python python-pip scons gcc diffutils make mingw-w64 tree
 
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         run: scons -j4 target=template_release platform=windows arch=x86_64
 
       - name: Uploading GDExtension artifact release
-        if: ${{ github.event.inputs.artifact }}
+        if: ${{ github.event.inputs.artifact == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_windows_build

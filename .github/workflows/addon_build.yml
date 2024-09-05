@@ -48,7 +48,7 @@ jobs:
           cp LICENSE test_room/addons/gde_gozen/
 
       - name: Uploading addon build
-        if: ${{ github.event.inputs.artifact_addon }}
+        if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: Addon_GDE_GoZen
@@ -56,7 +56,7 @@ jobs:
           retention-days: 1
 
       - name: Uploading test room build
-        if: ${{ github.event.inputs.artifact_test_room }}
+        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: test_room

@@ -104,9 +104,8 @@ elif 'windows' in platform:
     os.system(f'cp ffmpeg/bin/bin/*.dll bin/{platform}/{target}')
     print("showing inside of ffmpeg/bin/bin")
     os.system('ls -alh ffmpeg/bin/bin/')
-    print("showing inside of ffmpeg/bin/")
-    os.system('ls -alh ffmpeg/bin/')
-
+    print("showing tree of ffmpeg/bin/")
+    os.system('tree')
 
 src = Glob('src/*.cpp')
 libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])
