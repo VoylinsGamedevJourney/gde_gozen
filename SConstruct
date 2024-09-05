@@ -36,7 +36,7 @@ if 'linux' in platform:
         platform += '_full'
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
             os.chdir('ffmpeg')
-            # ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
+            ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
             os.system(f'./configure --prefix=bin {ffmpeg_args} --target-os=linux')
             time.sleep(5)
 
@@ -56,20 +56,26 @@ if 'linux' in platform:
             'ffmpeg/bin/lib'])
 
         print(os.system(f'cp ffmpeg/bin/lib/*.so* bin/{platform}/{target}'))
-        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample', 'swscale'])
+        env.Append(LIBS=[
+            'avcodec',
+            'avformat',
+            'avdevice',
+            'avutil',
+            'swresample',
+            'swscale'])
 elif 'windows' in platform:
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
-        extra_args = ''
         if os_platform.system().lower() == 'linux':
-            extra_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
-            extra_args = ' --enable-cross-compile'
-            extra_args += ' --extra-ldflags="-static"'
+            ffmpeg_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
+            ffmpeg_args = ' --enable-cross-compile'
+            ffmpeg_args += ' --extra-ldflags="-static"'
+            ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
         else:
-            extra_args = ' --target-os=windows'
+            ffmpeg_args = ' --target-os=windows'
 
         os.chdir('ffmpeg')
         os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
-        os.system(f'./configure --prefix=bin {ffmpeg_args} {extra_args}')
+        os.system(f'./configure --prefix=bin {ffmpeg_args}')
         time.sleep(5)
 
         os.system(f'make -j {jobs}')
@@ -85,7 +91,13 @@ elif 'windows' in platform:
             'swresample.lib',
             'swscale.lib'])
     else:
-        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample', 'swscale'])
+        env.Append(LIBS=[
+            'avcodec',
+            'avformat',
+            'avdevice',
+            'avutil',
+            'swresample',
+            'swscale'])
 
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
@@ -96,4 +108,3 @@ src = Glob('src/*.cpp')
 libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
-
