@@ -1,3 +1,4 @@
+class_name VideoPlayback
 extends Control
 ## Video playback and seeking inside of Godot.
 ##
@@ -9,7 +10,10 @@ extends Control
 
 
 signal _current_frame_changed(frame_nr) ## Getting the current frame might be usefull if you want certain events to happen at a certain frame number. In the test project we use it for making the timeline move along with the video
+
+signal _on_video_loaded ## Get's called when the video is ready to display
 signal _video_ended ## Get's called when last frame has been shown.
+
 signal _on_play_pressed ## Called when the play command has been used with an open video.
 signal _on_pause_pressed ## Called when the pause command has been used with an open video.
 signal _on_video_playback_ready ## Get's called when the video playback node is completely loaded, video is open and ready for playback.
@@ -22,12 +26,7 @@ var video: Video = null ## The video object uses GDEGoZen to function, this clas
 
 var texture_rect: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.
-
-var _buffers: Array[RID] = []
-var _uniform_sets: Array[RID] = []
-var _textures: Array[RID] = []
-
-var _texture_fmt: RDTextureFormat
+var skipped_image: ImageTexture = ImageTexture.new()
 
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
 var current_frame: int = 0: set = _set_current_frame ## Current frame number which the video playback is at.
@@ -41,7 +40,7 @@ var _skips: int = 0
 
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
-	texture_rect.texture = Texture2DRD.new()
+	texture_rect.texture = ImageTexture.new()
 	texture_rect.anchor_right = TextureRect.ANCHOR_END
 	texture_rect.anchor_bottom = TextureRect.ANCHOR_END
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -49,19 +48,10 @@ func _enter_tree() -> void:
 	add_child(texture_rect)
 	add_child(audio_player)
 
-	_buffers.resize(5)
-	_uniform_sets.resize(5)
-	_textures.resize(1)
-
 
 func _exit_tree() -> void:
-	GoZenServer.shutdown()
 	if video != null:
-		video.close()
-
-	_free_buffers()
-	_free_uniform_sets()
-	_free_textures()
+		close()
 
 
 func _ready() -> void:
@@ -70,42 +60,14 @@ func _ready() -> void:
 		set_video_path(path)
 
 
-#------------------------------------------------ CLEANUP CREW
-func _free_buffers() -> void:
-	if _buffers.size() == 0:
-		return
-	for i: RID in _buffers:
-		if GoZenServer.rd.framebuffer_is_valid(i):
-			GoZenServer.rd.free_rid(i)
-		
-
-func _free_uniform_sets() -> void:
-	if _uniform_sets.size() == 0:
-		return
-	for i: RID in _uniform_sets:
-		if GoZenServer.rd.uniform_set_is_valid(i):
-			GoZenServer.rd.free_rid(i)
-
-
-func _free_textures() -> void:
-	if _textures.size() == 0:
-		return
-	for i: RID in _textures:
-		if GoZenServer.rd.texture_is_valid(i):
-			GoZenServer.rd.free_rid(i)
-
-
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(a_path: String) -> void:
-	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's all the buffers for our shader which will help to display the current frame image.
+	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
 	path = a_path
 	if !is_node_ready():
 		return
 
-	if !GoZenServer.running:
-		GoZenServer.startup()
-	if video != null:
-		video.close()
+	audio_player.stream = null
 
 	video = Video.new()
 	var err: int = video.open(path, true)	
@@ -125,35 +87,7 @@ func update_video(a_video: Video) -> void:
 
 	is_playing = false
 	_frame_time = 1.0 / video.get_framerate()
-	
-	_free_textures()
-	_texture_fmt = RDTextureFormat.new()
-	_texture_fmt.format = RenderingDevice.DATA_FORMAT_R8G8B8A8_UNORM
-	_texture_fmt.texture_type = RenderingDevice.TEXTURE_TYPE_2D
-	_texture_fmt.width = video.get_width()
-	_texture_fmt.height = video.get_height()
-	_texture_fmt.depth = 1
-	_texture_fmt.array_layers = 1
-	_texture_fmt.mipmaps = 1
-	_texture_fmt.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_TO_BIT
-	_textures[0] = GoZenServer.create_image(_texture_fmt)
-	(texture_rect.texture as Texture2DRD).set_texture_rd_rid(_textures[0])
-
-	video.seek_frame(0)
-	_free_buffers()
-	_buffers[0] = GoZenServer.create_storage_buffer(video.get_y())
-	_buffers[1] = GoZenServer.create_storage_buffer(video.get_u())
-	_buffers[2] = GoZenServer.create_storage_buffer(video.get_v())
-	_buffers[3] = GoZenServer.create_storage_buffer(PackedInt32Array([video.get_width()]).to_byte_array())
-
-	_free_uniform_sets()
-	_uniform_sets[0] = GoZenServer.create_uniform_storage_buffer(_buffers[0], 0)
-	_uniform_sets[1] = GoZenServer.create_uniform_storage_buffer(_buffers[1], 1)
-	_uniform_sets[2] = GoZenServer.create_uniform_storage_buffer(_buffers[2], 2)
-	_uniform_sets[3] = GoZenServer.create_uniform_storage_buffer(_buffers[3], 3)
-	_uniform_sets[4] = GoZenServer.create_uniform_image(_textures[0], 4)
-
-	_compute_list_dispatch()
+	texture_rect.texture.set_image(video.seek_frame(0))
 	_on_video_loaded.emit()
 
 
@@ -163,40 +97,26 @@ func seek_frame(a_frame_nr: int) -> void:
 		return
 
 	current_frame = clamp(a_frame_nr, 0, video.get_frame_duration())
-	video.seek_frame(a_frame_nr)
+	texture_rect.texture.set_image(video.seek_frame(a_frame_nr))
 
 	audio_player.set_stream_paused(false)
 	audio_player.play(current_frame / video.get_framerate())
 	audio_player.set_stream_paused(!is_playing)
 
-	_update_frame()
-
 
 func next_frame(a_skip: bool = false) -> void:
 	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
-	video.next_frame(a_skip)
-
 	if !a_skip:
-		_update_frame()
-		_on_next_frame_called.emit(current_frame)
+		texture_rect.texture.set_image(video.next_frame())
+	else:
+		skipped_image.set_image(video.next_frame())
 
-
-func _update_frame() -> void:
-	GoZenServer.buffer_update(_buffers[0], video.get_y())
-	GoZenServer.buffer_update(_buffers[1], video.get_u())
-	GoZenServer.buffer_update(_buffers[2], video.get_v())
-	_compute_list_dispatch()
-
-
-func _compute_list_dispatch() -> void:
-	var l_compute_list: int = GoZenServer.cl_begin()
-	GoZenServer.cl_bind_uniform_set(l_compute_list, _uniform_sets[0], 0)
-	GoZenServer.cl_bind_uniform_set(l_compute_list, _uniform_sets[1], 1)
-	GoZenServer.cl_bind_uniform_set(l_compute_list, _uniform_sets[2], 2)
-	GoZenServer.cl_bind_uniform_set(l_compute_list, _uniform_sets[3], 3)
-	GoZenServer.cl_bind_uniform_set(l_compute_list, _uniform_sets[4], 4)
-
-	GoZenServer.cl_dispatch(l_compute_list, video.get_width(), video.get_height(), 1)
+	
+func close() -> void:
+	if is_playing:
+		pause()
+	video.close()
+	video = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING
@@ -206,10 +126,7 @@ func _process(a_delta: float) -> void:
 		if _time_elapsed < _frame_time:
 			_video_ended.emit()
 			return
-		_handle_update()
 
-
-func _handle_update() -> void:
 		_skips = 0
 		while _time_elapsed >= _frame_time:
 			_time_elapsed -= _frame_time
@@ -244,12 +161,6 @@ func pause() -> void:
 	_on_pause_pressed.emit()
 
 
-#------------------------------------------------ SETTERS
-func _set_current_frame(a_value: int) -> void:
-	current_frame = a_value
-	_current_frame_changed.emit(current_frame)
-
-
 #------------------------------------------------ GETTERS
 func get_frame_duration() -> int:
 	## Getting the frame duration returns the total amount of frames found in a video file.
@@ -264,3 +175,11 @@ func get_framerate() -> float:
 func is_open() -> bool:
 	## Checking to see if the video is open or not, trying to run functions without checking if open can crash your project.
 	return video != null and video.is_open()
+
+
+#------------------------------------------------ SETTERS
+func _set_current_frame(a_value: int) -> void:
+	current_frame = a_value
+	_current_frame_changed.emit(current_frame)
+
+
