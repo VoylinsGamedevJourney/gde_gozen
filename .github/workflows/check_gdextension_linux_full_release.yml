@@ -23,10 +23,43 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build Linux full Debug
+      - name: Restore cached linux_full_debug
+        id: cache-linux-full-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: linux_full_debug
+      - name: Build Linux full debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
-      - name: Build Linux full Release
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no
+      - name: Save cache linux_full_debug
+        id: cache-linux-full-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: ${{ steps.cache-linux-full-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached linux_full_release
+        id: cache-linux-full-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: linux_full_release
+      - name: Build Linux full release
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
+      - name: Save cache linux_full_release
+        id: cache-linux-full-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: ${{ steps.cache-linux-full-release-restore.outputs.cache-primary-key }}
 
       - name: Uploading GDExtension artifact full release
         if: ${{ github.event.inputs.artifact == 'true' }}
