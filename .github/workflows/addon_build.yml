@@ -33,13 +33,13 @@ jobs:
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
           scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
           scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
-          scons -j4 target=template_release platform=linux arch=x86_64 use_system=no enable_small=yes recompile_ffmpeg=no
+          scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
 
 
       - name: Build Windows
         run: |
-          scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
-          scons -j4 target=template_release platform=windows arch=x86_64 enable_small=yes recompile_ffmpeg=no
+          scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+          scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
 
 
       - name: Copying libs
