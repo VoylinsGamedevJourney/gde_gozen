@@ -23,17 +23,17 @@ ffmpeg_args += ' --quiet'
 ffmpeg_args += f' --arch={arch}'
 
 
-os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
 
 if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
+        os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
+
         env.Append(LINKFLAGS=['-static-libstdc++'])
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
         env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
-
-        os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
     else:  # For people needing FFmpeg binaries
         platform += '_full'
+        os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
 
@@ -68,6 +68,7 @@ if 'linux' in platform:
             'swresample',
             'swscale'])
 elif 'windows' in platform:
+    os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
         if os_platform.system().lower() == 'linux':
             ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
@@ -110,6 +111,8 @@ elif 'windows' in platform:
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
     os.system(f'cp ffmpeg/bin/bin/*.dll bin/{platform}/{target}')
 
+CacheDir('.scons-cache')
+Decider('MD5')
 
 src = Glob('src/*.cpp')
 libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])

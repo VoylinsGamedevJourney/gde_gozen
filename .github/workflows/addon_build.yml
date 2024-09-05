@@ -32,7 +32,7 @@ jobs:
         id: cache-linux-debug-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: linux_debug
       - name: Build Linux debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
@@ -40,7 +40,7 @@ jobs:
         id: cache-linux-debug-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-linux-debug-restore.outputs.cache-primary-key }}
 
 
@@ -48,7 +48,7 @@ jobs:
         id: cache-linux-full-debug-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: linux_full_debug
       - name: Build Linux full debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
@@ -56,7 +56,7 @@ jobs:
         id: cache-linux-full-debug-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-linux-full-debug-restore.outputs.cache-primary-key }}
 
 
@@ -64,7 +64,7 @@ jobs:
         id: cache-linux-release-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: linux_release
       - name: Build Linux release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
@@ -72,7 +72,7 @@ jobs:
         id: cache-linux-release-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-linux-release-restore.outputs.cache-primary-key }}
 
 
@@ -80,7 +80,7 @@ jobs:
         id: cache-linux-full-release-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: linux_full_release
       - name: Build Linux full release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
@@ -88,7 +88,7 @@ jobs:
         id: cache-linux-full-release-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-linux-full-release-restore.outputs.cache-primary-key }}
 
 
@@ -96,7 +96,7 @@ jobs:
         id: cache-windows-debug-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: windows_debug
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
@@ -104,15 +104,15 @@ jobs:
         id: cache-windows-debug-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
 
 
       - name: Restore cached windows_release
-        id: cache-windows-release
+        id: cache-windows-release-restore
         uses: actions/cache/restore@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: windows_release
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
@@ -120,7 +120,7 @@ jobs:
         id: cache-windows-release-save
         uses: actions/cache/save@v4
         with:
-          path: ${{github.workspace}}/.scons-cache/
+          path: .scons-cache/
           key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
 
 
