@@ -37,7 +37,7 @@ if 'linux' in platform:
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
             os.chdir('ffmpeg')
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
-            os.system(f'./configure --prefix=bin {ffmpeg_args} --target-os=linux')
+            os.system(f'./configure --prefix=./bin {ffmpeg_args} --target-os=linux')
             time.sleep(5)
 
             os.system(f'make -j {jobs}')
@@ -75,7 +75,7 @@ elif 'windows' in platform:
 
         os.chdir('ffmpeg')
         os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
-        os.system(f'./configure --prefix=bin {ffmpeg_args}')
+        os.system(f'./configure --prefix=./bin {ffmpeg_args}')
         time.sleep(5)
 
         os.system(f'make -j {jobs}')

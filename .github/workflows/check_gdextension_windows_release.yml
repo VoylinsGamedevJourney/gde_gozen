@@ -24,9 +24,9 @@ jobs:
           submodules: recursive
 
       - name: Build Windows Debug
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 enable_gpl=yes dev_build=yes
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
       - name: Build Windows Release
-        run: scons -j4 target=template_release platform=windows arch=x86_64 enable_gpl=yes enable_small=yes
+        run: scons -j4 target=template_release platform=windows arch=x86_64
 
       - name: Uploading GDExtension artifact release
         if: ${{ github.event.inputs.artifact }}
