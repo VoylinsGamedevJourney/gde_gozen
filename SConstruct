@@ -66,8 +66,8 @@ if 'linux' in platform:
 elif 'windows' in platform:
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
         if os_platform.system().lower() == 'linux':
-            ffmpeg_args = '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
-            ffmpeg_args = ' --enable-cross-compile'
+            ffmpeg_args += '--cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
+            ffmpeg_args += ' --enable-cross-compile'
             ffmpeg_args += ' --extra-ldflags="-static"'
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
         else:
@@ -104,9 +104,8 @@ elif 'windows' in platform:
     os.system(f'cp ffmpeg/bin/bin/*.dll bin/{platform}/{target}')
     print("showing inside of ffmpeg/bin/bin")
     os.system('ls -alh ffmpeg/bin/bin/')
-    print("showing inside of ffmpeg/bin/")
-    os.system('ls -alh ffmpeg/bin/')
-
+    print("showing tree of ffmpeg/bin/")
+    os.system('tree')
 
 src = Glob('src/*.cpp')
 libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])
