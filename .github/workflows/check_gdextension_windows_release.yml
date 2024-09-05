@@ -23,10 +23,43 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build Windows Debug
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
-      - name: Build Windows Release
-        run: scons -j4 target=template_release platform=windows arch=x86_64
+      - name: Restore cached windows_debug
+        id: cache-windows-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: windows_debug
+      - name: Build Windows debug
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+      - name: Save cache windows_debug
+        id: cache-windows-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached windows_release
+        id: cache-windows-release
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: windows_release
+      - name: Build Windows release
+        run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+      - name: Save cache windows_release
+        id: cache-windows-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            godot_cpp
+            ffmpeg
+          key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
 
       - name: Uploading GDExtension artifact release
         if: ${{ github.event.inputs.artifact == 'true' }}
