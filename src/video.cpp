@@ -137,8 +137,12 @@ int Video::open(String a_path, bool a_load_audio) {
 		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
 	}
 
-	sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, av_codec_ctx_video->sw_pix_fmt,
-							 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+	if (hw_decoding && hw_device_ctx)
+		sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, av_codec_ctx_video->sw_pix_fmt,
+								 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+	else
+		sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, (AVPixelFormat)av_stream_video->codecpar->format,
+								 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
 	if (!sws_ctx) {
 		UtilityFunctions::printerr("Couldn't get SWS context!");
 		close();
@@ -525,7 +529,7 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 void Video::_decode_video_frame(Ref<Image> a_image) {
 	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
 
-	if (hw_device_ctx) {
+	if (hw_decoding && hw_device_ctx) {
         av_soft_frame = av_frame_alloc();
         if (!av_soft_frame) {
             UtilityFunctions::printerr("Failed to allocate software frame!");
