@@ -18,6 +18,7 @@ No error code but returns an empty dictionary when nothing was able to be read.
 - -7: Could not establish the total amount of frames in video files;
 - -8: Failed setting up of SWR; 
 - -9: Audio seeking error;
+- -10: Hardware decoder setup failed;
 
 ### seek_frame and next_frame
 

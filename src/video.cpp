@@ -72,11 +72,13 @@ int Video::open(String a_path, bool a_load_audio) {
 			av_stream_video = av_format_ctx->streams[i];
 	}
 
-	// TODO: Implement hardware decoding
-	//	"vaapi", "qsv", "vulkan", "vdpau", "nvdec"
-	//
 	// Setup Decoder codec context
-	const AVCodec *av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
+	const AVCodec *av_codec_video;
+	if (hw_decoding)
+		av_codec_video = _get_hw_codec(av_stream_video->codecpar->codec_id);
+	else
+		av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
+
 	if (!av_codec_video) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for video!");
 		close();
@@ -97,6 +99,18 @@ int Video::open(String a_path, bool a_load_audio) {
 		UtilityFunctions::printerr("Couldn't initialize video codec context!");
 		close();
 		return -3;
+	}
+
+	// Hardware decoding setup
+	if (hw_decoding && hw_device_ctx) {
+		av_codec_ctx_video->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+
+		if (!av_codec_ctx_video->hw_device_ctx) {
+            UtilityFunctions::printerr("Failed to set hardware device context!");
+            av_buffer_unref(&hw_device_ctx); // Free hardware device context on failure
+            close();
+            return -10;
+        }
 	}
 
 	// Open codec - Video
@@ -123,7 +137,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
 	}
 
-	sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, (AVPixelFormat)av_stream_video->codecpar->format,
+	sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, av_codec_ctx_video->sw_pix_fmt,
 							 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
 	if (!sws_ctx) {
 		UtilityFunctions::printerr("Couldn't get SWS context!");
@@ -232,8 +246,13 @@ void Video::close() {
 
 	if (av_frame)
 		av_frame_free(&av_frame);
+	if (av_soft_frame)
+		av_frame_free(&av_soft_frame);
 	if (av_packet)
 		av_packet_free(&av_packet);
+
+	if (hw_device_ctx)
+		av_buffer_unref(&hw_device_ctx);
 }
 
 void Video::print_av_error(const char *a_message) {
@@ -453,6 +472,29 @@ Ref<Image> Video::next_frame() {
 	return l_image;
 }
 
+const AVCodec* Video::_get_hw_codec(enum AVCodecID a_id) {
+	const AVCodecDescriptor *l_desc = avcodec_descriptor_get(a_id);
+	const AVCodec* l_codec;
+
+	if (l_desc) {
+		for (const std::string& l_decoder : hw_decoders) {
+			l_codec = avcodec_find_decoder_by_name((std::string(l_desc->name) + '_' + l_decoder).c_str());
+
+			if (l_codec) {
+				UtilityFunctions::print("Found HW Decoder " + String(l_decoder.c_str()));
+
+				if (av_hwdevice_ctx_create(&hw_device_ctx, _get_hw_device_type(l_decoder), NULL, NULL, 0) < 0) {
+					UtilityFunctions::printerr("Failed to create hardware device context!");
+				} else return l_codec;
+			}
+		}
+	}
+
+	if (!l_codec)
+		return avcodec_find_decoder(a_id);
+	return l_codec;
+}
+
 void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 	bool l_eof = false;
 	av_frame_unref(av_frame);
@@ -482,6 +524,24 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 
 void Video::_decode_video_frame(Ref<Image> a_image) {
 	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
+
+	if (hw_device_ctx) {
+        av_soft_frame = av_frame_alloc();
+        if (!av_soft_frame) {
+            UtilityFunctions::printerr("Failed to allocate software frame!");
+            return;
+        }
+
+        if (av_hwframe_transfer_data(av_soft_frame, av_frame, 0) < 0) {
+            UtilityFunctions::printerr("Error transferring the frame to system memory!");
+            av_frame_free(&av_soft_frame);
+            return;
+        }
+
+        av_frame_unref(av_frame);
+        av_frame = av_soft_frame;
+    }
+
 	sws_scale(sws_ctx, av_frame->data, av_frame->linesize, 0, av_frame->height, l_dest_data, src_linesize);
 	a_image->set_data(resolution.x, av_frame->height, 0, a_image->FORMAT_RGB8, byte_array);
 
@@ -491,3 +551,15 @@ void Video::_decode_video_frame(Ref<Image> a_image) {
 	av_packet_free(&av_packet);
 }
 
+
+AVHWDeviceType Video::_get_hw_device_type(const std::string& a_decoder_name) {
+    size_t array_size = sizeof(hw_decoders) / sizeof(hw_decoders[0]);
+
+    for (size_t i = 0; i < array_size; ++i) {
+        if (hw_decoders[i] == a_decoder_name) {
+            return hw_device_types[i];
+        }
+    }
+
+	return AV_HWDEVICE_TYPE_NONE;
+}
