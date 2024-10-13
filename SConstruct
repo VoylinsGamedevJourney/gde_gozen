@@ -12,6 +12,7 @@ jobs = ARGUMENTS.get('jobs', 4)
 arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
+location = ARGUMENTS.get('location', 'bin')
 
 
 ffmpeg_args = '--enable-shared'
@@ -23,17 +24,16 @@ ffmpeg_args += ' --quiet'
 ffmpeg_args += f' --arch={arch}'
 
 
-
 if 'linux' in platform:
     if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
-        os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
+        os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
 
         env.Append(LINKFLAGS=['-static-libstdc++'])
         env.Append(CPPPATH=['/usr/include/ffmpeg/'])
         env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
     else:  # For people needing FFmpeg binaries
         platform += '_full'
-        os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
+        os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
 
@@ -59,7 +59,7 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'])
 
-        print(os.system(f'cp ffmpeg/bin/lib/*.so* bin/{platform}/{target}'))
+        print(os.system(f'cp ffmpeg/bin/lib/*.so* {location}/{platform}/{target}'))
         env.Append(LIBS=[
             'avcodec',
             'avformat',
@@ -68,7 +68,7 @@ if 'linux' in platform:
             'swresample',
             'swscale'])
 elif 'windows' in platform:
-    os.makedirs(f'bin/{platform}/{target}', exist_ok=True)
+    os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
         if os_platform.system().lower() == 'linux':
             ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
@@ -115,6 +115,6 @@ CacheDir('.scons-cache')
 Decider('MD5')
 
 src = Glob('src/*.cpp')
-libpath = 'bin/{}/{}/libgozen{}{}'.format(platform, target, env['suffix'], env['SHLIBSUFFIX'])
+libpath = '{}/{}/{}/libgozen{}{}'.format(location, platform, target, env['suffix'], env['SHLIBSUFFIX'])
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
