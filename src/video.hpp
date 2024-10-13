@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cmath>
+
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
@@ -9,7 +10,6 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "ffmpeg_includes.hpp"
-//#include "hw_devices.hpp"
 
 
 using namespace godot;
@@ -18,15 +18,34 @@ class Video : public Resource {
 	GDCLASS(Video, Resource);
 
 private:
+	static inline const std::string hw_decoders[] = {
+		"vaapi",
+		"qsv",
+		"nvdec",
+		"vdpau",
+		"cuvid",
+		"vulkan"
+	};
+	static inline const AVHWDeviceType hw_device_types[] = {
+		AV_HWDEVICE_TYPE_VAAPI,
+		AV_HWDEVICE_TYPE_QSV,
+		AV_HWDEVICE_TYPE_CUDA,
+		AV_HWDEVICE_TYPE_VDPAU,
+		AV_HWDEVICE_TYPE_CUDA,
+		AV_HWDEVICE_TYPE_VULKAN
+	};
+
 	AVFormatContext *av_format_ctx = nullptr;
 	AVStream *av_stream_video = nullptr, *av_stream_audio = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
+	AVHWDeviceType device_type;
 	AVBufferRef *hw_device_ctx = nullptr;
 
-	AVFrame *av_frame = nullptr;
+	AVFrame *av_frame = nullptr, *av_soft_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
 	struct SwsContext *sws_ctx = nullptr;
+
 
 	int response = 0;
 	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
@@ -35,7 +54,7 @@ private:
 	PackedByteArray byte_array;
 	int src_linesize[4] = {0, 0, 0, 0};
 	Vector2i resolution = Vector2i(0, 0);
-	bool loaded = false, variable_framerate = false;
+	bool loaded = false, hw_decoding = false, variable_framerate = false;
 	int64_t duration = 0, frame_duration = 0;
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
 	float framerate = 0.0;
@@ -44,6 +63,10 @@ private:
 	AudioStreamWAV *audio = nullptr;
 	String path = "";
 
+	const AVCodec *_get_hw_codec(enum AVCodecID a_id);
+	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
+	void _decode_video_frame(Ref<Image> a_image);
+	AVHWDeviceType _get_hw_device_type(const std::string& a_decoder_name);
 
 public:
 	Video() {}
@@ -65,6 +88,9 @@ public:
 
 	inline float get_framerate() { return framerate; }
 
+	inline void set_hw_decoding(bool a_value) { hw_decoding = a_value; }
+	inline bool get_hw_decoding() { return hw_decoding; }
+
 	inline bool is_framerate_variable() { return variable_framerate; }
 	inline int get_frame_duration() { return frame_duration; };
 
@@ -76,16 +102,13 @@ public:
 
 	void print_av_error(const char *a_message);
 
-	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
-	void _decode_video_frame(Ref<Image> a_image);
 
 protected:
 	static inline void _bind_methods() {
 		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_path"), &Video::get_file_meta);
 		ClassDB::bind_static_method("Video", D_METHOD("open_new", "a_path", "a_load_audio"), &Video::open_new);
 
-		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"),
-							 &Video::open, DEFVAL(""), DEFVAL(true));
+		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"), &Video::open, DEFVAL(""), DEFVAL(true));
 		ClassDB::bind_method(D_METHOD("close"), &Video::close);
 
 		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
@@ -93,6 +116,9 @@ protected:
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
 		ClassDB::bind_method(D_METHOD("next_frame"), &Video::next_frame);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
+
+		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
+		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 
