@@ -61,7 +61,7 @@ private:
 	double expected_pts = 0.0, actual_pts = 0.0;
 
 	AudioStreamWAV *audio = nullptr;
-	String path = "";
+	String path = "", prefered_hw_decoder = "";
 
 	const AVCodec *_get_hw_codec(enum AVCodecID a_id);
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
@@ -95,6 +95,9 @@ public:
 	inline int get_frame_duration() { return frame_duration; };
 
 	inline String get_path() { return path; }
+
+	inline void set_prefered_hw_decoder(String a_value) { prefered_hw_decoder = a_value; }
+	inline String get_prefered_decoder() { return prefered_hw_decoder; }
 	
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
@@ -123,6 +126,9 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 
 		ClassDB::bind_method(D_METHOD("get_path"), &Video::get_path);
+
+		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_value"), &Video::set_prefered_hw_decoder);
+		ClassDB::bind_method(D_METHOD("get_prefered_decoder"), &Video::get_prefered_decoder);
 
 		ClassDB::bind_method(D_METHOD("get_resolution"), &Video::get_resolution);
 		ClassDB::bind_method(D_METHOD("get_width"), &Video::get_width);
