@@ -143,7 +143,6 @@ func _process(a_delta: float) -> void:
 			audio_player.set_stream_paused(true)
 		else:
 			while _skips != 1:
-				print("test")
 				next_frame(true)
 				_skips -= 1
 			next_frame()
@@ -154,6 +153,11 @@ func play() -> void:
 	if video != null and !is_open() and is_playing:
 		return
 	is_playing = true
+
+	audio_player.set_stream_paused(false)
+	audio_player.play((current_frame + 1) / video.get_framerate())
+	audio_player.set_stream_paused(!is_playing)
+
 	_on_play_pressed.emit()
 
 
