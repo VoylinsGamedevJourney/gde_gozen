@@ -335,13 +335,6 @@ int Video::_get_audio() {
 		return -2;
 	}
 
-	// Open codec - Audio
-	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
-		UtilityFunctions::printerr("Couldn't open audio codec!");
-		close();
-		return -2;
-	}
-
 	// Enable multi-threading for decoding - Audio
 	// set codec to automatically determine how many threads suits best for the
 	// decoding job
@@ -352,6 +345,13 @@ int Video::_get_audio() {
 		av_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
 	else
 		av_codec_ctx_audio->thread_count = 1; // don't use multithreading
+
+	// Open codec - Audio
+	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
+		UtilityFunctions::printerr("Couldn't open audio codec!");
+		close();
+		return -2;
+	}
 
 	av_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
