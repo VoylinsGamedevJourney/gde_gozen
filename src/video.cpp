@@ -294,13 +294,13 @@ void Video::close() {
 	if (sws_ctx)
 		sws_freeContext(sws_ctx);
 
-	if (av_format_ctx)
-		avformat_close_input(&av_format_ctx);
-	if (av_codec_ctx_video)
-		avcodec_free_context(&av_codec_ctx_video);
-
 	if (hw_device_ctx)
 		av_buffer_unref(&hw_device_ctx);
+
+	if (av_codec_ctx_video)
+		avcodec_free_context(&av_codec_ctx_video);
+	if (av_format_ctx)
+		avformat_close_input(&av_format_ctx);
 }
 
 void Video::print_av_error(const char *a_message) {
@@ -475,7 +475,7 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 		UtilityFunctions::printerr("Can't seek video file!");
 		return l_image;
 	}
-
+	
 	while (true) {
 		_get_frame(av_codec_ctx_video, av_stream_video->index);
 		if (response) {
@@ -493,6 +493,7 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 			continue;
 	
 		_decode_video_frame(l_image);
+
 		break;
 	}
 
@@ -515,9 +516,7 @@ Ref<Image> Video::next_frame() {
 	av_packet = av_packet_alloc();
 	av_frame = av_frame_alloc();
 
-	int start_time = Time::get_singleton()->get_ticks_usec();
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
-	UtilityFunctions::print("get frame time: ", Time::get_singleton()->get_ticks_usec() - start_time);
 
 	_decode_video_frame(l_image);
 
@@ -634,7 +633,6 @@ void Video::_decode_video_frame(Ref<Image> a_image) {
             UtilityFunctions::printerr("Failed to allocate software frame!");
             return;
         }
-		AVHWFramesContext c;
 
         if (av_hwframe_transfer_data(av_soft_frame, av_frame, 0) < 0) {
             UtilityFunctions::printerr("Error transferring the frame to system memory!");
@@ -643,6 +641,7 @@ void Video::_decode_video_frame(Ref<Image> a_image) {
 
 		sws_scale(sws_ctx, av_soft_frame->data, av_soft_frame->linesize, 0, av_soft_frame->height, l_dest_data, src_linesize);
 		a_image->set_data(resolution.x, av_soft_frame->height, 0, a_image->FORMAT_RGB8, byte_array);
+
     } else {
 		sws_scale(sws_ctx, av_frame->data, av_frame->linesize, 0, av_frame->height, l_dest_data, src_linesize);
 		a_image->set_data(resolution.x, av_frame->height, 0, a_image->FORMAT_RGB8, byte_array);
