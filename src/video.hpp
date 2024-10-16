@@ -5,6 +5,7 @@
 
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/control.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include "godot_cpp/classes/gd_extension_manager.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -40,12 +41,12 @@ private:
 	AVCodecContext *av_codec_ctx_video = nullptr;
 	AVHWDeviceType device_type;
 	AVBufferRef *hw_device_ctx = nullptr;
+	AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	AVFrame *av_frame = nullptr, *av_soft_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
 	struct SwsContext *sws_ctx = nullptr;
-
 
 	int response = 0;
 	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
@@ -64,15 +65,18 @@ private:
 	String path = "", prefered_hw_decoder = "";
 
 	const AVCodec *_get_hw_codec(enum AVCodecID a_id);
+	AVHWDeviceType _get_hw_device_type(const std::string& a_decoder_name);
+	static enum AVPixelFormat _get_hw_format(AVCodecContext *a_ctx, const enum AVPixelFormat *a_pix_fmts);
+
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
 	void _decode_video_frame(Ref<Image> a_image);
-	AVHWDeviceType _get_hw_device_type(const std::string& a_decoder_name);
 
 public:
 	Video() {}
 	~Video() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
+	static PackedStringArray get_available_hw_codecs(String a_video_path);
 	static Ref<Video> open_new(String a_path = "", bool a_load_audio = true);
 
 	int open(String a_path = "", bool a_load_audio = true);
@@ -110,6 +114,8 @@ protected:
 	static inline void _bind_methods() {
 		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_path"), &Video::get_file_meta);
 		ClassDB::bind_static_method("Video", D_METHOD("open_new", "a_path", "a_load_audio"), &Video::open_new);
+
+		ClassDB::bind_static_method("Video", D_METHOD("get_available_hw_codecs", "a_video_path"), &Video::get_available_hw_codecs);
 
 		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"), &Video::open, DEFVAL(""), DEFVAL(true));
 		ClassDB::bind_method(D_METHOD("close"), &Video::close);
