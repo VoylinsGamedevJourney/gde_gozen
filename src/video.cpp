@@ -250,8 +250,6 @@ void Video::close() {
 
 	if (av_frame)
 		av_frame_free(&av_frame);
-	if (av_soft_frame)
-		av_frame_free(&av_soft_frame);
 	if (av_packet)
 		av_packet_free(&av_packet);
 
@@ -481,6 +479,20 @@ const AVCodec* Video::_get_hw_codec(enum AVCodecID a_id) {
 	const AVCodec* l_codec;
 
 	if (l_desc) {
+		// Get prefered decoder
+		if (prefered_hw_decoder != "") {
+			l_codec = avcodec_find_decoder_by_name((std::string(l_desc->name) + '_' + prefered_hw_decoder.utf8().get_data()).c_str());
+
+			if (l_codec) {
+				UtilityFunctions::print("Found HW Decoder " + prefered_hw_decoder);
+
+				if (av_hwdevice_ctx_create(&hw_device_ctx, _get_hw_device_type(prefered_hw_decoder.utf8().get_data()), NULL, NULL, 0) < 0) {
+					UtilityFunctions::printerr("Failed to use prefered hardware decoder!");
+				} else return l_codec;
+			}
+		}
+
+		// If no prefered, or prefered couldn't be found, check other decoders
 		for (const std::string& l_decoder : hw_decoders) {
 			l_codec = avcodec_find_decoder_by_name((std::string(l_desc->name) + '_' + l_decoder).c_str());
 
