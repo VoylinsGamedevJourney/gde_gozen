@@ -163,13 +163,14 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Enable multi-threading for decoding - Video
-	av_codec_ctx_video->thread_count = 0;
-	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+	av_codec_ctx_video->thread_count =  OS::get_singleton()->get_processor_count() - 1;
+	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		av_codec_ctx_video->thread_type = FF_THREAD_FRAME;
-	else if (av_codec_video->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+		UtilityFunctions::print("frame");
+	} else if (av_codec_video->capabilities & AV_CODEC_CAP_SLICE_THREADS) {
 		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
-	else
-		av_codec_ctx_video->thread_count = 1; // Don't use multithreading
+		UtilityFunctions::print("slice");
+	} else av_codec_ctx_video->thread_count = 1; // Don't use multithreading
 	
 	// Open codec - Video
 	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
@@ -321,45 +322,35 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream_audio->codecpar->codec_id);
 	if (!l_codec_audio) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for audio!");
-		close();
 		return -2;
 	}
 
 	AVCodecContext *l_codec_ctx_audio = avcodec_alloc_context3(l_codec_audio);
 	if (l_codec_ctx_audio == NULL) {
 		UtilityFunctions::printerr("Couldn't allocate codec context for audio!");
-		close();
 		return -2;
 	} else if (avcodec_parameters_to_context(l_codec_ctx_audio, a_stream_audio->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize audio codec context!");
-		close();
 		return -2;
 	}
 
 	// Enable multi-threading for decoding - Audio
 	// set codec to automatically determine how many threads suits best for the
 	// decoding job
-	l_codec_ctx_audio->thread_count = 0;
-	if (l_codec_audio->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+	l_codec_ctx_audio->thread_count = OS::get_singleton()->get_processor_count() - 1;
+	if (l_codec_audio->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		l_codec_ctx_audio->thread_type = FF_THREAD_FRAME;
-	else if (l_codec_audio->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+	} else if (l_codec_audio->capabilities & AV_CODEC_CAP_SLICE_THREADS) {
 		l_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
-	else
-		l_codec_ctx_audio->thread_count =  1; // don't use multithreading
+	} else l_codec_ctx_audio->thread_count =  1; // don't use multithreading
 
 	l_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
 	// Open codec - Audio
 	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
 		UtilityFunctions::printerr("Couldn't open audio codec!");
-		close();
 		return -2;
 	}
-
-	if (l_codec_ctx_audio->sample_fmt == AV_SAMPLE_FMT_S16)
-		UtilityFunctions::print("Worked");
-	else
-		UtilityFunctions::print("Didn't work");
 
 	struct SwrContext *l_swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
@@ -369,18 +360,16 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	
 	if (response < 0) {
 		print_av_error("Failed to obtain SWR context!");
-		close();
+		avcodec_flush_buffers(l_codec_ctx_audio);
+		avcodec_free_context(&l_codec_ctx_audio);
 		return -8;
-	} else if (!l_swr_ctx) {
-		UtilityFunctions::printerr("Could not allocate re-sampler context!");
-		close();
-		return -8;
-	}
+	} 
 
 	response = swr_init(l_swr_ctx);
 	if (response < 0) {
 		print_av_error("Couldn't initialize SWR!");
-		close();
+		avcodec_flush_buffers(l_codec_ctx_audio);
+		avcodec_free_context(&l_codec_ctx_audio);
 		return -8;
 	}
 
@@ -391,12 +380,22 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	response = av_seek_frame(av_format_ctx, -1, start_time_audio, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_ANY);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek to the beginning of audio stream!");
+		avcodec_flush_buffers(l_codec_ctx_audio);
+		avcodec_free_context(&l_codec_ctx_audio);
+		swr_free(&l_swr_ctx);
 		return -9;
 	}
 
 	AVFrame *l_audio_frame = av_frame_alloc();
 	AVFrame *l_decoded_frame = av_frame_alloc();
 	AVPacket *l_packet = av_packet_alloc();
+	if (!l_audio_frame || !l_decoded_frame || !l_packet) {
+		UtilityFunctions::printerr("Couldn't allocate frames or packet for audio!");
+		avcodec_flush_buffers(l_codec_ctx_audio);
+		avcodec_free_context(&l_codec_ctx_audio);
+		swr_free(&l_swr_ctx);
+		return -11;
+	}
 
 	int l_bytes_per_samples = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 	PackedByteArray l_audio_data = PackedByteArray();
