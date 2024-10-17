@@ -111,8 +111,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		if (!avcodec_find_decoder(av_codec_params->codec_id))
 			continue;
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
-			av_stream_audio = av_format_ctx->streams[i];
-			if (a_load_audio && (response = _get_audio()) != 0) {
+			if (a_load_audio && (response = _get_audio(av_format_ctx->streams[i])) != 0) {
 				close();
 				return response;
 			}
@@ -278,8 +277,8 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	frame_duration = (static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
 
-	av_packet_free(&av_packet);
-	av_frame_free(&av_frame);
+	av_packet_unref(av_packet);
+	av_frame_unref(av_frame);
 
 	loaded = true;
 	path = a_path;
@@ -297,6 +296,13 @@ void Video::close() {
 	if (hw_device_ctx)
 		av_buffer_unref(&hw_device_ctx);
 
+	if (av_frame)
+		av_frame_free(&av_frame);
+	if (av_soft_frame)
+		av_frame_free(&av_soft_frame);
+	if (av_packet)
+		av_packet_free(&av_packet);
+
 	if (av_codec_ctx_video)
 		avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx)
@@ -309,27 +315,22 @@ void Video::print_av_error(const char *a_message) {
 	UtilityFunctions::printerr((std::string(a_message) + " " + l_error_buffer).c_str());
 }
 
-int Video::_get_audio() {
+int Video::_get_audio(AVStream* a_stream_audio) {
 	audio = memnew(AudioStreamWAV);
 
-	// Audio Decoder Setup
-	const AVCodec *av_codec_audio = avcodec_find_decoder(av_stream_audio->codecpar->codec_id);
-	if (!av_codec_audio) {
+	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream_audio->codecpar->codec_id);
+	if (!l_codec_audio) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for audio!");
 		close();
 		return -2;
 	}
 
-	// Allocate codec context for decoder
-	AVCodecContext *av_codec_ctx_audio = avcodec_alloc_context3(av_codec_audio);
-	if (av_codec_ctx_audio == NULL) {
+	AVCodecContext *l_codec_ctx_audio = avcodec_alloc_context3(l_codec_audio);
+	if (l_codec_ctx_audio == NULL) {
 		UtilityFunctions::printerr("Couldn't allocate codec context for audio!");
 		close();
 		return -2;
-	}
-
-	// Copying parameters
-	if (avcodec_parameters_to_context(av_codec_ctx_audio, av_stream_audio->codecpar)) {
+	} else if (avcodec_parameters_to_context(l_codec_ctx_audio, a_stream_audio->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize audio codec context!");
 		close();
 		return -2;
@@ -338,40 +339,45 @@ int Video::_get_audio() {
 	// Enable multi-threading for decoding - Audio
 	// set codec to automatically determine how many threads suits best for the
 	// decoding job
-	av_codec_ctx_audio->thread_count = 0;
-	if (av_codec_audio->capabilities & AV_CODEC_CAP_FRAME_THREADS)
-		av_codec_ctx_audio->thread_type = FF_THREAD_FRAME;
-	else if (av_codec_audio->capabilities & AV_CODEC_CAP_SLICE_THREADS)
-		av_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
+	l_codec_ctx_audio->thread_count = 0;
+	if (l_codec_audio->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+		l_codec_ctx_audio->thread_type = FF_THREAD_FRAME;
+	else if (l_codec_audio->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+		l_codec_ctx_audio->thread_type = FF_THREAD_SLICE;
 	else
-		av_codec_ctx_audio->thread_count = 1; // don't use multithreading
+		l_codec_ctx_audio->thread_count =  1; // don't use multithreading
+
+	l_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
 	// Open codec - Audio
-	if (avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL)) {
+	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
 		UtilityFunctions::printerr("Couldn't open audio codec!");
 		close();
 		return -2;
 	}
 
-	av_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
+	if (l_codec_ctx_audio->sample_fmt == AV_SAMPLE_FMT_S16)
+		UtilityFunctions::print("Worked");
+	else
+		UtilityFunctions::print("Didn't work");
 
-	// Setup SWR for converting frame
-	struct SwrContext *swr_ctx = nullptr;
+	struct SwrContext *l_swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
-		&swr_ctx, &av_codec_ctx_audio->ch_layout, AV_SAMPLE_FMT_S16, av_codec_ctx_audio->sample_rate,
-		&av_codec_ctx_audio->ch_layout, av_codec_ctx_audio->sample_fmt, av_codec_ctx_audio->sample_rate, 0,
-		nullptr);
+		&l_swr_ctx, &l_codec_ctx_audio->ch_layout, AV_SAMPLE_FMT_S16, l_codec_ctx_audio->sample_rate,
+		&l_codec_ctx_audio->ch_layout, l_codec_ctx_audio->sample_fmt, l_codec_ctx_audio->sample_rate,
+		0, nullptr);
+	
 	if (response < 0) {
 		print_av_error("Failed to obtain SWR context!");
 		close();
 		return -8;
-	} else if (!swr_ctx) {
+	} else if (!l_swr_ctx) {
 		UtilityFunctions::printerr("Could not allocate re-sampler context!");
 		close();
 		return -8;
 	}
 
-	response = swr_init(swr_ctx);
+	response = swr_init(l_swr_ctx);
 	if (response < 0) {
 		print_av_error("Couldn't initialize SWR!");
 		close();
@@ -379,80 +385,85 @@ int Video::_get_audio() {
 	}
 
 	// Set the seeker to the beginning
-	int start_time_audio = av_stream_audio->start_time != AV_NOPTS_VALUE ? av_stream_audio->start_time : 0;
-	avcodec_flush_buffers(av_codec_ctx_audio);
+	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE ? a_stream_audio->start_time : 0;
+	avcodec_flush_buffers(l_codec_ctx_audio);
+
 	response = av_seek_frame(av_format_ctx, -1, start_time_audio, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_ANY);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek to the beginning of audio stream!");
 		return -9;
 	}
 
-	av_packet = av_packet_alloc();
-	av_frame = av_frame_alloc();
+	AVFrame *l_audio_frame = av_frame_alloc();
+	AVFrame *l_decoded_frame = av_frame_alloc();
+	AVPacket *l_packet = av_packet_alloc();
 
+	int l_bytes_per_samples = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 	PackedByteArray l_audio_data = PackedByteArray();
+    bool l_stereo = l_codec_ctx_audio->ch_layout.nb_channels >= 2;
 	size_t l_audio_size = 0;
 
 	while (true) {
-		_get_frame(av_codec_ctx_audio, av_stream_audio->index);
+		_get_frame_audio(l_codec_ctx_audio, a_stream_audio->index, l_audio_frame, l_packet);
 		if (response)
 			break;
 
 		// Copy decoded data to new frame
-		AVFrame *l_av_new_frame = av_frame_alloc();
-		l_av_new_frame->format = AV_SAMPLE_FMT_S16;
-		l_av_new_frame->ch_layout = av_frame->ch_layout;
-		l_av_new_frame->sample_rate = av_frame->sample_rate;
-		l_av_new_frame->nb_samples = swr_get_out_samples(swr_ctx, av_frame->nb_samples);
+		l_decoded_frame->format = AV_SAMPLE_FMT_S16;
+		l_decoded_frame->ch_layout = l_audio_frame->ch_layout;
+		l_decoded_frame->sample_rate = l_audio_frame->sample_rate;
+		l_decoded_frame->nb_samples = swr_get_out_samples(l_swr_ctx, l_audio_frame->nb_samples);
 
-		response = av_frame_get_buffer(l_av_new_frame, 0);
+		response = av_frame_get_buffer(l_decoded_frame, 0);
 		if (response < 0) {
 			print_av_error("Couldn't create new frame for swr!");
-			av_frame_unref(av_frame);
-			av_frame_unref(l_av_new_frame);
+			av_frame_unref(l_audio_frame);
+			av_frame_unref(l_decoded_frame);
 			break;
 		}
 
-		response = swr_config_frame(swr_ctx, l_av_new_frame, av_frame);
+		response = swr_config_frame(l_swr_ctx, l_decoded_frame, l_audio_frame);
 		if (response < 0) {
 			print_av_error("Couldn't config the audio frame!");
-			av_frame_unref(av_frame);
-			av_frame_unref(l_av_new_frame);
+			av_frame_unref(l_audio_frame);
+			av_frame_unref(l_decoded_frame);
 			break;
 		}
 
-		response = swr_convert_frame(swr_ctx, l_av_new_frame, av_frame);
+		response = swr_convert_frame(l_swr_ctx, l_decoded_frame, l_audio_frame);
 		if (response < 0) {
 			print_av_error("Couldn't convert the audio frame!");
-			av_frame_unref(av_frame);
-			av_frame_unref(l_av_new_frame);
+			av_frame_unref(l_audio_frame);
+			av_frame_unref(l_decoded_frame);
 			break;
 		}
 		
-		size_t l_byte_size = l_av_new_frame->nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-		if (av_codec_ctx_audio->ch_layout.nb_channels >= 2)
+		size_t l_byte_size = l_decoded_frame->nb_samples * l_bytes_per_samples;
+		if (l_codec_ctx_audio->ch_layout.nb_channels >= 2)
 			l_byte_size *= 2;
 
 		l_audio_data.resize(l_audio_size + l_byte_size);
-		memcpy(&(l_audio_data.ptrw()[l_audio_size]), l_av_new_frame->extended_data[0], l_byte_size);
+		memcpy(&(l_audio_data.ptrw()[l_audio_size]), l_decoded_frame->extended_data[0], l_byte_size);
 		l_audio_size += l_byte_size;
 
-		av_frame_unref(av_frame);
-		av_frame_unref(l_av_new_frame);
+		av_frame_unref(l_audio_frame);
+		av_frame_unref(l_decoded_frame);
 	}
 
 	// Audio creation
 	audio->set_format(audio->FORMAT_16_BITS);
-	audio->set_mix_rate(av_codec_ctx_audio->sample_rate);
-	audio->set_stereo(av_codec_ctx_audio->ch_layout.nb_channels >= 2);
+	audio->set_mix_rate(l_codec_ctx_audio->sample_rate);
+	audio->set_stereo(l_stereo);
 	audio->set_data(l_audio_data);
 
 	// Cleanup
-	avcodec_flush_buffers(av_codec_ctx_audio);
-	avcodec_free_context(&av_codec_ctx_audio);
-	swr_free(&swr_ctx);
-	av_frame_free(&av_frame);
-	av_packet_free(&av_packet);
+	avcodec_flush_buffers(l_codec_ctx_audio);
+	avcodec_free_context(&l_codec_ctx_audio);
+	swr_free(&l_swr_ctx);
+
+	av_frame_free(&l_audio_frame);
+	av_frame_free(&l_decoded_frame);
+	av_packet_free(&l_packet);
 
 	return OK;
 }
@@ -463,9 +474,6 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 		UtilityFunctions::printerr("Video isn't open yet!");
 		return l_image;
 	}
-
-	av_packet = av_packet_alloc();
-	av_frame = av_frame_alloc();
 
 	// Video seeking
 	frame_timestamp = (long)(a_frame_nr * average_frame_duration);
@@ -499,10 +507,10 @@ Ref<Image> Video::seek_frame(int a_frame_nr) {
 
 	// Cleanup
 	if (av_soft_frame)
-		av_frame_free(&av_soft_frame);
+		av_frame_unref(av_soft_frame);
 	
-	av_frame_free(&av_frame);
-	av_packet_free(&av_packet);
+	av_frame_unref(av_frame);
+	av_packet_unref(av_packet);
 	return l_image;
 }
 
@@ -513,19 +521,16 @@ Ref<Image> Video::next_frame() {
 		return l_image;
 	}
 
-	av_packet = av_packet_alloc();
-	av_frame = av_frame_alloc();
-
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 
 	_decode_video_frame(l_image);
 
 	// Cleanup
 	if (av_soft_frame)
-		av_frame_free(&av_soft_frame);
+		av_frame_unref(av_soft_frame);
 	
-	av_frame_free(&av_frame);
-	av_packet_free(&av_packet);
+	av_frame_unref(av_frame);
+	av_packet_unref(av_packet);
 
 	return l_image;
 }
@@ -598,8 +603,6 @@ enum AVPixelFormat Video::_get_hw_format(AVCodecContext *a_ctx, const enum AVPix
 void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 	bool l_eof = false;
 
-	av_frame_unref(av_frame);
-
 	while ((response = avcodec_receive_frame(a_codec_ctx, av_frame)) == AVERROR(EAGAIN) && !l_eof) {
 		do {
 			av_packet_unref(av_packet);
@@ -624,11 +627,37 @@ void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 }
 
 
+void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet) {
+	bool l_eof = false;
+
+	while ((response = avcodec_receive_frame(a_codec_ctx, a_frame)) == AVERROR(EAGAIN) && !l_eof) {
+		do {
+			av_packet_unref(a_packet);
+			response = av_read_frame(av_format_ctx, a_packet);
+		} while (a_packet->stream_index != a_stream_id && response >= 0);
+
+		if (response == AVERROR_EOF) {
+			l_eof = true;
+			avcodec_send_packet(a_codec_ctx, nullptr); // Send null packet to signal end
+		} else if (response < 0) {
+			UtilityFunctions::printerr("Error reading frame! ", response);
+			break;
+		} else {
+			response = avcodec_send_packet(a_codec_ctx, a_packet);
+			if (response < 0) {
+				UtilityFunctions::printerr("Problem sending package! ", response);
+				break;
+			}
+		}
+	}
+}
+
+
+
 void Video::_decode_video_frame(Ref<Image> a_image) {
 	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
 
 	if (hw_decoding && hw_device_ctx) {
-        av_soft_frame = av_frame_alloc();
         if (!av_soft_frame) {
             UtilityFunctions::printerr("Failed to allocate software frame!");
             return;

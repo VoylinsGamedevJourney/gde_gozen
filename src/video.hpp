@@ -37,7 +37,7 @@ private:
 	};
 
 	AVFormatContext *av_format_ctx = nullptr;
-	AVStream *av_stream_video = nullptr, *av_stream_audio = nullptr;
+	AVStream *av_stream_video = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
 	AVHWDeviceType device_type;
 	AVBufferRef *hw_device_ctx = nullptr;
@@ -69,6 +69,7 @@ private:
 	static enum AVPixelFormat _get_hw_format(AVCodecContext *a_ctx, const enum AVPixelFormat *a_pix_fmts);
 
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
+	void _get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
 	void _decode_video_frame(Ref<Image> a_image);
 
 public:
@@ -88,7 +89,7 @@ public:
 	Ref<Image> next_frame();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
-	int _get_audio();
+	int _get_audio(AVStream* a_stream_audio);
 
 	inline float get_framerate() { return framerate; }
 
