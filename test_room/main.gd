@@ -41,7 +41,7 @@ func open_video(a_file: String) -> void:
 
 
 func after_video_open() -> void:
-	timeline.max_value = video_playback.get_frame_duration()
+	timeline.max_value = video_playback.get_frame_duration() - 1
 	play_pause_button.texture_normal = preload("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png")
 	max_frame_value.text = str(video_playback.get_frame_duration())
 	fps_value.text = str(video_playback.get_framerate()).left(5)

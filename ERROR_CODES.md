@@ -19,6 +19,9 @@ No error code but returns an empty dictionary when nothing was able to be read.
 - -8: Failed setting up of SWR; 
 - -9: Audio seeking error;
 - -10: Hardware decoder setup failed;
+- -11: Couldn't allocate audio frames or packet;
+- -12: Couldn't allocate video frame or packet;
+- -13: Couldn't allocate video frame for hw decoding;
 
 ### seek_frame and next_frame
 

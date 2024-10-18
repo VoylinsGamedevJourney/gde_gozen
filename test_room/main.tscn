@@ -72,7 +72,6 @@ layout_mode = 2
 [node name="Timeline" type="HSlider" parent="VBox/BottomPanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-min_value = 1.0
 value = 1.0
 
 [node name="ButtonsHBox" type="HBoxContainer" parent="VBox/BottomPanel/VBox"]
