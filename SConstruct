@@ -109,7 +109,7 @@ elif 'windows' in platform:
 
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
-    os.system(f'cp ffmpeg/bin/bin/*.dll bin/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/bin/*.dll {location}/{platform}/{target}')
 
 CacheDir('.scons-cache')
 Decider('MD5')
