@@ -108,15 +108,17 @@ int Video::open(String a_path, bool a_load_audio) {
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
 
-		if (!avcodec_find_decoder(av_codec_params->codec_id))
+		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
+			av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 			continue;
-		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			if (a_load_audio && (response = _get_audio(av_format_ctx->streams[i])) != 0) {
 				close();
 				return response;
-			}
+			} else av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
 			av_stream_video = av_format_ctx->streams[i];
+		else av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
 	// Setup Decoder codec context
@@ -131,7 +133,6 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -3;
 	}
-	
 
 	// Allocate codec context for decoder
 	av_codec_ctx_video = avcodec_alloc_context3(av_codec_video);
@@ -150,8 +151,6 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Hardware decoding setup
 	if (hw_decoding && hw_device_ctx) {
-        //av_codec_ctx_video->opaque = this;
-		//av_codec_ctx_video->get_format = Video::_get_hw_format;
 		av_codec_ctx_video->hw_device_ctx = av_buffer_ref(hw_device_ctx);
 
 		if (!av_codec_ctx_video->hw_device_ctx) {
@@ -166,10 +165,8 @@ int Video::open(String a_path, bool a_load_audio) {
 	av_codec_ctx_video->thread_count =  OS::get_singleton()->get_processor_count() - 1;
 	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		av_codec_ctx_video->thread_type = FF_THREAD_FRAME;
-		UtilityFunctions::print("frame");
 	} else if (av_codec_video->capabilities & AV_CODEC_CAP_SLICE_THREADS) {
 		av_codec_ctx_video->thread_type = FF_THREAD_SLICE;
-		UtilityFunctions::print("slice");
 	} else av_codec_ctx_video->thread_count = 1; // Don't use multithreading
 	
 	// Open codec - Video
@@ -178,7 +175,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -3;
 	}
-	
+
 	resolution.x = av_codec_ctx_video->width;
 	resolution.y = av_codec_ctx_video->height;
 
@@ -188,11 +185,11 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	if (hw_decoding && hw_device_ctx)
-		sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, AV_PIX_FMT_NV12, // av_codec_ctx_video->sw_pix_fmt,
-								 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_X, NULL, NULL, NULL);
+		sws_ctx = sws_getContext(resolution.x, resolution.y, AV_PIX_FMT_NV12, // av_codec_ctx_video->sw_pix_fmt,
+								 resolution.x, resolution.y, AV_PIX_FMT_RGB24, SWS_X, NULL, NULL, NULL);
 	else
-		sws_ctx = sws_getContext(av_codec_ctx_video->width, av_codec_ctx_video->height, (AVPixelFormat)av_stream_video->codecpar->format,
-								 resolution.x, av_codec_ctx_video->height, AV_PIX_FMT_RGB24, SWS_X, NULL, NULL, NULL);
+		sws_ctx = sws_getContext(resolution.x, resolution.y, (AVPixelFormat)av_stream_video->codecpar->format,
+								 resolution.x, resolution.y, AV_PIX_FMT_RGB24, SWS_X, NULL, NULL, NULL);
 	if (!sws_ctx) {
 		UtilityFunctions::printerr("Couldn't get SWS context!");
 		close();
@@ -200,7 +197,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Byte_array setup
-	byte_array.resize(resolution.x * av_codec_ctx_video->height * 3);
+	byte_array.resize(resolution.x * resolution.y * 3);
 	src_linesize[0] = resolution.x * 3;
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
@@ -208,6 +205,20 @@ int Video::open(String a_path, bool a_load_audio) {
 	// Getting some data out of first frame
 	av_packet = av_packet_alloc();
 	av_frame = av_frame_alloc();
+	if (!av_packet || !av_frame) {
+		UtilityFunctions::printerr("Couldn't allocate packet or frame for video!");
+		close();
+		return -12;
+	}
+
+	if (hw_decoding) {
+		av_soft_frame = av_frame_alloc();
+		if (!av_soft_frame) {
+			UtilityFunctions::printerr("Couldn't allocate av_soft_frame!");
+			close();
+			return -13;
+		}
+	}
 
 	avcodec_flush_buffers(av_codec_ctx_video);
 	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
@@ -216,19 +227,21 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -5;
 	}
+
 	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_FRAME | AVSEEK_FLAG_ANY);
 	if (response < 0) {
 		print_av_error("Seeking to beginning error: ");
 		close();
 		return -5;
 	}
+
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
 		close();
 		return -5;
 	}
-
+	
 	// Checking for interlacing and what type of interlacing
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
 		interlaced = av_frame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST ? 1 : 2;
@@ -278,8 +291,12 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	frame_duration = (static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
 
-	av_packet_unref(av_packet);
-	av_frame_unref(av_frame);
+	if (av_packet)
+		av_packet_unref(av_packet);
+	if (av_frame)
+		av_frame_unref(av_frame);
+	if (av_soft_frame)
+		av_frame_unref(av_soft_frame);
 
 	loaded = true;
 	path = a_path;

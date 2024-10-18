@@ -31,7 +31,7 @@ var skipped_image: ImageTexture = ImageTexture.new()
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
 var current_frame: int = 0: set = _set_current_frame ## Current frame number which the video playback is at.
 
-var hardware_decoding: bool = false ## Use your CPU/GPU decoder (if available). This should be set before opening a video! Default value is true inside of the Video class, when creating a new Video class and you want to disable hardware decoding, you should set the value before using Video.open() for it to have effect. NOTE: At this point Hardware decoding isn't working properly yet!
+var hardware_decoding: bool = false ## use your CPU/GPU decoder (if available). This should be set before opening a video! Default value is true inside of the Video class, when creating a new Video class and you want to disable hardware decoding, you should set the value before using Video.open() for it to have effect. NOTE: At this point Hardware decoding isn't working properly yet!
 
 
 var _time_elapsed: float = 0.
@@ -76,7 +76,7 @@ func set_video_path(a_path: String) -> void:
 		print("Available hw codecs: ", video.get_available_hw_codecs(a_path))
 	video.set_hw_decoding(hardware_decoding)
 
-	var err: int = video.open(path, true)	
+	var err: int = video.open(path, true)
 	if err:
 		printerr("Error opening video: ", err)
 
