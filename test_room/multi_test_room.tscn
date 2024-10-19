@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3 uid="uid://dv3o0xtfoty08"]
+
+[ext_resource type="PackedScene" uid="uid://b1e501df8faw" path="res://main.tscn" id="1_jacyg"]
+
+[node name="MultiTestRoom" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+
+[node name="HBoxTop" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Playback1" parent="HBoxTop" instance=ExtResource("1_jacyg")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Playback2" parent="HBoxTop" instance=ExtResource("1_jacyg")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxBottom" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Playback3" parent="HBoxBottom" instance=ExtResource("1_jacyg")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Playback4" parent="HBoxBottom" instance=ExtResource("1_jacyg")]
+layout_mode = 2
+size_flags_horizontal = 3
