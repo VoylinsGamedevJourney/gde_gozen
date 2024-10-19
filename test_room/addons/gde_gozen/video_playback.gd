@@ -26,12 +26,9 @@ var video: Video = null ## The video object uses GDEGoZen to function, this clas
 
 var texture_rect: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.
-var skipped_image: ImageTexture = ImageTexture.new()
 
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
 var current_frame: int = 0: set = _set_current_frame ## Current frame number which the video playback is at.
-
-var hardware_decoding: bool = false ## use your CPU/GPU decoder (if available). This should be set before opening a video! Default value is true inside of the Video class, when creating a new Video class and you want to disable hardware decoding, you should set the value before using Video.open() for it to have effect. NOTE: At this point Hardware decoding isn't working properly yet!
 
 
 var _time_elapsed: float = 0.
@@ -71,10 +68,6 @@ func set_video_path(a_path: String) -> void:
 
 	audio_player.stream = null
 	video = Video.new()
-
-	if hardware_decoding:
-		print("Available hw codecs: ", video.get_available_hw_codecs(a_path))
-	video.set_hw_decoding(hardware_decoding)
 
 	var err: int = video.open(path, true)
 	if err:
@@ -116,7 +109,9 @@ func next_frame(a_skip: bool = false) -> void:
 	if !a_skip:
 		texture_rect.texture.set_image(video.next_frame())
 	else:
-		skipped_image.set_image(video.next_frame())
+		if video.next_frame(true) == null:
+			print("Something went wrong getting next frame!")
+		printerr("Skipped frame")
 
 	
 func close() -> void:
@@ -139,7 +134,7 @@ func _process(a_delta: float) -> void:
 			_time_elapsed -= _frame_time
 			current_frame += 1
 			_skips += 1
-		
+
 		if current_frame >= video.get_frame_duration():
 			is_playing = !is_playing
 			audio_player.set_stream_paused(true)
