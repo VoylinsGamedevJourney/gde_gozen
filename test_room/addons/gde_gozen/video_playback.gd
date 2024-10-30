@@ -126,7 +126,6 @@ func _process(a_delta: float) -> void:
 	if is_playing:
 		_time_elapsed += a_delta
 		if _time_elapsed < _frame_time:
-			_video_ended.emit()
 			return
 
 		_skips = 0
@@ -138,6 +137,7 @@ func _process(a_delta: float) -> void:
 		if current_frame >= video.get_frame_duration():
 			is_playing = !is_playing
 			audio_player.set_stream_paused(true)
+			_video_ended.emit()
 		else:
 			while _skips != 1:
 				next_frame(true)
