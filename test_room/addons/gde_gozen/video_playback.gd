@@ -21,6 +21,7 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
+@export var hardware_decoding: bool = true ## Setting hardware decoding on may not deliver the performance increase which you might expect due to the pixel conversion, this is a WIP!
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
@@ -68,6 +69,7 @@ func set_video_path(a_path: String) -> void:
 
 	audio_player.stream = null
 	video = Video.new()
+	video.set_hw_decoding(hardware_decoding)
 
 	var err: int = video.open(path, true)
 	if err:
@@ -87,7 +89,8 @@ func update_video(a_video: Video) -> void:
 
 	is_playing = false
 	_frame_time = 1.0 / video.get_framerate()
-	texture_rect.texture.set_image(video.seek_frame(0))
+	video.seek_frame(0)
+	texture_rect.texture.set_image(video.get_frame_image())
 	_on_video_loaded.emit()
 
 
@@ -97,7 +100,8 @@ func seek_frame(a_frame_nr: int) -> void:
 		return
 
 	current_frame = clamp(a_frame_nr, 0, video.get_frame_duration())
-	texture_rect.texture.set_image(video.seek_frame(a_frame_nr))
+	video.seek_frame(a_frame_nr)
+	texture_rect.texture.set_image(video.get_frame_image())
 
 	audio_player.set_stream_paused(false)
 	audio_player.play(current_frame / video.get_framerate())
@@ -106,12 +110,10 @@ func seek_frame(a_frame_nr: int) -> void:
 
 func next_frame(a_skip: bool = false) -> void:
 	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
-	if !a_skip:
-		texture_rect.texture.set_image(video.next_frame())
-	else:
-		if video.next_frame(true) == null:
-			print("Something went wrong getting next frame!")
-		printerr("Skipped frame")
+	if video.next_frame(a_skip) and !a_skip:
+		texture_rect.texture.set_image(video.get_frame_image())
+	elif !a_skip:
+		print("Something went wrong getting next frame!")
 
 	
 func close() -> void:

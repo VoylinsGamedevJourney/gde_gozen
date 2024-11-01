@@ -20,49 +20,97 @@ class Video : public Resource {
 	GDCLASS(Video, Resource);
 
 private:
+	// HW Decoding info
+	static inline const std::string hw_decoders[] = {
+		"vaapi",
+		"qsv",
+		"nvdec",
+		"vdpau",
+		"cuvid",
+		"vulkan"
+	};
+	static inline const AVHWDeviceType hw_device_types[] = {
+		AV_HWDEVICE_TYPE_VAAPI,
+		AV_HWDEVICE_TYPE_QSV,
+		AV_HWDEVICE_TYPE_CUDA,
+		AV_HWDEVICE_TYPE_VDPAU,
+		AV_HWDEVICE_TYPE_CUDA,
+		AV_HWDEVICE_TYPE_VULKAN
+	};
+
+
+	// FFmpeg classes
 	AVFormatContext *av_format_ctx = nullptr;
-	AVStream *av_stream_video = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
+	AVBufferRef *hw_device_ctx = nullptr;
+	AVStream *av_stream_video = nullptr;
 
 	AVFrame *av_frame = nullptr;
+	AVFrame *av_hw_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
 	struct SwsContext *sws_ctx = nullptr;
 
+	// Default variable types
 	int response = 0;
-	long start_time_video = 0, frame_timestamp = 0, current_pts = 0;
-	double average_frame_duration = 0, stream_time_base_video = 0;
-
-	PackedByteArray byte_array;
 	int src_linesize[4] = {0, 0, 0, 0};
-	Vector2i resolution = Vector2i(0, 0);
-	bool loaded = false, variable_framerate = false;
-	int64_t duration = 0, frame_duration = 0;
+	int av_frame_linesize[3] = {0, 0, 0};
+
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
-	float framerate = 0.0;
-	double expected_pts = 0.0, actual_pts = 0.0;
+	
+	uint8_t *av_frame_data[3] = {nullptr, nullptr, nullptr};
+	
+	int64_t duration = 0;
+	int64_t frame_duration = 0;
 
-	AudioStreamWAV *audio = nullptr;
+	long start_time_video = 0;
+	long frame_timestamp = 0;
+	long current_pts = 0;
+
+	double actual_pts = 0.;
+	double expected_pts = 0.;
+	double average_frame_duration = 0;
+	double stream_time_base_video = 0;
+
+	float framerate = 0.;
+
+	bool loaded = false; // Is true after open()
+	bool variable_framerate = false; // Is set during open()
+	bool hw_decoding = false; // Set by user
+
+	// Godot classes
 	String path = "";
+	String prefered_hw_decoder = "";
+	Vector2i resolution = Vector2i(0, 0);
+	AudioStreamWAV *audio = nullptr;
+	PackedByteArray byte_array;
 
+
+	// Private functions
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
 	void _get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
-	void _decode_video_frame(Ref<Image> a_image);
+	void _copy_frame_data();
+	void _clean_frame_data();
+
+	const AVCodec *_get_hw_codec();
+	AVHWDeviceType _get_hw_type(String a_decoder_name);
+
 
 public:
 	Video() {}
 	~Video() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
-	static Ref<Video> open_new(String a_path = "", bool a_load_audio = true);
+	static PackedStringArray get_available_hw_codecs(String a_file_path);
 
 	int open(String a_path = "", bool a_load_audio = true);
 	void close();
 
 	inline bool is_open() { return loaded; }
 
-	Ref<Image> seek_frame(int a_frame_nr);
-	Ref<Image> next_frame(bool a_skip = false);
+	bool seek_frame(int a_frame_nr);
+	bool next_frame(bool a_skip = false);
+	Ref<Image> get_frame_image();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 	int _get_audio(AVStream* a_stream_audio);
@@ -78,13 +126,19 @@ public:
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
 
+	inline void set_hw_decoding(bool a_value) { hw_decoding = a_value; }
+	inline bool get_hw_decoding() { return hw_decoding; }
+
+	inline void set_prefered_hw_decoder(String a_value) { prefered_hw_decoder = a_value; }
+	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
+
 	void print_av_error(const char *a_message);
 
 
 protected:
 	static inline void _bind_methods() {
-		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_path"), &Video::get_file_meta);
-		ClassDB::bind_static_method("Video", D_METHOD("open_new", "a_path", "a_load_audio"), &Video::open_new);
+		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_file_path"), &Video::get_file_meta);
+		ClassDB::bind_static_method("Video", D_METHOD("get_available_hw_codecs", "a_file_path"), &Video::get_available_hw_codecs);
 
 		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"), &Video::open, DEFVAL(""), DEFVAL(true));
 		ClassDB::bind_method(D_METHOD("close"), &Video::close);
@@ -93,6 +147,7 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
 		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame, DEFVAL(false));
+		ClassDB::bind_method(D_METHOD("get_frame_image"), &Video::get_frame_image);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
@@ -105,5 +160,11 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("is_framerate_variable"), &Video::is_framerate_variable);
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
+
+		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
+		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::set_hw_decoding);
+
+		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
+		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
 	}
 };
