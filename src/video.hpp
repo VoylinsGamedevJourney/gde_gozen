@@ -76,14 +76,19 @@ private:
 
 	bool loaded = false; // Is true after open()
 	bool variable_framerate = false; // Is set during open()
-	bool hw_decoding = false; // Set by user
+	bool hw_decoding = true; // Set by user
+	bool hw_conversion = true; // Set by user
 
 	// Godot classes
 	String path = "";
 	String prefered_hw_decoder = "";
 	Vector2i resolution = Vector2i(0, 0);
 	AudioStreamWAV *audio = nullptr;
+
 	PackedByteArray byte_array;
+	PackedByteArray y_data;
+	PackedByteArray u_data;
+	PackedByteArray v_data;
 
 
 	// Private functions
@@ -126,11 +131,28 @@ public:
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
 
-	inline void set_hw_decoding(bool a_value) { hw_decoding = a_value; }
+	inline void set_hw_decoding(bool a_value) {
+		if (loaded)
+			UtilityFunctions::printerr("Setting hw_decoding after opening file has no effect!");
+		hw_decoding = a_value; }
 	inline bool get_hw_decoding() { return hw_decoding; }
 
-	inline void set_prefered_hw_decoder(String a_value) { prefered_hw_decoder = a_value; }
+	inline void set_hw_conversion(bool a_value) {
+		if (loaded)
+			UtilityFunctions::printerr("Setting hw_conversion after opening file has no effect!");
+		else hw_conversion = a_value;
+	}
+	inline bool get_hw_conversion() { return hw_conversion; }
+
+	inline void set_prefered_hw_decoder(String a_value) {
+		if (loaded)
+			UtilityFunctions::printerr("Setting prefered_hw_decoder after opening file has no effect!");
+		prefered_hw_decoder = a_value; }
 	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
+
+	inline PackedByteArray get_y_data() { return y_data; }
+	inline PackedByteArray get_u_data() { return u_data; }
+	inline PackedByteArray get_v_data() { return v_data; }
 
 	void print_av_error(const char *a_message);
 
@@ -163,6 +185,9 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
 		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::set_hw_decoding);
+
+		ClassDB::bind_method(D_METHOD("set_hw_conversion", "a_value"), &Video::set_hw_conversion);
+		ClassDB::bind_method(D_METHOD("get_hw_conversion"), &Video::set_hw_conversion);
 
 		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
 		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);

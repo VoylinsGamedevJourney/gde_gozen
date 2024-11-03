@@ -177,18 +177,16 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -14;
 	}
 
-	sws_ctx = sws_getContext(resolution.x, resolution.y, AV_PIX_FMT_YUV420P, // av_codec_ctx_video->pix_fmt,
-							 resolution.x, resolution.y, AV_PIX_FMT_RGB24,
-							 SWS_X, NULL, NULL, NULL);
-	if (!sws_ctx) {
-		UtilityFunctions::printerr("Couldn't get SWS context!");
-		close();
-		return -4;
+	if (!hw_conversion) {
+		sws_ctx = sws_getContext(resolution.x, resolution.y, av_codec_ctx_video->pix_fmt,
+								 resolution.x, resolution.y, AV_PIX_FMT_RGB24,
+								 SWS_X, NULL, NULL, NULL);
+		if (!sws_ctx) {
+			UtilityFunctions::printerr("Couldn't get SWS context!");
+			close();
+			return -4;
+		}
 	}
-
-	// Byte_array setup
-	byte_array.resize(resolution.x * resolution.y * 3);
-	src_linesize[0] = resolution.x * 3;
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -251,6 +249,20 @@ int Video::open(String a_path, bool a_load_audio) {
 		}
 	}
 
+	// Preparing the data array's
+	if (hw_conversion) {
+		y_data.resize(av_frame->linesize[0]);
+		u_data.resize(av_frame->linesize[1]);
+		v_data.resize(av_frame->linesize[2]);
+	} else {
+		byte_array.resize(resolution.x * resolution.y * 3);
+		src_linesize[0] = resolution.x * 3;
+
+		av_frame_linesize[0] = av_frame->linesize[0];
+		av_frame_linesize[1] = av_frame->linesize[1];
+		av_frame_linesize[2] = av_frame->linesize[2];
+	}
+
 	// Checking second frame
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response)
@@ -272,6 +284,7 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	frame_duration = (static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
 
+
 	if (av_packet)
 		av_packet_unref(av_packet);
 	if (av_frame)
@@ -291,7 +304,7 @@ void Video::close() {
 
 	_clean_frame_data();
 	
-	if (sws_ctx)
+	if (!hw_conversion && sws_ctx)
 		sws_freeContext(sws_ctx);
 
 	if (av_frame)
@@ -530,9 +543,13 @@ Ref<Image> Video::get_frame_image() {
 	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
 	Ref<Image> l_image = memnew(Image);
 
+	if (hw_conversion) {
+		UtilityFunctions::printerr("hw_conversion is on, software conversion with get_frame_image isn't possible!");
+		return l_image;
+	}
+
 	sws_scale(sws_ctx, av_frame_data, av_frame_linesize, 0, resolution.y, l_dest_data, src_linesize);
 	l_image->set_data(resolution.x, resolution.y, 0, l_image->FORMAT_RGB8, byte_array);
-	_clean_frame_data();
 
 	return l_image;
 }
@@ -589,56 +606,31 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 }
 
 void Video::_copy_frame_data() {
-	int l_size = 0;
-
-	_clean_frame_data();
-
-	// SW Decoding
-	if (!hw_decoding) {
-		for (int i = 0; i < 3; ++i) {
-			av_frame_linesize[i] = av_frame->linesize[i];
-			l_size = av_frame_linesize[i] * resolution.y;
-			av_frame_data[i] = new uint8_t[l_size];
-			memcpy(av_frame_data[i], av_frame->data[i], l_size);
-		} return;
+	if (hw_conversion) {
+		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
+		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
+		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
+		return;
 	}
 
-	// HW Decoding
-	// Y
-	av_frame_linesize[0] = av_frame->linesize[0];
-	l_size = av_frame_linesize[0] * resolution.y;
-	av_frame_data[0] = new uint8_t[l_size];
-	memcpy(av_frame_data[0], av_frame->data[0], l_size);
+	int l_size = 0;
+	_clean_frame_data();
 
-	int time = Time::get_singleton()->get_ticks_usec();
-	// UV
-	av_frame_linesize[1] = av_frame->linesize[1] / 2;
-	av_frame_linesize[2] = av_frame->linesize[1] / 2;
+	for (int i = 0; i < 3; ++i) {
+		l_size = av_frame_linesize[i] * resolution.y;
 
-	av_frame_data[1] = new uint8_t[av_frame->linesize[1] * (resolution.y / 2) / 2];
-	av_frame_data[2] = new uint8_t[av_frame->linesize[1] * (resolution.y / 2) / 2];
-
-	#pragma omp parallel for
-	for (int l_row = 0; l_row < resolution.y / 2; ++l_row) {
-		int l_src_row_offset = l_row * av_frame->linesize[1];
-		int l_dest_row_offset = l_row * (av_frame->linesize[1] / 2);
-		
-		for (int l_col = 0; l_col < av_frame->linesize[1]; l_col += 2) {
-			int l_src_index = l_src_row_offset + l_col;
-			int l_dest_index = l_dest_row_offset + (l_col / 2);
-
-			av_frame_data[1][l_dest_index] = av_frame->data[1][l_src_index];
-			av_frame_data[2][l_dest_index] = av_frame->data[1][l_src_index + 1];
-		}
+		av_frame_data[i] = new uint8_t[l_size];
+		memcpy(av_frame_data[i], av_frame->data[i], l_size);
 	}
 }
 
 void Video::_clean_frame_data() {
 	for (int i = 0; i < 3; ++i) {
-		if (av_frame_data[i] != nullptr) {
-			delete[] av_frame_data[i];
-			av_frame_data[i] = nullptr;
-		}
+		if (av_frame_data[i] != nullptr) 
+			continue;
+
+		delete[] av_frame_data[i];
+		av_frame_data[i] = nullptr;
 	}
 }
 

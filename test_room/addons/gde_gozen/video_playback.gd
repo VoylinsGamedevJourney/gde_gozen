@@ -21,7 +21,8 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
-@export var hardware_decoding: bool = true ## Setting hardware decoding on may not deliver the performance increase which you might expect due to the pixel conversion, this is a WIP!
+@export var hardware_decoding: bool = false ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files, this does NOT convert the data to RGB. If you want hardware pixel format conversion to be on, which is needed for hardware decoding to get good performance, you will also need to enable hardware_conversion!
+@export var hardware_conversion: bool = false ## Setting hardware conversion uses the GPU to change the pixel format of the video frame to RGB. This is needed to have good performance when using Hardware decoding and can help perfomance with just software decoding.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
@@ -70,6 +71,7 @@ func set_video_path(a_path: String) -> void:
 	audio_player.stream = null
 	video = Video.new()
 	video.set_hw_decoding(hardware_decoding)
+	video.set_hw_conversion(hardware_conversion)
 
 	var err: int = video.open(path, true)
 	if err:
