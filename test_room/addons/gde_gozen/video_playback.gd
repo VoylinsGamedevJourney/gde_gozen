@@ -21,8 +21,8 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
-@export var hardware_decoding: bool = false ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files, this does NOT convert the data to RGB. If you want hardware pixel format conversion to be on, which is needed for hardware decoding to get good performance, you will also need to enable hardware_conversion!
-@export var hardware_conversion: bool = false ## Setting hardware conversion uses the GPU to change the pixel format of the video frame to RGB. This is needed to have good performance when using Hardware decoding and can help perfomance with just software decoding.
+@export var hardware_decoding: bool = true ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files, this does NOT convert the data to RGB. If you want hardware pixel format conversion to be on, which is needed for hardware decoding to get good performance, you will also need to enable hardware_conversion!
+@export var hardware_conversion: bool = true ## Setting hardware conversion uses the GPU to change the pixel format of the video frame to RGB. This is needed to have good performance when using Hardware decoding and can help perfomance with just software decoding.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
@@ -37,6 +37,10 @@ var _time_elapsed: float = 0.
 var _frame_time: float = 0
 var _skips: int = 0
 
+var _resolution: Vector2i = Vector2i.ZERO
+var _uv_resolution: Vector2i = Vector2i.ZERO
+var _shader_material: ShaderMaterial = null
+
 
 
 #------------------------------------------------ TREE FUNCTIONS
@@ -48,6 +52,9 @@ func _enter_tree() -> void:
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	add_child(texture_rect)
 	add_child(audio_player)
+	
+	_shader_material = ShaderMaterial.new()
+	texture_rect.material = _shader_material
 
 
 func _exit_tree() -> void:
@@ -87,12 +94,26 @@ func update_video(a_video: Video) -> void:
 		printerr("Video isn't open!")
 		return
 
+	_resolution = video.get_resolution()
+	_shader_material.shader = null
+
+	if video.get_hw_conversion():
+		var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+		texture_rect.texture.set_image(l_image)
+
+		_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
+		match video.get_pixel_format():
+			"nv12": _shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+			"yuv420p":  _shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+
 	audio_player.stream = video.get_audio()
 
 	is_playing = false
 	_frame_time = 1.0 / video.get_framerate()
 	video.seek_frame(0)
-	texture_rect.texture.set_image(video.get_frame_image())
+
+	_set_frame_image()
+
 	_on_video_loaded.emit()
 
 
@@ -103,7 +124,8 @@ func seek_frame(a_frame_nr: int) -> void:
 
 	current_frame = clamp(a_frame_nr, 0, video.get_frame_duration())
 	video.seek_frame(a_frame_nr)
-	texture_rect.texture.set_image(video.get_frame_image())
+
+	_set_frame_image()
 
 	audio_player.set_stream_paused(false)
 	audio_player.play(current_frame / video.get_framerate())
@@ -113,7 +135,7 @@ func seek_frame(a_frame_nr: int) -> void:
 func next_frame(a_skip: bool = false) -> void:
 	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
 	if video.next_frame(a_skip) and !a_skip:
-		texture_rect.texture.set_image(video.get_frame_image())
+		_set_frame_image()
 	elif !a_skip:
 		print("Something went wrong getting next frame!")
 
@@ -192,4 +214,18 @@ func is_open() -> bool:
 func _set_current_frame(a_value: int) -> void:
 	current_frame = a_value
 	_current_frame_changed.emit(current_frame)
+
+
+func _set_frame_image() -> void:
+	# TODO: Make this work
+	if hardware_conversion:
+		if video.get_pixel_format() == "nv12":
+			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
+			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
+		else:
+			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
+			_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
+			_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
+	else:
+		texture_rect.texture.set_image(video.get_frame_image())
 

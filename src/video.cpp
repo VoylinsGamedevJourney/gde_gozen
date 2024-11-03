@@ -126,7 +126,6 @@ int Video::open(String a_path, bool a_load_audio) {
 	else
 		av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
-
 	if (!av_codec_video) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for video!");
 		close();
@@ -186,6 +185,8 @@ int Video::open(String a_path, bool a_load_audio) {
 			close();
 			return -4;
 		}
+	} else {
+		pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
 	}
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
@@ -251,9 +252,13 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Preparing the data array's
 	if (hw_conversion) {
-		y_data.resize(av_frame->linesize[0]);
-		u_data.resize(av_frame->linesize[1]);
-		v_data.resize(av_frame->linesize[2]);
+		y_data.resize(av_frame->linesize[0] * resolution.y);
+		if (av_codec_ctx_video->pix_fmt == AV_PIX_FMT_NV12) {
+			u_data.resize(av_frame->linesize[1] * resolution.y);
+		} else {
+			u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
+			v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
+		}
 	} else {
 		byte_array.resize(resolution.x * resolution.y * 3);
 		src_linesize[0] = resolution.x * 3;

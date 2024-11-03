@@ -82,7 +82,10 @@ private:
 	// Godot classes
 	String path = "";
 	String prefered_hw_decoder = "";
+	String pixel_format = "";
+
 	Vector2i resolution = Vector2i(0, 0);
+
 	AudioStreamWAV *audio = nullptr;
 
 	PackedByteArray byte_array;
@@ -150,6 +153,8 @@ public:
 		prefered_hw_decoder = a_value; }
 	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
 
+	inline String get_pixel_format() { return pixel_format; }
+
 	inline PackedByteArray get_y_data() { return y_data; }
 	inline PackedByteArray get_u_data() { return u_data; }
 	inline PackedByteArray get_v_data() { return v_data; }
@@ -187,9 +192,15 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::set_hw_decoding);
 
 		ClassDB::bind_method(D_METHOD("set_hw_conversion", "a_value"), &Video::set_hw_conversion);
-		ClassDB::bind_method(D_METHOD("get_hw_conversion"), &Video::set_hw_conversion);
+		ClassDB::bind_method(D_METHOD("get_hw_conversion"), &Video::get_hw_conversion);
 
 		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
 		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
+
+		ClassDB::bind_method(D_METHOD("get_pixel_format"), &Video::get_pixel_format);
+
+		ClassDB::bind_method(D_METHOD("get_y_data"), &Video::get_y_data);
+		ClassDB::bind_method(D_METHOD("get_u_data"), &Video::get_u_data);
+		ClassDB::bind_method(D_METHOD("get_v_data"), &Video::get_v_data);
 	}
 };
