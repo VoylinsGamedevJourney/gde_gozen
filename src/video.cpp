@@ -304,21 +304,21 @@ void Video::close() {
 
 	_clean_frame_data();
 	
-	if (!hw_conversion && sws_ctx)
-		sws_freeContext(sws_ctx);
+	if (sws_ctx) sws_freeContext(sws_ctx);
+	if (av_frame) av_frame_free(&av_frame);
+	if (av_packet) av_packet_free(&av_packet);
 
-	if (av_frame)
-		av_frame_free(&av_frame);
-	if (av_packet)
-		av_packet_free(&av_packet);
+	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx);
+	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
+	if (av_format_ctx) avformat_close_input(&av_format_ctx);
 
-	if (hw_device_ctx)
-		av_buffer_unref(&hw_device_ctx);
+	sws_ctx = nullptr;
+	av_frame = nullptr;
+	av_packet = nullptr;
+	hw_device_ctx = nullptr;
 
-	if (av_codec_ctx_video)
-		avcodec_free_context(&av_codec_ctx_video);
-	if (av_format_ctx)
-		avformat_close_input(&av_format_ctx);
+	av_codec_ctx_video = nullptr;
+	av_format_ctx = nullptr;
 }
 
 void Video::print_av_error(const char *a_message) {
@@ -626,7 +626,7 @@ void Video::_copy_frame_data() {
 
 void Video::_clean_frame_data() {
 	for (int i = 0; i < 3; ++i) {
-		if (av_frame_data[i] != nullptr) 
+		if (av_frame_data[i] == nullptr) 
 			continue;
 
 		delete[] av_frame_data[i];

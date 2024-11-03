@@ -119,10 +119,11 @@ func next_frame(a_skip: bool = false) -> void:
 
 	
 func close() -> void:
-	if is_playing:
-		pause()
-	video.close()
-	video = null
+	if video != null:
+		if is_playing:
+			pause()
+		video.close()
+		video = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING
