@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_debug
+          key: linux_debug_addon
       - name: Build Linux debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
       - name: Save cache linux_debug
@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_full_debug
+          key: linux_full_debug_addon
       - name: Build Linux full debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
       - name: Save cache linux_full_debug
@@ -65,7 +65,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_release
+          key: linux_release_addon
       - name: Build Linux release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
       - name: Save cache linux_release
@@ -81,7 +81,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_full_release
+          key: linux_full_release_addon
       - name: Build Linux full release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
       - name: Save cache linux_full_release
@@ -97,7 +97,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: windows_debug
+          key: windows_debug_addon
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
       - name: Save cache windows_debug
@@ -113,7 +113,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: windows_release
+          key: windows_release_addon
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
       - name: Save cache windows_release
