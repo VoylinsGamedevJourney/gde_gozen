@@ -221,7 +221,7 @@ func _set_frame_image() -> void:
 	if hardware_conversion:
 		if video.get_pixel_format() == "nv12":
 			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
-			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
+			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
 		else:
 			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
 			_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))

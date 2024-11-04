@@ -254,7 +254,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	if (hw_conversion) {
 		y_data.resize(av_frame->linesize[0] * resolution.y);
 		if (av_codec_ctx_video->pix_fmt == AV_PIX_FMT_NV12) {
-			u_data.resize(av_frame->linesize[1] * resolution.y);
+			u_data.resize((av_frame->linesize[1] / 2) * (resolution.y / 2) * 2);
 		} else {
 			u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
 			v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
