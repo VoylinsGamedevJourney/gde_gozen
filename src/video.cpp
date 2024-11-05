@@ -96,6 +96,8 @@ enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPix
 int Video::open(String a_path, bool a_load_audio) {
 	if (loaded)
 		close();
+	if (debug)
+		UtilityFunctions::print("Opening video file on path: ", a_path);
 
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
@@ -119,6 +121,9 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Getting the audio and video stream
+	if (debug)
+		UtilityFunctions::print("Getting stream information ...");
+
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
 
@@ -129,18 +134,27 @@ int Video::open(String a_path, bool a_load_audio) {
 			if (a_load_audio && (response = _get_audio(av_format_ctx->streams[i])) != 0) {
 				close();
 				return response;
-			} else av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
-		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO)
+			}
+			continue;
+		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO) {
 			av_stream_video = av_format_ctx->streams[i];
-		else av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
+
+			if (debug)
+				UtilityFunctions::print("Video stream found.");
+
+			continue;
+		}
+		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
 	// Setup Decoder codec context
-	const AVCodec *av_codec_video;
+	if (debug)
+		UtilityFunctions::print("Setting up decoder codec context ...");
 
+	const AVCodec *av_codec_video;
 	if (hw_decoding)
 		av_codec_video = _get_hw_codec();
-	else
+	else 
 		av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
 	if (!av_codec_video) {
@@ -238,8 +252,11 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -5;
 	}
-
+	int time = Time::get_singleton()->get_ticks_usec();
+	
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
+	if (debug)
+		UtilityFunctions::print("Getting first frame took: ", Time::get_singleton()->get_ticks_usec() - time);
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
 		close();
@@ -294,6 +311,7 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Checking second frame
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
+
 	if (response)
 		print_av_error("Something went wrong getting second frame!");
 
@@ -329,12 +347,15 @@ int Video::open(String a_path, bool a_load_audio) {
 }
 
 void Video::close() {
+	if (debug)
+		UtilityFunctions::print("Closing video file on path: ", path);
 	loaded = false;
 
 	_clean_frame_data();
 	
 	if (sws_ctx) sws_freeContext(sws_ctx);
 	if (av_frame) av_frame_free(&av_frame);
+	if (av_hw_frame) av_frame_free(&av_hw_frame);
 	if (av_packet) av_packet_free(&av_packet);
 
 	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx);
@@ -358,6 +379,9 @@ void Video::print_av_error(const char *a_message) {
 
 int Video::_get_audio(AVStream* a_stream_audio) {
 	audio = memnew(AudioStreamWAV);
+
+	if (debug)
+		UtilityFunctions::print("Getting audio ...");
 
 	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream_audio->codecpar->codec_id);
 	if (!l_codec_audio) {
@@ -386,11 +410,17 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 
 	l_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
+	if (debug)
+		UtilityFunctions::print("Opening audio codec ...");
+
 	// Open codec - Audio
 	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
 		UtilityFunctions::printerr("Couldn't open audio codec!");
 		return -2;
 	}
+
+	if (debug)
+		UtilityFunctions::print("Creating SWR context ...");
 
 	struct SwrContext *l_swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
@@ -412,6 +442,9 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		avcodec_free_context(&l_codec_ctx_audio);
 		return -8;
 	}
+
+	if (debug)
+		UtilityFunctions::print("Seeking to beginning of audio data ...");
 
 	// Set the seeker to the beginning
 	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE ? a_stream_audio->start_time : 0;
@@ -442,8 +475,11 @@ int Video::_get_audio(AVStream* a_stream_audio) {
     bool l_stereo = l_codec_ctx_audio->ch_layout.nb_channels >= 2;
 	size_t l_audio_size = 0;
 
+	if (debug)
+		UtilityFunctions::print("Starting loop to gather audio data ...");
+
 	while (true) {
-		_get_frame_audio(l_codec_ctx_audio, a_stream_audio->index, av_frame, av_packet);
+		_get_frame(l_codec_ctx_audio, a_stream_audio->index);
 		if (response)
 			break;
 
@@ -489,6 +525,9 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		av_frame_unref(l_decoded_frame);
 	}
 
+	if (debug)
+		UtilityFunctions::print("Audio object creation ...");
+
 	// Audio creation
 	audio->set_format(audio->FORMAT_16_BITS);
 	audio->set_mix_rate(l_codec_ctx_audio->sample_rate);
@@ -503,6 +542,9 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	av_frame_free(&av_frame);
 	av_frame_free(&l_decoded_frame);
 	av_packet_free(&av_packet);
+
+	if (debug)
+		UtilityFunctions::print("Getting audio was succesfull.");
 
 	return OK;
 }
@@ -559,6 +601,7 @@ bool Video::next_frame(bool a_skip) {
 	}
 
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
+
 	if (!a_skip)
 		_copy_frame_data();
 
