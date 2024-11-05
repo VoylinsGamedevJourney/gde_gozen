@@ -26,6 +26,11 @@ func _ready() -> void:
 				current_frame_value.text = str(a_value)
 				editor_fps_value.text = str(Engine.get_frames_per_second())):
 		printerr("Couldn't connect _current_frame_changed!")
+	
+
+func _input(a_event: InputEvent) -> void:
+	if a_event.is_action_pressed("play_pause"):
+		_on_play_pause_button_pressed()
 
 
 func _on_video_drop(a_files: PackedStringArray) -> void:
