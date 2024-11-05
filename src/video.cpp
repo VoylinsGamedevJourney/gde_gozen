@@ -96,6 +96,7 @@ enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPix
 int Video::open(String a_path, bool a_load_audio) {
 	if (loaded)
 		close();
+	
 	if (debug)
 		UtilityFunctions::print("Opening video file on path: ", a_path);
 
@@ -223,9 +224,13 @@ int Video::open(String a_path, bool a_load_audio) {
 			return -4;
 		}
 	}
+
 	pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
-	if (debug)
+
+	if (debug) {
 		UtilityFunctions::print("Selected pixel format is: ", pixel_format);
+		UtilityFunctions::print("Seeking to beginning of video data ...");
+	}
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -252,7 +257,12 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -5;
 	}
-	int time = Time::get_singleton()->get_ticks_usec();
+
+	int time = 0;
+	if (debug) {
+		UtilityFunctions::print("Getting first frame ...");
+		time = Time::get_singleton()->get_ticks_usec();
+	}
 	
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (debug)
@@ -263,6 +273,9 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -5;
 	}
 	
+	if (debug)
+		UtilityFunctions::print("Getting first frame info ...");
+
 	// Checking for interlacing and what type of interlacing
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
 		interlaced = av_frame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST ? 1 : 2;
@@ -290,6 +303,9 @@ int Video::open(String a_path, bool a_load_audio) {
 			return -6;
 		}
 	}
+	
+	if (debug)
+		UtilityFunctions::print("Preparing data array's ...");
 
 	// Preparing the data array's
 	if (hw_conversion) {
@@ -310,10 +326,15 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Checking second frame
-	_get_frame(av_codec_ctx_video, av_stream_video->index);
+	if (debug)
+		UtilityFunctions::print("Getting second frame ...");
 
+	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response)
 		print_av_error("Something went wrong getting second frame!");
+
+	if (debug)
+		UtilityFunctions::print("Getting data from second frame ...");
 
 	duration = av_format_ctx->duration;
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
@@ -342,6 +363,9 @@ int Video::open(String a_path, bool a_load_audio) {
 	loaded = true;
 	path = a_path;
 	response = OK;
+
+	if (debug)
+		UtilityFunctions::print("Video is open now.");
 
 	return OK;
 }
@@ -679,9 +703,18 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 
 void Video::_copy_frame_data() {
 	if (hw_conversion) {
+	//	if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
+    //        UtilityFunctions::printerr("Error transferring the frame to system memory!");
+    //        return;
+    //    }
+
 		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
 		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
+	//	memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
+	//	memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
+	//	memcpy(v_data.ptrw(), av_hw_frame->data[2], v_data.size());
+	//	av_frame_unref(av_hw_frame);
 		return;
 	}
 
@@ -707,42 +740,49 @@ void Video::_clean_frame_data() {
 }
 
 const AVCodec *Video::_get_hw_codec() {
-	const AVCodecDescriptor *l_descriptor = avcodec_descriptor_get(av_stream_video->codecpar->codec_id);
 	const AVCodec *l_codec;
+	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
 
-	if (!l_descriptor) {
-		UtilityFunctions::printerr("Couldn't find codec descriptor!");
-		return l_codec;
-	}
 	
 	if (prefered_hw_decoder != "") {
-		l_codec = avcodec_find_decoder_by_name((std::string(l_descriptor->name) + '_' + prefered_hw_decoder.utf8().get_data()).c_str());
+		if (debug)
+			UtilityFunctions::print("Getting prefered HW codec ", prefered_hw_decoder, " ...");
 
-		if (!l_codec)
-			UtilityFunctions::printerr("Prefered HW decoder couldn't be found!");
-		else if (av_hwdevice_ctx_create(&hw_device_ctx, _get_hw_type(prefered_hw_decoder), NULL, NULL, 0) < 0)
-			UtilityFunctions::printerr("Failed to use prefered hardware decoder!");
-		else {
-			UtilityFunctions::print("Using prefered HW decoder: " + prefered_hw_decoder);
+		l_type = av_hwdevice_find_type_by_name(prefered_hw_decoder.utf8().get_data());
+		l_codec = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
+
+        if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, nullptr, nullptr, 0) < 0) {
+			UtilityFunctions::printerr("Selected hw device couldn't be created!");
+		} else if (!av_codec_is_decoder(l_codec)) {
+			UtilityFunctions::printerr("Found codec isn't a hw decoder!");
+		} else {
+			UtilityFunctions::print("Using HW decoder: ", av_hwdevice_get_type_name(l_type));
+			hw_decoder = l_type;
+
 			return l_codec;
 		}
+        av_buffer_unref(&hw_device_ctx);
 	}
 
-	for (const std::string &l_decoder: hw_decoders) {
-		l_codec = avcodec_find_decoder_by_name((std::string(l_descriptor->name) + '_' + l_decoder).c_str());
+	if (debug)
+		UtilityFunctions::print("Selecting best HW codec ...");
 
-		if (!l_codec)
-			continue;
+	l_type = AV_HWDEVICE_TYPE_NONE;
+    while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
+		l_codec = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
-		response = av_hwdevice_ctx_create(&hw_device_ctx, _get_hw_type(l_decoder.c_str()), NULL, NULL, 0);
-		if (response < 0) {
-			print_av_error(("Failed to create HW device for " + l_decoder + "!").c_str());
-			continue;
+        if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, nullptr, nullptr, 0) < 0)
+            continue;
+
+        if (av_codec_is_decoder(l_codec)) {
+			UtilityFunctions::print("Using HW decoder: ", av_hwdevice_get_type_name(l_type));
+			hw_decoder = l_type;
+
+			return l_codec;
 		}
-		UtilityFunctions::print("Using HW decoder: " + String(l_decoder.c_str()));
-		return l_codec;
+        av_buffer_unref(&hw_device_ctx);
 	}
-	
+
 	hw_decoding = false;
 	UtilityFunctions::print("HW decoding not possible, switching to software decoding!");
 	return avcodec_find_decoder(av_stream_video->codecpar->codec_id);
