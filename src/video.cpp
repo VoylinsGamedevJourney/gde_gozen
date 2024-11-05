@@ -29,7 +29,6 @@ Dictionary Video::get_file_meta(String a_file_path) {
 PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
 	PackedStringArray l_decoders = PackedStringArray();
 	AVFormatContext *l_format_ctx = avformat_alloc_context();
-	AVStream *l_stream = nullptr;
 
 	if (!l_format_ctx) {
 		UtilityFunctions::printerr("Couldn't allocate AVFormatContext!");
@@ -48,26 +47,39 @@ PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
 		return l_decoders;
 	}
 
+	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
+	AVCodecID l_id; 
+
 	for (int i = 0; i < l_format_ctx->nb_streams; i++) {
 		if (!avcodec_find_decoder(l_format_ctx->streams[i]->codecpar->codec_id))
 			continue;
 		else if (l_format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-			l_stream = l_format_ctx->streams[i];
+			l_id = l_format_ctx->streams[i]->codecpar->codec_id;
 			break;
 		}
 	}
 
-	const AVCodecDescriptor *l_descriptor = avcodec_descriptor_get(l_stream->codecpar->codec_id);
+    while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
+		const AVCodec *l_codec = avcodec_find_decoder(l_id);
+        AVBufferRef* l_hw_device_ctx = nullptr;
 
-	if (!l_descriptor) {
-		UtilityFunctions::printerr("Couldn't find codec descriptor!");
-		avformat_close_input(&l_format_ctx);
-		return l_decoders;
-	}
+        if (av_hwdevice_ctx_create(&l_hw_device_ctx, l_type, nullptr, nullptr, 0) < 0)
+            continue;
 
-	for (const std::string& l_decoder: hw_decoders) {
-		if (avcodec_find_decoder_by_name((std::string(l_descriptor->name) + '_' + l_decoder).c_str()))
-			l_decoders.append(l_decoder.c_str());
+        if (av_codec_is_decoder(l_codec)) {
+            AVCodecContext* l_codec_ctx = avcodec_alloc_context3(l_codec);
+            if (!l_codec_ctx) {
+                UtilityFunctions::printerr("Failed to allocate codec context!");
+                av_buffer_unref(&l_hw_device_ctx);
+                continue;
+            }
+
+			l_codec_ctx->hw_device_ctx = l_hw_device_ctx;
+
+            if (!avcodec_open2(l_codec_ctx, l_codec, nullptr))
+				l_decoders.append(av_hwdevice_get_type_name(l_type));
+		}
+        av_buffer_unref(&l_hw_device_ctx);
 	}
 
 	avformat_close_input(&l_format_ctx);
