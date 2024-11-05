@@ -21,6 +21,7 @@ ffmpeg_args += ' --disable-avfilter'
 ffmpeg_args += ' --disable-programs --disable-ffmpeg --disable-ffplay --disable-ffprobe'
 ffmpeg_args += ' --disable-doc --disable-htmlpages --disable-manpages --disable-podpages --disable-txtpages'
 ffmpeg_args += ' --quiet'
+ffmpeg_args += ' --disable-sndio'
 ffmpeg_args += f' --arch={arch}'
 
 
