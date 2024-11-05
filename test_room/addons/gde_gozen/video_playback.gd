@@ -23,6 +23,7 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 @export var hardware_decoding: bool = true ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files, this does NOT convert the data to RGB. If you want hardware pixel format conversion to be on, which is needed for hardware decoding to get good performance, you will also need to enable hardware_conversion!
 @export var hardware_conversion: bool = true ## Setting hardware conversion uses the GPU to change the pixel format of the video frame to RGB. This is needed to have good performance when using Hardware decoding and can help perfomance with just software decoding.
+@export var debug: bool = true ## Setting this value will print debug messages of the video file whilst opening and during playback.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
@@ -79,6 +80,14 @@ func set_video_path(a_path: String) -> void:
 	video = Video.new()
 	video.set_hw_decoding(hardware_decoding)
 	video.set_hw_conversion(hardware_conversion)
+
+	if debug:
+		video.enable_debug()
+		if hardware_decoding:
+			print("Available hardware decoders!")
+			print(video.get_available_hw_codecs(a_path))
+	else:
+		video.disable_debug()
 
 	var err: int = video.open(path, true)
 	if err:
@@ -217,7 +226,6 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	# TODO: Make this work
 	if hardware_conversion:
 		if video.get_pixel_format() == "nv12":
 			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
