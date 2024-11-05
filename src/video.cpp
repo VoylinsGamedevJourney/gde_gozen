@@ -86,6 +86,11 @@ PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
 	return l_decoders;
 }
 
+enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt) {
+	Video* l_video = static_cast<Video*>(a_av_ctx->opaque);
+    return l_video->_get_hw_format(a_pix_fmt);
+}
+
 
 //----------------------------------------------- NON-STATIC FUNCTIONS
 int Video::open(String a_path, bool a_load_audio) {
@@ -158,9 +163,15 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -3;
 	}
+	
+	if (hw_decoding && hw_device_ctx) {
+		av_codec_ctx_video->hw_device_ctx = hw_device_ctx;
+		av_codec_ctx_video->opaque = this;
+		av_codec_ctx_video->get_format = _get_format;
+	}
 
 	// Enable multi-threading for decoding - Video
-	av_codec_ctx_video->thread_count =  OS::get_singleton()->get_processor_count() - 1;
+	av_codec_ctx_video->thread_count = OS::get_singleton()->get_processor_count() - 1;
 	if (av_codec_video->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		av_codec_ctx_video->thread_type = FF_THREAD_FRAME;
 	} else if (av_codec_video->capabilities & AV_CODEC_CAP_SLICE_THREADS) {
@@ -181,7 +192,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	if (l_aspect_ratio > 1.0) 
 		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
 	
-	if (hw_decoding && av_codec_ctx_video->pix_fmt != AV_PIX_FMT_NV12 or AV_PIX_FMT_YUV420P) {
+	if (hw_decoding && av_codec_ctx_video->pix_fmt != AV_PIX_FMT_NV12 && av_codec_ctx_video->pix_fmt != AV_PIX_FMT_YUV420P) {
 		UtilityFunctions::printerr("Unsupported pixel format! Contact developer for support!");
 		UtilityFunctions::printerr(av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt));
 		close();
@@ -197,9 +208,10 @@ int Video::open(String a_path, bool a_load_audio) {
 			close();
 			return -4;
 		}
-	} else {
-		pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
 	}
+	pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
+	if (debug)
+		UtilityFunctions::print("Selected pixel format is: ", pixel_format);
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -693,12 +705,11 @@ const AVCodec *Video::_get_hw_codec() {
 	return avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 }
  
-AVHWDeviceType Video::_get_hw_type(String a_decoder_name) {
-	for (size_t i = 0; i < sizeof(hw_decoders) / sizeof(hw_decoders[0]); ++i) {
-		if (hw_decoders[i] == a_decoder_name.utf8().get_data())
-			return hw_device_types[i];
+enum AVPixelFormat Video::_get_hw_format(const enum AVPixelFormat *a_pix_fmt) {
+	for (const enum AVPixelFormat *p = a_pix_fmt; *p != AV_PIX_FMT_NONE; p++) {
+		if (*p == AV_PIX_FMT_NV12 || *p == AV_PIX_FMT_YUV420P) {
+			return *p;
+		}
 	}
-
-	return AV_HWDEVICE_TYPE_NONE;
+	return a_pix_fmt[0];
 }
-
