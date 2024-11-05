@@ -20,25 +20,6 @@ class Video : public Resource {
 	GDCLASS(Video, Resource);
 
 private:
-	// HW Decoding info
-	static inline const std::string hw_decoders[] = {
-		"vaapi",
-		"qsv",
-		"nvdec",
-		"vdpau",
-		"cuvid",
-		"vulkan"
-	};
-	static inline const AVHWDeviceType hw_device_types[] = {
-		AV_HWDEVICE_TYPE_VAAPI,
-		AV_HWDEVICE_TYPE_QSV,
-		AV_HWDEVICE_TYPE_CUDA,
-		AV_HWDEVICE_TYPE_VDPAU,
-		AV_HWDEVICE_TYPE_CUDA,
-		AV_HWDEVICE_TYPE_VULKAN
-	};
-
-
 	// FFmpeg classes
 	AVFormatContext *av_format_ctx = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
@@ -50,6 +31,9 @@ private:
 	AVPacket *av_packet = nullptr;
 
 	struct SwsContext *sws_ctx = nullptr;
+
+	AVHWDeviceType hw_decoder;
+	AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	// Default variable types
 	int response = 0;
@@ -78,6 +62,7 @@ private:
 	bool variable_framerate = false; // Is set during open()
 	bool hw_decoding = true; // Set by user
 	bool hw_conversion = true; // Set by user
+	bool debug = false;
 
 	// Godot classes
 	String path = "";
@@ -95,13 +80,16 @@ private:
 
 
 	// Private functions
+	static enum AVPixelFormat _get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt);
+	
+
 	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
 	void _get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
 	void _copy_frame_data();
 	void _clean_frame_data();
 
 	const AVCodec *_get_hw_codec();
-	AVHWDeviceType _get_hw_type(String a_decoder_name);
+    enum AVPixelFormat _get_hw_format(const enum AVPixelFormat *a_pix_fmt);
 
 
 public:
@@ -153,6 +141,10 @@ public:
 		prefered_hw_decoder = a_value; }
 	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
 
+	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
+	inline void disable_debug() { debug = false; }
+	inline bool get_debug_enabled() { return debug; }
+
 	inline String get_pixel_format() { return pixel_format; }
 
 	inline PackedByteArray get_y_data() { return y_data; }
@@ -196,6 +188,10 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
 		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
+
+		ClassDB::bind_method(D_METHOD("enable_debug"), &Video::enable_debug);
+		ClassDB::bind_method(D_METHOD("disable_debug"), &Video::disable_debug);
+		ClassDB::bind_method(D_METHOD("get_debug_enabled"), &Video::get_debug_enabled);
 
 		ClassDB::bind_method(D_METHOD("get_pixel_format"), &Video::get_pixel_format);
 
