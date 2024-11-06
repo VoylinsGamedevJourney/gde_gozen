@@ -23,6 +23,7 @@ No error code but returns an empty dictionary when nothing was able to be read.
 - -12: Couldn't allocate video frame or packet;
 - -13: Couldn't allocate video frame for hw decoding;
 - -14: Unsupported format;
+- -100: Video already open;
 
 ### seek_frame and next_frame
 
