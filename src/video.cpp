@@ -253,18 +253,6 @@ int Video::open(String a_path, bool a_load_audio) {
 	average_frame_duration = 10000000.0 / framerate;								// eg. 1 sec / 25 fps = 400.000 ticks (40ms)
 	stream_time_base_video = av_q2d(av_stream_video->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks
 
-	// Checking for variable framerate
-	variable_framerate = av_codec_ctx_video->framerate.num == 0 || av_codec_ctx_video->framerate.den == 0;
-	if (variable_framerate) {
-		if (av_stream_video->r_frame_rate.num == av_stream_video->avg_frame_rate.num) {
-			variable_framerate = false;
-		} else {
-			UtilityFunctions::printerr("Variable framerate detected, aborting! (not supported)");
-			close();
-			return -6;
-		}
-	}
-	
 	// Preparing the data array's
 	if (!hw_decoding) {
 		_print_debug("Preparing data array's for HW decoding with Shaders");
@@ -642,7 +630,7 @@ void Video::_copy_frame_data() {
 const AVCodec *Video::_get_hw_codec() {
 	const AVCodec *l_codec;
 	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
-	
+
 	if (prefered_hw_decoder != "" && prefered_hw_decoder != "vulkan") {
 		_print_debug("Getting prefered HW codec " + prefered_hw_decoder + " ...");
 

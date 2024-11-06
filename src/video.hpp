@@ -54,7 +54,6 @@ private:
 	float framerate = 0.;
 
 	bool loaded = false; // Is true after open()
-	bool variable_framerate = false; // Is set during open()
 	bool hw_decoding = true; // Set by user
 	bool debug = false;
 
@@ -109,7 +108,6 @@ public:
 
 	inline float get_framerate() { return framerate; }
 
-	inline bool is_framerate_variable() { return variable_framerate; }
 	inline int get_frame_duration() { return frame_duration; };
 
 	inline String get_path() { return path.c_str(); }
@@ -164,7 +162,6 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_width"), &Video::get_width);
 		ClassDB::bind_method(D_METHOD("get_height"), &Video::get_height);
 
-		ClassDB::bind_method(D_METHOD("is_framerate_variable"), &Video::is_framerate_variable);
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
 
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
