@@ -174,16 +174,6 @@ int Video::open(String a_path, bool a_load_audio) {
 	if (l_aspect_ratio > 1.0) 
 		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
 
-	if (!hw_conversion) {
-		sws_ctx = sws_getContext(resolution.x, resolution.y, av_codec_ctx_video->pix_fmt,
-								 resolution.x, resolution.y, AV_PIX_FMT_RGB24,
-								 SWS_X, NULL, NULL, NULL);
-		if (!sws_ctx) {
-			UtilityFunctions::printerr("Couldn't get SWS context!");
-			close();
-			return -4;
-		}
-	}
 	if (hw_decoding)
 		pixel_format = av_get_pix_fmt_name(hw_pix_fmt);
 	else 
@@ -272,24 +262,17 @@ int Video::open(String a_path, bool a_load_audio) {
 		}
 	}
 	
-	_print_debug("Preparing data array's ...");
-
 	// Preparing the data array's
-	if (hw_conversion && !hw_decoding) {
+	if (!hw_decoding) {
+		_print_debug("Preparing data array's for HW decoding with Shaders");
 		y_data.resize(resolution.x * resolution.y);
 		u_data.resize((resolution.x / 2) * (resolution.y / 2));
 		v_data.resize((resolution.x / 2) * (resolution.y / 2));
-	} else if (hw_conversion) {
+	} else {
+		_print_debug("Preparing data array's for SW decoding with Shaders");
 		y_data.resize(resolution.x * resolution.y);
 		u_data.resize((resolution.x / 2) * (resolution.y / 2) * 2);
-	} else {
-		byte_array.resize(resolution.x * resolution.y * 3);
-		src_linesize[0] = resolution.x * 3;
-
-		av_frame_linesize[0] = resolution.x; // av_frame->linesize[0];
-		av_frame_linesize[1] = resolution.x; // av_frame->linesize[1];
-		av_frame_linesize[2] = resolution.x; // av_frame->linesize[2];
-	}
+	} 
 
 	// Checking second frame
 	_print_debug("Getting second frame ...");
@@ -334,9 +317,6 @@ void Video::close() {
 	_print_debug("Closing video file on path: " + path);
 	loaded = false;
 
-	if (!hw_conversion) _clean_frame_data();
-	
-	if (hw_conversion && sws_ctx) sws_freeContext(sws_ctx);
 	if (av_frame) av_frame_free(&av_frame);
 	if (hw_decoding && av_hw_frame) av_frame_free(&av_hw_frame);
 	if (av_packet) av_packet_free(&av_packet);
@@ -344,7 +324,6 @@ void Video::close() {
 	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx) avformat_close_input(&av_format_ctx);
 
-	sws_ctx = nullptr;
 	av_frame = nullptr;
 	av_packet = nullptr;
 	hw_device_ctx = nullptr;
@@ -586,21 +565,6 @@ bool Video::next_frame(bool a_skip) {
 	return true;
 }
 
-Ref<Image> Video::get_frame_image() {
-	uint8_t *l_dest_data[1] = {byte_array.ptrw()};
-	Ref<Image> l_image = memnew(Image);
-
-	if (hw_conversion) {
-		UtilityFunctions::printerr("hw_conversion is on, software conversion with get_frame_image isn't possible!");
-		return l_image;
-	}
-
-	sws_scale(sws_ctx, av_frame_data, av_frame_linesize, 0, resolution.y, l_dest_data, src_linesize);
-	l_image->set_data(resolution.x, resolution.y, 0, l_image->FORMAT_RGB8, byte_array);
-
-	return l_image;
-}
-
 void Video::_get_frame(AVCodecContext *a_codec_ctx, int a_stream_id) {
 	bool l_eof = false;
 
@@ -653,9 +617,7 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 }
 
 void Video::_copy_frame_data() {
-	if (hw_conversion && av_frame->format == hw_pix_fmt) {
-		_print_debug("Hardware decoded frame received");
-
+	if (av_frame->format == hw_pix_fmt) {
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
 			return;
@@ -666,34 +628,11 @@ void Video::_copy_frame_data() {
 
 		av_frame_unref(av_hw_frame);
 		return;
-	} else if (hw_conversion) {
-		_print_debug("Software decoded frame received for shaders");
-
+	} else {
 		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
 		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
 		return;
-	}
-	_print_debug("Software decoded frame received for sws");
-
-	int l_size = 0;
-	_clean_frame_data();
-
-	for (int i = 0; i < 3; ++i) {
-		l_size = av_frame_linesize[i] * resolution.y;
-
-		av_frame_data[i] = new uint8_t[l_size];
-		memcpy(av_frame_data[i], av_frame->data[i], l_size);
-	}
-}
-
-void Video::_clean_frame_data() {
-	for (int i = 0; i < 3; ++i) {
-		if (av_frame_data[i] == nullptr) 
-			continue;
-
-		delete[] av_frame_data[i];
-		av_frame_data[i] = nullptr;
 	}
 }
 

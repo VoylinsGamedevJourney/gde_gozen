@@ -31,19 +31,13 @@ private:
 	AVFrame *av_hw_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
-	struct SwsContext *sws_ctx = nullptr;
-
 	enum AVHWDeviceType hw_decoder;
 	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	// Default variable types
 	int response = 0;
-	int src_linesize[4] = {0, 0, 0, 0};
-	int av_frame_linesize[3] = {0, 0, 0};
 
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
-	
-	uint8_t *av_frame_data[3] = {nullptr, nullptr, nullptr};
 	
 	int64_t duration = 0;
 	int64_t frame_duration = 0;
@@ -62,7 +56,6 @@ private:
 	bool loaded = false; // Is true after open()
 	bool variable_framerate = false; // Is set during open()
 	bool hw_decoding = true; // Set by user
-	bool hw_conversion = true; // Set by user
 	bool debug = false;
 
 	std::string path = "";
@@ -110,7 +103,6 @@ public:
 
 	bool seek_frame(int a_frame_nr);
 	bool next_frame(bool a_skip = false);
-	Ref<Image> get_frame_image();
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 	int _get_audio(AVStream* a_stream_audio);
@@ -131,13 +123,6 @@ public:
 			UtilityFunctions::printerr("Setting hw_decoding after opening file has no effect!");
 		hw_decoding = a_value; }
 	inline bool get_hw_decoding() { return hw_decoding; }
-
-	inline void set_hw_conversion(bool a_value) {
-		if (loaded)
-			UtilityFunctions::printerr("Setting hw_conversion after opening file has no effect!");
-		else hw_conversion = a_value;
-	}
-	inline bool get_hw_conversion() { return hw_conversion; }
 
 	inline void set_prefered_hw_decoder(String a_value) {
 		if (loaded)
@@ -169,7 +154,6 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
 		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame, DEFVAL(false));
-		ClassDB::bind_method(D_METHOD("get_frame_image"), &Video::get_frame_image);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
@@ -185,9 +169,6 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
 		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::set_hw_decoding);
-
-		ClassDB::bind_method(D_METHOD("set_hw_conversion", "a_value"), &Video::set_hw_conversion);
-		ClassDB::bind_method(D_METHOD("get_hw_conversion"), &Video::get_hw_conversion);
 
 		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
 		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);

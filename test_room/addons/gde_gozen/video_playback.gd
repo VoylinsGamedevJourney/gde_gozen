@@ -21,8 +21,7 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
-@export var hardware_decoding: bool = true ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files, this does NOT convert the data to RGB. If you want hardware pixel format conversion to be on, which is needed for hardware decoding to get good performance, you will also need to enable hardware_conversion!
-@export var hardware_conversion: bool = true ## Setting hardware conversion uses the GPU to change the pixel format of the video frame to RGB. This is needed to have good performance when using Hardware decoding and can help perfomance with just software decoding.
+@export var hardware_decoding: bool = true ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files.
 @export var debug: bool = true ## Setting this value will print debug messages of the video file whilst opening and during playback.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
@@ -85,7 +84,6 @@ func set_video_path(a_path: String) -> void:
 	audio_player.stream = null
 	video = Video.new()
 	video.set_hw_decoding(hardware_decoding)
-	video.set_hw_conversion(hardware_conversion)
 
 	if debug:
 		video.enable_debug()
@@ -109,15 +107,14 @@ func update_video(a_video: Video) -> void:
 	_resolution = video.get_resolution()
 	_shader_material.shader = null
 
-	if video.get_hw_conversion():
-		var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
-		texture_rect.texture.set_image(l_image)
+	var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+	texture_rect.texture.set_image(l_image)
 
-		_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
-		if video.get_pixel_format() == "yuv420p":
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
-		else:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+	_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
+	if video.get_pixel_format() == "yuv420p":
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+	else:
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
 
 	audio_player.stream = video.get_audio()
 
@@ -229,14 +226,11 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	if hardware_conversion:
-		if video.get_pixel_format() == "yuv420p":
-			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
-			_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
-			_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
-		else:
-			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
-			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
+	if video.get_pixel_format() == "yuv420p":
+		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
+		_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
+		_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
 	else:
-		texture_rect.texture.set_image(video.get_frame_image())
+		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
+		_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
 
