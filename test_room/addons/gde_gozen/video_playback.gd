@@ -110,11 +110,14 @@ func update_video(a_video: Video) -> void:
 	var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 	texture_rect.texture.set_image(l_image)
 
-	_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
+	print(video.get_padding())
+	_uv_resolution = Vector2i((_resolution.x + video.get_padding()) / 2, _resolution.y / 2)
 	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+	
+	_shader_material.set_shader_parameter("resolution", _resolution)
 
 	audio_player.stream = video.get_audio()
 
@@ -227,10 +230,10 @@ func _set_current_frame(a_value: int) -> void:
 
 func _set_frame_image() -> void:
 	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
+		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x + video.get_padding(), _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
 		_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
 		_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
 	else:
-		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
+		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x + video.get_padding(), _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
 		_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
 

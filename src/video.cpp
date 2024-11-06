@@ -255,14 +255,20 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Preparing the data array's
 	if (!hw_decoding) {
-		_print_debug("Preparing data array's for HW decoding with Shaders");
-		y_data.resize(resolution.x * resolution.y);
-		u_data.resize((resolution.x / 2) * (resolution.y / 2));
-		v_data.resize((resolution.x / 2) * (resolution.y / 2));
+		_print_debug("Preparing data array's for SW decoding ...");
+		y_data.resize(av_frame->linesize[0] * resolution.y);
+		u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
+		v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
+		padding = av_frame->linesize[0] - resolution.x;
 	} else {
-		_print_debug("Preparing data array's for SW decoding with Shaders");
-		y_data.resize(resolution.x * resolution.y);
-		u_data.resize((resolution.x / 2) * (resolution.y / 2) * 2);
+		_print_debug("Preparing data array's for HW decoding ...");
+		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0)
+			UtilityFunctions::printerr("Error transferring the frame to system memory!");
+
+		y_data.resize(av_hw_frame->linesize[0] * resolution.y);
+		u_data.resize((av_hw_frame->linesize[1] / 2) * (resolution.y / 2) * 2);
+		padding = av_hw_frame->linesize[0] - resolution.x;
+		av_frame_unref(av_hw_frame);
 	} 
 
 	// Checking second frame
@@ -613,6 +619,8 @@ void Video::_copy_frame_data() {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
 			return;
 		}
+		UtilityFunctions::print(av_hw_frame->linesize[0]);
+		UtilityFunctions::print(av_hw_frame->linesize[1]);
 
 		memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
@@ -686,11 +694,9 @@ const AVCodec *Video::_get_hw_codec() {
 enum AVPixelFormat Video::_get_hw_format(const enum AVPixelFormat *a_pix_fmt) {
 	const enum AVPixelFormat *p;
 
-    for (p = a_pix_fmt; *p != -1; p++) {
-        if (*p == hw_pix_fmt) {
+    for (p = a_pix_fmt; *p != -1; p++)
+        if (*p == hw_pix_fmt)
             return *p;
-		}
-    }
 
 	UtilityFunctions::printerr("Failed to get HW surface format!");
     return AV_PIX_FMT_NONE;
