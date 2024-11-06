@@ -35,6 +35,7 @@ func _input(a_event: InputEvent) -> void:
 
 func _on_video_drop(a_files: PackedStringArray) -> void:
 	if a_files[0].get_extension().to_lower() in ["webm" ,"mkv" ,"flv" ,"vob" ,"ogv" ,"ogg" ,"mng" ,"avi" ,"mts" ,"m2ts" ,"ts" ,"mov" ,"qt" ,"wmv" ,"yuv" ,"rm" ,"rmvb" ,"viv" ,"asf" ,"amv" ,"mp4" ,"m4p" ,"mp2" ,"mpe" ,"mpv" ,"mpg" ,"mpeg" ,"m2v" ,"m4v" ,"svi" ,"3gp" ,"3g2" ,"mxf" ,"roq" ,"nsv" ,"flv" ,"f4v" ,"f4p" ,"f4a" ,"f4b"]: 
+		timeline.value = 0
 		open_video(a_files[0])
 	else:
 		print("Not a valid video file!");
