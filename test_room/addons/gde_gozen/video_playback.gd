@@ -111,7 +111,7 @@ func update_video(a_video: Video) -> void:
 	texture_rect.texture.set_image(l_image)
 
 	_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
-	if video.get_pixel_format() == "yuv420p":
+	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
@@ -226,7 +226,7 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	if video.get_pixel_format() == "yuv420p":
+	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
 		_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
 		_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
