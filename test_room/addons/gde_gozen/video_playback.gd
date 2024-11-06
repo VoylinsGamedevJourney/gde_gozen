@@ -56,6 +56,9 @@ func _enter_tree() -> void:
 	
 	_shader_material = ShaderMaterial.new()
 	texture_rect.material = _shader_material
+	if debug:
+		print("Available hardware devices:")
+		print(Video.get_available_hw_devices())
 
 
 func _exit_tree() -> void:
@@ -84,8 +87,8 @@ func set_video_path(a_path: String) -> void:
 	if debug:
 		video.enable_debug()
 		if hardware_decoding:
-			print("Available hardware decoders!")
-			print(video.get_available_hw_codecs(a_path))
+			print("Available hardware decoders:")
+			print(Video.get_available_hw_codecs(a_path))
 	else:
 		video.disable_debug()
 
@@ -111,9 +114,10 @@ func update_video(a_video: Video) -> void:
 		texture_rect.texture.set_image(l_image)
 
 		_uv_resolution = Vector2i(_resolution.x / 2, _resolution.y / 2)
-		match video.get_pixel_format():
-			"nv12": _shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
-			"yuv420p":  _shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+		if video.get_pixel_format() == "yuv420p":
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+		else:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
 
 	audio_player.stream = video.get_audio()
 
@@ -227,13 +231,13 @@ func _set_current_frame(a_value: int) -> void:
 
 func _set_frame_image() -> void:
 	if hardware_conversion:
-		if video.get_pixel_format() == "nv12":
-			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
-			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
-		else:
+		if video.get_pixel_format() == "yuv420p":
 			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
 			_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
 			_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
+		else:
+			_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x, _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
+			_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
 	else:
 		texture_rect.texture.set_image(video.get_frame_image())
 
