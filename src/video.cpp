@@ -90,9 +90,13 @@ int Video::open(String a_path, bool a_load_audio) {
 			continue;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO) {
 			av_stream_video = av_format_ctx->streams[i];
-
 			resolution.x = av_codec_params->width;
 			resolution.y = av_codec_params->height;
+
+			if (av_codec_params->format != AV_PIX_FMT_YUV420P && hw_decoding) {
+				UtilityFunctions::print("Hardware decoding not supported for this pixel format, switching to software decoding!");
+				hw_decoding = false;
+			}
 
 			_print_debug("Video stream found.");
 			continue;
@@ -153,7 +157,6 @@ int Video::open(String a_path, bool a_load_audio) {
 		close();
 		return -3;
 	}
-	
 
 	// Enable multi-threading for decoding - Video
 	av_codec_ctx_video->thread_count = OS::get_singleton()->get_processor_count() - 1;
