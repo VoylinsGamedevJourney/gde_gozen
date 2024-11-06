@@ -29,7 +29,7 @@ func _ready() -> void:
 	
 
 func _input(a_event: InputEvent) -> void:
-	if a_event.is_action_pressed("play_pause"):
+	if a_event.is_action_released("play_pause"):
 		_on_play_pause_button_pressed()
 
 
@@ -64,6 +64,8 @@ func _on_play_pause_button_pressed() -> void:
 	else:
 		video_playback.play()
 		play_pause_button.texture_normal = preload("res://icons/pause_48dp_FILL1_wght400_GRAD0_opsz48.png")
+
+	play_pause_button.release_focus()
 
 
 func _on_timeline_value_changed(_value:float) -> void:
