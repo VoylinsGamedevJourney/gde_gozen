@@ -110,7 +110,6 @@ func update_video(a_video: Video) -> void:
 	var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 	texture_rect.texture.set_image(l_image)
 
-	print(video.get_padding())
 	_uv_resolution = Vector2i((_resolution.x + video.get_padding()) / 2, _resolution.y / 2)
 	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")

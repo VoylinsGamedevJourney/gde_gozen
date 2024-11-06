@@ -619,8 +619,6 @@ void Video::_copy_frame_data() {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
 			return;
 		}
-		UtilityFunctions::print(av_hw_frame->linesize[0]);
-		UtilityFunctions::print(av_hw_frame->linesize[1]);
 
 		memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
