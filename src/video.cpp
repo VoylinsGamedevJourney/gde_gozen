@@ -120,7 +120,6 @@ int Video::open(String a_path, bool a_load_audio) {
 		UtilityFunctions::printerr("Couldn't allocate av format context!");
 		return -1;
 	}
-
 	// Open file with avformat
 	if (avformat_open_input(&av_format_ctx, path.c_str(), NULL, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video file!");
@@ -396,16 +395,16 @@ void Video::close() {
 	_print_debug("Closing video file on path: " + path);
 	loaded = false;
 
-	_clean_frame_data();
+	if (!hw_conversion) _clean_frame_data();
 	
-	if (sws_ctx) sws_freeContext(sws_ctx);
+	if (hw_conversion && sws_ctx) sws_freeContext(sws_ctx);
 	if (av_frame) av_frame_free(&av_frame);
-	if (av_hw_frame) av_frame_free(&av_hw_frame);
+	if (hw_decoding && av_hw_frame) av_frame_free(&av_hw_frame);
 	if (av_packet) av_packet_free(&av_packet);
 
 	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx) avformat_close_input(&av_format_ctx);
-	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx);
+	if (hw_decoding && hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 
 	sws_ctx = nullptr;
 	av_frame = nullptr;
