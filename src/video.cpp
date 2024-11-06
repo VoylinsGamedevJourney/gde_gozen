@@ -25,6 +25,17 @@ Dictionary Video::get_file_meta(String a_file_path) {
 	return l_dic;
 }
 
+PackedStringArray Video::get_available_hw_devices() {
+	PackedStringArray l_devices = PackedStringArray();
+	enum AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
+	
+	while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
+		if (l_type != AV_HWDEVICE_TYPE_VULKAN) // At this moment no hardware support for Vulkan yet
+			l_devices.append(av_hwdevice_get_type_name(l_type));
+	}
+
+	return l_devices;
+}
 
 PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
 	PackedStringArray l_decoders = PackedStringArray();
@@ -60,6 +71,9 @@ PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
 	}
 
     while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
+		if (l_type == AV_HWDEVICE_TYPE_VULKAN)
+			continue; // At this moment no hardware support for Vulkan yet
+
 		const AVCodec *l_codec = avcodec_find_decoder(l_id);
         AVBufferRef* l_hw_device_ctx = nullptr;
 
@@ -97,8 +111,8 @@ int Video::open(String a_path, bool a_load_audio) {
 	if (loaded)
 		close();
 	
-	if (debug)
-		UtilityFunctions::print("Opening video file on path: ", a_path);
+	path = a_path.utf8();
+	_print_debug("Opening video file on path: " + path);
 
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
@@ -108,7 +122,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Open file with avformat
-	if (avformat_open_input(&av_format_ctx, a_path.utf8(), NULL, NULL)) {
+	if (avformat_open_input(&av_format_ctx, path.c_str(), NULL, NULL)) {
 		UtilityFunctions::printerr("Couldn't open video file!");
 		close();
 		return -1;
@@ -122,8 +136,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Getting the audio and video stream
-	if (debug)
-		UtilityFunctions::print("Getting stream information ...");
+	_print_debug("Getting stream information ...");
 
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
@@ -140,17 +153,17 @@ int Video::open(String a_path, bool a_load_audio) {
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO) {
 			av_stream_video = av_format_ctx->streams[i];
 
-			if (debug)
-				UtilityFunctions::print("Video stream found.");
+			resolution.x = av_codec_params->width;
+			resolution.y = av_codec_params->height;
 
+			_print_debug("Video stream found.");
 			continue;
 		}
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
 	// Setup Decoder codec context
-	if (debug)
-		UtilityFunctions::print("Setting up decoder codec context ...");
+	_print_debug("Setting up decoder codec context ...");
 
 	const AVCodec *av_codec_video;
 	if (hw_decoding)
@@ -172,6 +185,30 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -3;
 	}
 
+	if (hw_decoding && hw_device_ctx) {
+		av_codec_ctx_video->hw_device_ctx = hw_device_ctx;
+
+		for (int i = 0;; i++) {
+			const AVCodecHWConfig* config = avcodec_get_hw_config(av_codec_video, i);
+			if (!config) {
+				UtilityFunctions::printerr("Current decoder does not accept selected device! Codec name: ", av_codec_video->long_name, "  -  Device: ", av_hwdevice_get_type_name(hw_decoder));
+
+				hw_decoding = false;
+				av_codec_ctx_video->hw_device_ctx = nullptr;
+				break;
+			}
+			if ((config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) && config->device_type == hw_decoder) {
+				hw_pix_fmt = config->pix_fmt;
+
+				_print_debug(std::string("Hardware pixel format is: ") + av_get_pix_fmt_name(hw_pix_fmt));
+				break;
+			}
+		}
+
+		av_codec_ctx_video->opaque = this;
+		av_codec_ctx_video->get_format = _get_format;
+	}
+
 	// Copying parameters
 	if (avcodec_parameters_to_context(av_codec_ctx_video, av_stream_video->codecpar)) {
 		UtilityFunctions::printerr("Couldn't initialize video codec context!");
@@ -179,11 +216,6 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -3;
 	}
 	
-	if (hw_decoding && hw_device_ctx) {
-		av_codec_ctx_video->hw_device_ctx = hw_device_ctx;
-		av_codec_ctx_video->opaque = this;
-		av_codec_ctx_video->get_format = _get_format;
-	}
 
 	// Enable multi-threading for decoding - Video
 	av_codec_ctx_video->thread_count = OS::get_singleton()->get_processor_count() - 1;
@@ -200,19 +232,9 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -3;
 	}
 
-	resolution.x = av_codec_ctx_video->width;
-	resolution.y = av_codec_ctx_video->height;
-
 	float l_aspect_ratio = av_q2d(av_stream_video->codecpar->sample_aspect_ratio);
 	if (l_aspect_ratio > 1.0) 
 		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
-	
-	if (hw_decoding && av_codec_ctx_video->pix_fmt != AV_PIX_FMT_NV12 && av_codec_ctx_video->pix_fmt != AV_PIX_FMT_YUV420P) {
-		UtilityFunctions::printerr("Unsupported pixel format! Contact developer for support!");
-		UtilityFunctions::printerr(av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt));
-		close();
-		return -14;
-	}
 
 	if (!hw_conversion) {
 		sws_ctx = sws_getContext(resolution.x, resolution.y, av_codec_ctx_video->pix_fmt,
@@ -224,13 +246,13 @@ int Video::open(String a_path, bool a_load_audio) {
 			return -4;
 		}
 	}
+	if (hw_decoding)
+		pixel_format = av_get_pix_fmt_name(hw_pix_fmt);
+	else 
+		pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
 
-	pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
-
-	if (debug) {
-		UtilityFunctions::print("Selected pixel format is: ", pixel_format);
-		UtilityFunctions::print("Seeking to beginning of video data ...");
-	}
+	_print_debug("Selected pixel format is: " + pixel_format);
+	_print_debug("Seeking to beginning of video data ...");
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -243,6 +265,16 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -12;
 	}
 
+	if (hw_decoding) {
+		av_hw_frame = av_frame_alloc();
+
+		if (!av_hw_frame) {
+			UtilityFunctions::printerr("Couldn't allocate hw frame for video!");
+			close();
+			return -12;
+		}
+	}
+
 	avcodec_flush_buffers(av_codec_ctx_video);
 	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
 	if (l_duration_from_bitrate) {
@@ -251,7 +283,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -5;
 	}
 
-	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_FRAME);
+	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_BACKWARD);
 	if (response < 0) {
 		print_av_error("Seeking to beginning error: ");
 		close();
@@ -260,21 +292,19 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	int time = 0;
 	if (debug) {
-		UtilityFunctions::print("Getting first frame ...");
+		_print_debug("Getting first frame ...");
 		time = Time::get_singleton()->get_ticks_usec();
 	}
 	
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
-	if (debug)
-		UtilityFunctions::print("Getting first frame took: ", Time::get_singleton()->get_ticks_usec() - time);
+	_print_debug("Getting first frame took: " + std::to_string(Time::get_singleton()->get_ticks_usec() - time));
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
 		close();
 		return -5;
 	}
 	
-	if (debug)
-		UtilityFunctions::print("Getting first frame info ...");
+	_print_debug("Getting first frame info ...");
 
 	// Checking for interlacing and what type of interlacing
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
@@ -304,18 +334,16 @@ int Video::open(String a_path, bool a_load_audio) {
 		}
 	}
 	
-	if (debug)
-		UtilityFunctions::print("Preparing data array's ...");
+	_print_debug("Preparing data array's ...");
 
 	// Preparing the data array's
-	if (hw_conversion) {
+	if (hw_conversion && !hw_decoding) {
 		y_data.resize(av_frame->linesize[0] * resolution.y);
-		if (av_codec_ctx_video->pix_fmt == AV_PIX_FMT_NV12) {
-			u_data.resize((av_frame->linesize[1] / 2) * (resolution.y / 2) * 2);
-		} else {
-			u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
-			v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
-		}
+		u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
+		v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
+	} else if (hw_conversion) {
+		y_data.resize(resolution.x * resolution.y);
+		u_data.resize((resolution.x / 2) * (resolution.y / 2) * 2);
 	} else {
 		byte_array.resize(resolution.x * resolution.y * 3);
 		src_linesize[0] = resolution.x * 3;
@@ -326,15 +354,13 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Checking second frame
-	if (debug)
-		UtilityFunctions::print("Getting second frame ...");
+	_print_debug("Getting second frame ...");
 
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response)
 		print_av_error("Something went wrong getting second frame!");
 
-	if (debug)
-		UtilityFunctions::print("Getting data from second frame ...");
+	_print_debug("Getting data from second frame ...");
 
 	duration = av_format_ctx->duration;
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
@@ -357,22 +383,17 @@ int Video::open(String a_path, bool a_load_audio) {
 		av_packet_unref(av_packet);
 	if (av_frame)
 		av_frame_unref(av_frame);
-	if (hw_device_ctx)
-		av_buffer_unref(&hw_device_ctx);
 
 	loaded = true;
-	path = a_path;
 	response = OK;
 
-	if (debug)
-		UtilityFunctions::print("Video is open now.");
+	_print_debug("Video is open now.");
 
 	return OK;
 }
 
 void Video::close() {
-	if (debug)
-		UtilityFunctions::print("Closing video file on path: ", path);
+	_print_debug("Closing video file on path: " + path);
 	loaded = false;
 
 	_clean_frame_data();
@@ -382,9 +403,9 @@ void Video::close() {
 	if (av_hw_frame) av_frame_free(&av_hw_frame);
 	if (av_packet) av_packet_free(&av_packet);
 
-	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx) avformat_close_input(&av_format_ctx);
+	if (hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 
 	sws_ctx = nullptr;
 	av_frame = nullptr;
@@ -404,8 +425,7 @@ void Video::print_av_error(const char *a_message) {
 int Video::_get_audio(AVStream* a_stream_audio) {
 	audio = memnew(AudioStreamWAV);
 
-	if (debug)
-		UtilityFunctions::print("Getting audio ...");
+	_print_debug("Getting audio ...");
 
 	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream_audio->codecpar->codec_id);
 	if (!l_codec_audio) {
@@ -434,8 +454,7 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 
 	l_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
-	if (debug)
-		UtilityFunctions::print("Opening audio codec ...");
+	_print_debug("Opening audio codec ...");
 
 	// Open codec - Audio
 	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
@@ -443,8 +462,7 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		return -2;
 	}
 
-	if (debug)
-		UtilityFunctions::print("Creating SWR context ...");
+	_print_debug("Creating SWR context ...");
 
 	struct SwrContext *l_swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
@@ -467,14 +485,13 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		return -8;
 	}
 
-	if (debug)
-		UtilityFunctions::print("Seeking to beginning of audio data ...");
+	_print_debug("Seeking to beginning of audio data ...");
 
 	// Set the seeker to the beginning
 	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE ? a_stream_audio->start_time : 0;
 	avcodec_flush_buffers(l_codec_ctx_audio);
 
-	response = av_seek_frame(av_format_ctx, -1, start_time_audio, AVSEEK_FLAG_FRAME);
+	response = av_seek_frame(av_format_ctx, -1, start_time_audio, AVSEEK_FLAG_BACKWARD);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek to the beginning of audio stream!");
 		avcodec_flush_buffers(l_codec_ctx_audio);
@@ -499,8 +516,7 @@ int Video::_get_audio(AVStream* a_stream_audio) {
     bool l_stereo = l_codec_ctx_audio->ch_layout.nb_channels >= 2;
 	size_t l_audio_size = 0;
 
-	if (debug)
-		UtilityFunctions::print("Starting loop to gather audio data ...");
+	_print_debug("Starting loop to gather audio data ...");
 
 	while (true) {
 		_get_frame(l_codec_ctx_audio, a_stream_audio->index);
@@ -549,8 +565,7 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		av_frame_unref(l_decoded_frame);
 	}
 
-	if (debug)
-		UtilityFunctions::print("Audio object creation ...");
+	_print_debug("Audio object creation ...");
 
 	// Audio creation
 	audio->set_format(audio->FORMAT_16_BITS);
@@ -567,8 +582,7 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	av_frame_free(&l_decoded_frame);
 	av_packet_free(&av_packet);
 
-	if (debug)
-		UtilityFunctions::print("Getting audio was succesfull.");
+	_print_debug("Getting audio was succesfull.");
 
 	return OK;
 }
@@ -583,7 +597,7 @@ bool Video::seek_frame(int a_frame_nr) {
 	frame_timestamp = (long)(a_frame_nr * average_frame_duration);
 	avcodec_flush_buffers(av_codec_ctx_video);
 
-	response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_FRAME);
+	response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek video file!");
 		return false;
@@ -702,21 +716,28 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 }
 
 void Video::_copy_frame_data() {
-	if (hw_conversion) {
-	//	if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
-    //        UtilityFunctions::printerr("Error transferring the frame to system memory!");
-    //        return;
-    //    }
+	if (hw_conversion && av_frame->format == hw_pix_fmt) {
+		_print_debug("Hardware decoded frame received");
+
+		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
+			UtilityFunctions::printerr("Error transferring the frame to system memory!");
+			return;
+		}
+
+		memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
+		memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
+
+		av_frame_unref(av_hw_frame);
+		return;
+	} else if (hw_conversion) {
+		_print_debug("Software decoded frame received for shaders");
 
 		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
 		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
-	//	memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
-	//	memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
-	//	memcpy(v_data.ptrw(), av_hw_frame->data[2], v_data.size());
-	//	av_frame_unref(av_hw_frame);
 		return;
 	}
+	_print_debug("Software decoded frame received for sws");
 
 	int l_size = 0;
 	_clean_frame_data();
@@ -742,17 +763,19 @@ void Video::_clean_frame_data() {
 const AVCodec *Video::_get_hw_codec() {
 	const AVCodec *l_codec;
 	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
-
 	
-	if (prefered_hw_decoder != "") {
-		if (debug)
-			UtilityFunctions::print("Getting prefered HW codec ", prefered_hw_decoder, " ...");
+	if (prefered_hw_decoder != "" && prefered_hw_decoder != "vulkan") {
+		_print_debug("Getting prefered HW codec " + prefered_hw_decoder + " ...");
 
-		l_type = av_hwdevice_find_type_by_name(prefered_hw_decoder.utf8().get_data());
+		l_type = av_hwdevice_find_type_by_name(prefered_hw_decoder.c_str());
 		l_codec = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
-        if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, nullptr, nullptr, 0) < 0) {
-			UtilityFunctions::printerr("Selected hw device couldn't be created!");
+		// TODO: Support Vulkan, older hardware does not have video decoding support so this is not too necessary yet at this point.
+		// const char *l_device_name = l_type == AV_HWDEVICE_TYPE_VULKAN ? RenderingServer::get_singleton()->get_video_adapter_name().utf8() : nullptr;
+		// if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, l_device_name, nullptr, 0) < 0)
+
+        if ((response = av_hwdevice_ctx_create(&hw_device_ctx, l_type, nullptr, nullptr, 0)) < 0) {
+			print_av_error("Selected hw device couldn't be created!");
 		} else if (!av_codec_is_decoder(l_codec)) {
 			UtilityFunctions::printerr("Found codec isn't a hw decoder!");
 		} else {
@@ -761,14 +784,19 @@ const AVCodec *Video::_get_hw_codec() {
 
 			return l_codec;
 		}
-        av_buffer_unref(&hw_device_ctx);
 	}
+    av_buffer_unref(&hw_device_ctx);
 
-	if (debug)
-		UtilityFunctions::print("Selecting best HW codec ...");
+	_print_debug("Selecting best HW codec ...");
 
 	l_type = AV_HWDEVICE_TYPE_NONE;
     while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
+		// TODO: Support Vulkan, older hardware does not have video decoding support so this is not too necessary yet at this point.
+		// const char *l_device_name = l_type == AV_HWDEVICE_TYPE_VULKAN ? RenderingServer::get_singleton()->get_video_adapter_name().utf8() : nullptr;
+		// if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, l_device_name, nullptr, 0) < 0)
+		if (l_type == AV_HWDEVICE_TYPE_VULKAN)
+			continue;
+
 		l_codec = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
         if (av_hwdevice_ctx_create(&hw_device_ctx, l_type, nullptr, nullptr, 0) < 0)
@@ -789,10 +817,24 @@ const AVCodec *Video::_get_hw_codec() {
 }
  
 enum AVPixelFormat Video::_get_hw_format(const enum AVPixelFormat *a_pix_fmt) {
-	for (const enum AVPixelFormat *p = a_pix_fmt; *p != AV_PIX_FMT_NONE; p++) {
-		if (*p == AV_PIX_FMT_NV12 || *p == AV_PIX_FMT_YUV420P) {
-			return *p;
+	const enum AVPixelFormat *p;
+
+    for (p = a_pix_fmt; *p != -1; p++) {
+        if (*p == hw_pix_fmt) {
+            return *p;
 		}
-	}
-	return a_pix_fmt[0];
+    }
+
+	UtilityFunctions::printerr("Failed to get HW surface format!");
+    return AV_PIX_FMT_NONE;
+}
+
+void Video::_print_debug(std::string a_text) {
+	if (debug)
+		UtilityFunctions::print(a_text.c_str());
+}
+
+void Video::_printerr_debug(std::string a_text) {
+	if (debug)
+		UtilityFunctions::print(a_text.c_str());
 }

@@ -8,8 +8,9 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
-#include "godot_cpp/classes/gd_extension_manager.hpp"
+#include <godot_cpp/classes/gd_extension_manager.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 
 #include "ffmpeg_includes.hpp"
 
@@ -32,8 +33,8 @@ private:
 
 	struct SwsContext *sws_ctx = nullptr;
 
-	AVHWDeviceType hw_decoder;
-	AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
+	enum AVHWDeviceType hw_decoder;
+	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	// Default variable types
 	int response = 0;
@@ -64,11 +65,11 @@ private:
 	bool hw_conversion = true; // Set by user
 	bool debug = false;
 
-	// Godot classes
-	String path = "";
-	String prefered_hw_decoder = "";
-	String pixel_format = "";
+	std::string path = "";
+	std::string pixel_format = "";
+	std::string prefered_hw_decoder = "";
 
+	// Godot classes
 	Vector2i resolution = Vector2i(0, 0);
 
 	AudioStreamWAV *audio = nullptr;
@@ -91,12 +92,16 @@ private:
 	const AVCodec *_get_hw_codec();
     enum AVPixelFormat _get_hw_format(const enum AVPixelFormat *a_pix_fmt);
 
+	void _print_debug(std::string a_text);
+	void _printerr_debug(std::string a_text);
+
 
 public:
 	Video() {}
 	~Video() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
+	static PackedStringArray get_available_hw_devices();
 	static PackedStringArray get_available_hw_codecs(String a_file_path);
 
 	int open(String a_path = "", bool a_load_audio = true);
@@ -116,7 +121,7 @@ public:
 	inline bool is_framerate_variable() { return variable_framerate; }
 	inline int get_frame_duration() { return frame_duration; };
 
-	inline String get_path() { return path; }
+	inline String get_path() { return path.c_str(); }
 
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
@@ -138,14 +143,14 @@ public:
 	inline void set_prefered_hw_decoder(String a_value) {
 		if (loaded)
 			UtilityFunctions::printerr("Setting prefered_hw_decoder after opening file has no effect!");
-		prefered_hw_decoder = a_value; }
-	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
+		prefered_hw_decoder = a_value.utf8(); }
+	inline String get_prefered_hw_decoder() { return prefered_hw_decoder.c_str(); }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
 	inline void disable_debug() { debug = false; }
 	inline bool get_debug_enabled() { return debug; }
 
-	inline String get_pixel_format() { return pixel_format; }
+	inline String get_pixel_format() { return pixel_format.c_str(); }
 
 	inline PackedByteArray get_y_data() { return y_data; }
 	inline PackedByteArray get_u_data() { return u_data; }
@@ -157,6 +162,7 @@ public:
 protected:
 	static inline void _bind_methods() {
 		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_file_path"), &Video::get_file_meta);
+		ClassDB::bind_static_method("Video", D_METHOD("get_available_hw_devices"), &Video::get_available_hw_devices);
 		ClassDB::bind_static_method("Video", D_METHOD("get_available_hw_codecs", "a_file_path"), &Video::get_available_hw_codecs);
 
 		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"), &Video::open, DEFVAL(""), DEFVAL(true));
