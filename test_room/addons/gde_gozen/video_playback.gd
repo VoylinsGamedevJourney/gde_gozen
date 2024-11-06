@@ -89,9 +89,6 @@ func set_video_path(a_path: String) -> void:
 
 	if debug:
 		video.enable_debug()
-		if hardware_decoding:
-			print("Available hardware decoders:")
-			print(Video.get_available_hw_codecs(a_path))
 	else:
 		video.disable_debug()
 

@@ -37,69 +37,6 @@ PackedStringArray Video::get_available_hw_devices() {
 	return l_devices;
 }
 
-PackedStringArray Video::get_available_hw_codecs(String a_file_path) {
-	PackedStringArray l_decoders = PackedStringArray();
-	AVFormatContext *l_format_ctx = avformat_alloc_context();
-
-	if (!l_format_ctx) {
-		UtilityFunctions::printerr("Couldn't allocate AVFormatContext!");
-		return l_decoders;
-	}
-
-	if (avformat_open_input(&l_format_ctx, a_file_path.utf8(), NULL, NULL)) {
-		UtilityFunctions::printerr("Couldn't open video file!");
-		avformat_close_input(&l_format_ctx);
-		return l_decoders;
-	}
-
-	if (avformat_find_stream_info(l_format_ctx, NULL)) {
-		UtilityFunctions::printerr("Couldn't find stream info!");
-		avformat_close_input(&l_format_ctx);
-		return l_decoders;
-	}
-
-	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
-	AVCodecID l_id; 
-
-	for (int i = 0; i < l_format_ctx->nb_streams; i++) {
-		if (!avcodec_find_decoder(l_format_ctx->streams[i]->codecpar->codec_id))
-			continue;
-		else if (l_format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-			l_id = l_format_ctx->streams[i]->codecpar->codec_id;
-			break;
-		}
-	}
-
-    while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
-		if (l_type == AV_HWDEVICE_TYPE_VULKAN)
-			continue; // At this moment no hardware support for Vulkan yet
-
-		const AVCodec *l_codec = avcodec_find_decoder(l_id);
-        AVBufferRef* l_hw_device_ctx = nullptr;
-
-        if (av_hwdevice_ctx_create(&l_hw_device_ctx, l_type, nullptr, nullptr, 0) < 0)
-            continue;
-
-        if (av_codec_is_decoder(l_codec)) {
-            AVCodecContext* l_codec_ctx = avcodec_alloc_context3(l_codec);
-            if (!l_codec_ctx) {
-                UtilityFunctions::printerr("Failed to allocate codec context!");
-                av_buffer_unref(&l_hw_device_ctx);
-                continue;
-            }
-
-			l_codec_ctx->hw_device_ctx = l_hw_device_ctx;
-
-            if (!avcodec_open2(l_codec_ctx, l_codec, nullptr))
-				l_decoders.append(av_hwdevice_get_type_name(l_type));
-		}
-        av_buffer_unref(&l_hw_device_ctx);
-	}
-
-	avformat_close_input(&l_format_ctx);
-	return l_decoders;
-}
-
 enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt) {
 	Video* l_video = static_cast<Video*>(a_av_ctx->opaque);
     return l_video->_get_hw_format(a_pix_fmt);
@@ -108,9 +45,11 @@ enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPix
 
 //----------------------------------------------- NON-STATIC FUNCTIONS
 int Video::open(String a_path, bool a_load_audio) {
-	if (loaded)
-		close();
-	
+	if (loaded) {
+		UtilityFunctions::printerr("Video is already open");
+		return -100;
+	}
+
 	path = a_path.utf8();
 	_print_debug("Opening video file on path: " + path);
 
@@ -337,9 +276,9 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Preparing the data array's
 	if (hw_conversion && !hw_decoding) {
-		y_data.resize(av_frame->linesize[0] * resolution.y);
-		u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
-		v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
+		y_data.resize(resolution.x * resolution.y);
+		u_data.resize((resolution.x / 2) * (resolution.y / 2));
+		v_data.resize((resolution.x / 2) * (resolution.y / 2));
 	} else if (hw_conversion) {
 		y_data.resize(resolution.x * resolution.y);
 		u_data.resize((resolution.x / 2) * (resolution.y / 2) * 2);
@@ -347,9 +286,9 @@ int Video::open(String a_path, bool a_load_audio) {
 		byte_array.resize(resolution.x * resolution.y * 3);
 		src_linesize[0] = resolution.x * 3;
 
-		av_frame_linesize[0] = av_frame->linesize[0];
-		av_frame_linesize[1] = av_frame->linesize[1];
-		av_frame_linesize[2] = av_frame->linesize[2];
+		av_frame_linesize[0] = resolution.x; // av_frame->linesize[0];
+		av_frame_linesize[1] = resolution.x; // av_frame->linesize[1];
+		av_frame_linesize[2] = resolution.x; // av_frame->linesize[2];
 	}
 
 	// Checking second frame
@@ -404,7 +343,6 @@ void Video::close() {
 
 	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx) avformat_close_input(&av_format_ctx);
-	if (hw_decoding && hw_device_ctx) av_buffer_unref(&hw_device_ctx);
 
 	sws_ctx = nullptr;
 	av_frame = nullptr;
