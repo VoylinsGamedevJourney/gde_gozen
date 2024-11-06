@@ -75,6 +75,9 @@ func _ready() -> void:
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(a_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
+	if video != null:
+		close()
+
 	path = a_path
 	if !is_node_ready():
 		return
@@ -157,7 +160,6 @@ func close() -> void:
 	if video != null:
 		if is_playing:
 			pause()
-		video.close()
 		video = null
 
 
