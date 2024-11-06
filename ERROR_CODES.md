@@ -14,7 +14,6 @@ No error code but returns an empty dictionary when nothing was able to be read.
 - -3: Failed setting up of video decoder;
 - -4: Failed setting up SWS;
 - -5: Video file is not usable due to limitations;
-- -6: Invalid frame-rate found in video;
 - -7: Could not establish the total amount of frames in video files;
 - -8: Failed setting up of SWR; 
 - -9: Audio seeking error;
