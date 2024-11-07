@@ -214,7 +214,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -5;
 	}
 
-	response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_BACKWARD);
+	_seek_frame(0);
 	if (response < 0) {
 		print_av_error("Seeking to beginning error: ");
 		close();
@@ -507,10 +507,7 @@ bool Video::seek_frame(int a_frame_nr) {
 	}
 
 	// Video seeking
-	frame_timestamp = (long)(a_frame_nr * average_frame_duration);
-	avcodec_flush_buffers(av_codec_ctx_video);
-
-	response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD);
+	_seek_frame(a_frame_nr);
 	if (response < 0) {
 		UtilityFunctions::printerr("Can't seek video file!");
 		return false;
@@ -519,8 +516,17 @@ bool Video::seek_frame(int a_frame_nr) {
 	while (true) {
 		_get_frame(av_codec_ctx_video, av_stream_video->index);
 		if (response) {
+			if (response == AVERROR_EOF) {
+				_printerr_debug("End of file reached! Going back 1 frame!");
+				_seek_frame(a_frame_nr--);
+				if (response < 0) {
+					UtilityFunctions::printerr("Can't seek video file!");
+					return false;
+				}
+				continue;
+			}
+			print_av_error("Problem happened getting frame in seek_frame! ");
 			response = 1;
-			UtilityFunctions::printerr("Problem happened getting frame in seek_frame! ", response);
 			break;
 		}
 
@@ -539,10 +545,7 @@ bool Video::seek_frame(int a_frame_nr) {
 	av_frame_unref(av_frame);
 	av_packet_unref(av_packet);
 
-	if (response == 1) {
-		response = 0;
-		return false;
-	} else return true;
+	return response != 1;
 }
 
 bool Video::next_frame(bool a_skip) {
@@ -614,9 +617,13 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 }
 
 void Video::_copy_frame_data() {
-	if (av_frame->format == hw_pix_fmt) {
+	if (hw_decoding && av_frame->format == hw_pix_fmt) {
+		UtilityFunctions::print(4);
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
+			return;
+		} else if (av_hw_frame->data[0] == nullptr) {
+			_printerr_debug("Frame is empty!");
 			return;
 		}
 
@@ -626,6 +633,11 @@ void Video::_copy_frame_data() {
 		av_frame_unref(av_hw_frame);
 		return;
 	} else {
+		if (av_frame->data[0] == nullptr) {
+			_printerr_debug("Frame is empty!");
+			return;
+		}
+
 		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
 		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
 		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
@@ -709,3 +721,15 @@ void Video::_printerr_debug(std::string a_text) {
 	if (debug)
 		UtilityFunctions::print(a_text.c_str());
 }
+
+void Video::_seek_frame(int a_frame_nr) {
+	avcodec_flush_buffers(av_codec_ctx_video);
+
+	if (a_frame_nr == 0)
+		response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_BACKWARD);
+	else {
+		frame_timestamp = (long)(a_frame_nr * average_frame_duration);
+		response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD);
+	}
+}
+

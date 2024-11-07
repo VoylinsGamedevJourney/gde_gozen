@@ -47,8 +47,6 @@ private:
 	long frame_timestamp = 0;
 	long current_pts = 0;
 
-	double actual_pts = 0.;
-	double expected_pts = 0.;
 	double average_frame_duration = 0;
 	double stream_time_base_video = 0;
 
@@ -88,6 +86,7 @@ private:
 	void _print_debug(std::string a_text);
 	void _printerr_debug(std::string a_text);
 
+	void _seek_frame(int a_frame_nr);
 
 public:
 	Video() {}
