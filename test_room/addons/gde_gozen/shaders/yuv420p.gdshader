@@ -6,6 +6,8 @@ uniform sampler2D u_data;
 uniform sampler2D v_data;
 
 uniform vec2 resolution;
+uniform vec4 color_profile;
+
 
 
 void fragment() {
@@ -17,9 +19,9 @@ void fragment() {
     float U = texture(u_data, uv).r - 0.5;
     float V = texture(v_data, uv).r - 0.5;
 
-    float R = Y + 1.402 * V;
-    float G = Y - 0.344136 * U - 0.714136 * V;
-    float B = Y + 1.772 * U;
+	float R = Y + color_profile.x * V;
+	float G = Y - color_profile.y * U - color_profile.z * V;
+	float B = Y + color_profile.w * U;
 
     COLOR = vec4(R, G, B, 1.0);
 }
