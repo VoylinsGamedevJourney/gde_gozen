@@ -51,7 +51,7 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	path = a_path.utf8();
-	_print_debug("Opening video file on path: " + path);
+	_print_debug("VIDEO: Opening video file on path: " + path);
 
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
@@ -74,8 +74,6 @@ int Video::open(String a_path, bool a_load_audio) {
 	}
 
 	// Getting the audio and video stream
-	_print_debug("Getting stream information ...");
-
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
 
@@ -92,21 +90,18 @@ int Video::open(String a_path, bool a_load_audio) {
 			av_stream_video = av_format_ctx->streams[i];
 			resolution.x = av_codec_params->width;
 			resolution.y = av_codec_params->height;
+			color_profile = av_codec_params->color_primaries;
 
 			if (av_codec_params->format != AV_PIX_FMT_YUV420P && hw_decoding) {
-				UtilityFunctions::print("Hardware decoding not supported for this pixel format, switching to software decoding!");
+				_print_debug("Hardware decoding not supported for this pixel format, switching to software decoding!");
 				hw_decoding = false;
 			}
-
-			_print_debug("Video stream found.");
 			continue;
 		}
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
 	// Setup Decoder codec context
-	_print_debug("Setting up decoder codec context ...");
-
 	const AVCodec *av_codec_video;
 	if (hw_decoding)
 		av_codec_video = _get_hw_codec();
@@ -133,15 +128,14 @@ int Video::open(String a_path, bool a_load_audio) {
 		for (int i = 0;; i++) {
 			const AVCodecHWConfig* config = avcodec_get_hw_config(av_codec_video, i);
 			if (!config) {
-				UtilityFunctions::printerr("Current decoder does not accept selected device! Codec name: ", av_codec_video->long_name, "  -  Device: ", av_hwdevice_get_type_name(hw_decoder));
-
+				_printerr_debug("Current decoder does not accept selected device!");
+				_printerr_debug(std::string("Codec name: ") + av_codec_video->long_name + "  -  Device: " + av_hwdevice_get_type_name(hw_decoder));
 				hw_decoding = false;
 				av_codec_ctx_video->hw_device_ctx = nullptr;
 				break;
 			}
 			if ((config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) && config->device_type == hw_decoder) {
 				hw_pix_fmt = config->pix_fmt;
-
 				_print_debug(std::string("Hardware pixel format is: ") + av_get_pix_fmt_name(hw_pix_fmt));
 				break;
 			}
@@ -181,9 +175,7 @@ int Video::open(String a_path, bool a_load_audio) {
 		pixel_format = av_get_pix_fmt_name(hw_pix_fmt);
 	else 
 		pixel_format = av_get_pix_fmt_name(av_codec_ctx_video->pix_fmt);
-
 	_print_debug("Selected pixel format is: " + pixel_format);
-	_print_debug("Seeking to beginning of video data ...");
 
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (long)(av_stream_video->start_time * stream_time_base_video) : 0;
 
@@ -221,22 +213,13 @@ int Video::open(String a_path, bool a_load_audio) {
 		return -5;
 	}
 
-	int time = 0;
-	if (debug) {
-		_print_debug("Getting first frame ...");
-		time = Time::get_singleton()->get_ticks_usec();
-	}
-	
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
-	_print_debug("Getting first frame took: " + std::to_string(Time::get_singleton()->get_ticks_usec() - time));
 	if (response) {
 		print_av_error("Something went wrong getting first frame!");
 		close();
 		return -5;
 	}
 	
-	_print_debug("Getting first frame info ...");
-
 	// Checking for interlacing and what type of interlacing
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
 		interlaced = av_frame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST ? 1 : 2;
@@ -255,15 +238,13 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Preparing the data array's
 	if (!hw_decoding) {
-		_print_debug("Preparing data array's for SW decoding ...");
 		y_data.resize(av_frame->linesize[0] * resolution.y);
 		u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
 		v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
 		padding = av_frame->linesize[0] - resolution.x;
 	} else {
-		_print_debug("Preparing data array's for HW decoding ...");
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0)
-			UtilityFunctions::printerr("Error transferring the frame to system memory!");
+			_printerr_debug("Error transferring the frame to system memory!");
 
 		y_data.resize(av_hw_frame->linesize[0] * resolution.y);
 		u_data.resize((av_hw_frame->linesize[1] / 2) * (resolution.y / 2) * 2);
@@ -272,13 +253,9 @@ int Video::open(String a_path, bool a_load_audio) {
 	} 
 
 	// Checking second frame
-	_print_debug("Getting second frame ...");
-
 	_get_frame(av_codec_ctx_video, av_stream_video->index);
 	if (response)
 		print_av_error("Something went wrong getting second frame!");
-
-	_print_debug("Getting data from second frame ...");
 
 	duration = av_format_ctx->duration;
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
@@ -304,8 +281,6 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	loaded = true;
 	response = OK;
-
-	_print_debug("Video is open now.");
 
 	return OK;
 }
@@ -338,8 +313,6 @@ void Video::print_av_error(const char *a_message) {
 int Video::_get_audio(AVStream* a_stream_audio) {
 	audio = memnew(AudioStreamWAV);
 
-	_print_debug("Getting audio ...");
-
 	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream_audio->codecpar->codec_id);
 	if (!l_codec_audio) {
 		UtilityFunctions::printerr("Couldn't find any codec decoder for audio!");
@@ -367,15 +340,11 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 
 	l_codec_ctx_audio->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
-	_print_debug("Opening audio codec ...");
-
 	// Open codec - Audio
 	if (avcodec_open2(l_codec_ctx_audio, l_codec_audio, NULL)) {
 		UtilityFunctions::printerr("Couldn't open audio codec!");
 		return -2;
 	}
-
-	_print_debug("Creating SWR context ...");
 
 	struct SwrContext *l_swr_ctx = nullptr;
 	response = swr_alloc_set_opts2(
@@ -397,8 +366,6 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		avcodec_free_context(&l_codec_ctx_audio);
 		return -8;
 	}
-
-	_print_debug("Seeking to beginning of audio data ...");
 
 	// Set the seeker to the beginning
 	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE ? a_stream_audio->start_time : 0;
@@ -428,8 +395,6 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	PackedByteArray l_audio_data = PackedByteArray();
     bool l_stereo = l_codec_ctx_audio->ch_layout.nb_channels >= 2;
 	size_t l_audio_size = 0;
-
-	_print_debug("Starting loop to gather audio data ...");
 
 	while (true) {
 		_get_frame(l_codec_ctx_audio, a_stream_audio->index);
@@ -478,8 +443,6 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 		av_frame_unref(l_decoded_frame);
 	}
 
-	_print_debug("Audio object creation ...");
-
 	// Audio creation
 	audio->set_format(audio->FORMAT_16_BITS);
 	audio->set_mix_rate(l_codec_ctx_audio->sample_rate);
@@ -494,8 +457,6 @@ int Video::_get_audio(AVStream* a_stream_audio) {
 	av_frame_free(&av_frame);
 	av_frame_free(&l_decoded_frame);
 	av_packet_free(&av_packet);
-
-	_print_debug("Getting audio was succesfull.");
 
 	return OK;
 }
@@ -618,7 +579,6 @@ void Video::_get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFra
 
 void Video::_copy_frame_data() {
 	if (hw_decoding && av_frame->format == hw_pix_fmt) {
-		UtilityFunctions::print(4);
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0) {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
 			return;
@@ -650,8 +610,6 @@ const AVCodec *Video::_get_hw_codec() {
 	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
 
 	if (prefered_hw_decoder != "" && prefered_hw_decoder != "vulkan") {
-		_print_debug("Getting prefered HW codec " + prefered_hw_decoder + " ...");
-
 		l_type = av_hwdevice_find_type_by_name(prefered_hw_decoder.c_str());
 		l_codec = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
@@ -664,15 +622,13 @@ const AVCodec *Video::_get_hw_codec() {
 		} else if (!av_codec_is_decoder(l_codec)) {
 			UtilityFunctions::printerr("Found codec isn't a hw decoder!");
 		} else {
-			UtilityFunctions::print("Using HW decoder: ", av_hwdevice_get_type_name(l_type));
+			_print_debug(std::string("Using HW device: ") + av_hwdevice_get_type_name(l_type));
 			hw_decoder = l_type;
 
 			return l_codec;
 		}
 	}
     av_buffer_unref(&hw_device_ctx);
-
-	_print_debug("Selecting best HW codec ...");
 
 	l_type = AV_HWDEVICE_TYPE_NONE;
     while ((l_type = av_hwdevice_iterate_types(l_type)) != AV_HWDEVICE_TYPE_NONE) {
@@ -688,7 +644,7 @@ const AVCodec *Video::_get_hw_codec() {
             continue;
 
         if (av_codec_is_decoder(l_codec)) {
-			UtilityFunctions::print("Using HW decoder: ", av_hwdevice_get_type_name(l_type));
+			_print_debug(std::string("Using HW device: ") + av_hwdevice_get_type_name(l_type));
 			hw_decoder = l_type;
 
 			return l_codec;
@@ -697,7 +653,7 @@ const AVCodec *Video::_get_hw_codec() {
 	}
 
 	hw_decoding = false;
-	UtilityFunctions::print("HW decoding not possible, switching to software decoding!");
+	_print_debug("HW decoding not possible, switching to software decoding!");
 	return avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 }
  
@@ -708,18 +664,8 @@ enum AVPixelFormat Video::_get_hw_format(const enum AVPixelFormat *a_pix_fmt) {
         if (*p == hw_pix_fmt)
             return *p;
 
-	UtilityFunctions::printerr("Failed to get HW surface format!");
+	_printerr_debug("Failed to get HW surface format!");
     return AV_PIX_FMT_NONE;
-}
-
-void Video::_print_debug(std::string a_text) {
-	if (debug)
-		UtilityFunctions::print(a_text.c_str());
-}
-
-void Video::_printerr_debug(std::string a_text) {
-	if (debug)
-		UtilityFunctions::print(a_text.c_str());
 }
 
 void Video::_seek_frame(int a_frame_nr) {
@@ -732,4 +678,15 @@ void Video::_seek_frame(int a_frame_nr) {
 		response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD);
 	}
 }
+
+void Video::_print_debug(std::string a_text) {
+	if (debug)
+		UtilityFunctions::print(a_text.c_str());
+}
+
+void Video::_printerr_debug(std::string a_text) {
+	if (debug)
+		UtilityFunctions::print(a_text.c_str());
+}
+
 

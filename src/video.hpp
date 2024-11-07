@@ -32,6 +32,7 @@ private:
 	AVPacket *av_packet = nullptr;
 
 	enum AVHWDeviceType hw_decoder;
+	enum AVColorPrimaries color_profile;
 	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	// Default variable types
@@ -83,10 +84,10 @@ private:
 	const AVCodec *_get_hw_codec();
     enum AVPixelFormat _get_hw_format(const enum AVPixelFormat *a_pix_fmt);
 
+	void _seek_frame(int a_frame_nr);
+
 	void _print_debug(std::string a_text);
 	void _printerr_debug(std::string a_text);
-
-	void _seek_frame(int a_frame_nr);
 
 public:
 	Video() {}
@@ -134,6 +135,7 @@ public:
 	inline bool get_debug_enabled() { return debug; }
 
 	inline String get_pixel_format() { return pixel_format.c_str(); }
+	inline String get_color_profile() { return av_color_primaries_name(color_profile); }
 
 	inline PackedByteArray get_y_data() { return y_data; }
 	inline PackedByteArray get_u_data() { return u_data; }
@@ -167,7 +169,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
 
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
-		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::set_hw_decoding);
+		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
 
 		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
 		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
@@ -177,6 +179,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_debug_enabled"), &Video::get_debug_enabled);
 
 		ClassDB::bind_method(D_METHOD("get_pixel_format"), &Video::get_pixel_format);
+		ClassDB::bind_method(D_METHOD("get_color_profile"), &Video::get_color_profile);
 
 		ClassDB::bind_method(D_METHOD("get_y_data"), &Video::get_y_data);
 		ClassDB::bind_method(D_METHOD("get_u_data"), &Video::get_u_data);

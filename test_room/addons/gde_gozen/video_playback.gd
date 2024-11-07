@@ -56,8 +56,16 @@ func _enter_tree() -> void:
 	_shader_material = ShaderMaterial.new()
 	texture_rect.material = _shader_material
 	if debug:
-		print("Available hardware devices:")
-		print(Video.get_available_hw_devices())
+		print_rich("[b]System info")
+		print("OS name: ", OS.get_name())
+		print("Distro name: ", OS.get_distribution_name())
+		print("OS version: ", OS.get_version())
+		print_rich("Memory info:\n\t", OS.get_memory_info())
+		print("CPU name: ", OS.get_processor_name())
+		print("Core\threads count: ", OS.get_processor_count())
+		print("GPU name: ", RenderingServer.get_video_adapter_name())
+		print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
+		print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
 
 
 func _exit_tree() -> void:
@@ -104,17 +112,34 @@ func update_video(a_video: Video) -> void:
 		printerr("Video isn't open!")
 		return
 
+	if debug:
+		print_rich("[b]Video debug info")
+		print("Extension: ", path.get_extension())
+		print("Resolution: ", video.get_resolution())
+		print("HW decoding: ", video.get_hw_decoding())
+		print("Pixel format: ", video.get_pixel_format())
+		print("Color profile: ", video.get_color_profile())
+		print("Framerate: ", video.get_framerate())
+		print("Duration (in frames): ", video.get_frame_duration())
+		print("Padding: ", video.get_padding())
+
 	_resolution = video.get_resolution()
-	_shader_material.shader = null
+	_uv_resolution = Vector2i((_resolution.x + video.get_padding()) / 2, _resolution.y / 2)
 
 	var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 	texture_rect.texture.set_image(l_image)
+	_shader_material.shader = null
 
-	_uv_resolution = Vector2i((_resolution.x + video.get_padding()) / 2, _resolution.y / 2)
 	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+
+	match video.get_color_profile():
+		"bt601":
+			_shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
+		_: # bt709 and unknown
+			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 	
 	_shader_material.set_shader_parameter("resolution", _resolution)
 
