@@ -22,7 +22,7 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 @export var hardware_decoding: bool = false ## HW decoding is not useful for most cases due to the added performance cost of putting the data from the GPU to the system memory, that's why it is disabled by default. For harder to decode formats this could be useful, but those cases are few. Hardware decoding is [b]NOT[/b] available for Windows due to issues with crashing.
-@export var debug: bool = true ## Setting this value will print debug messages of the video file whilst opening and during playback.
+@export var debug: bool = false ## Setting this value will print debug messages of the video file whilst opening and during playback.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
