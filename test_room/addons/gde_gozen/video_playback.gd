@@ -121,11 +121,10 @@ func update_video(a_video: Video) -> void:
 	_resolution = video.get_resolution()
 	_frame_duration = video.get_frame_duration()
 	_uv_resolution = Vector2i((_resolution.x + _padding) / 2, _resolution.y / 2)
+	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 
 	if debug:
 		_print_video_debug()
-
-	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 
 	texture_rect.texture.set_image(l_image)
 
@@ -155,10 +154,11 @@ func update_video(a_video: Video) -> void:
 		_shader_material.set_shader_parameter("y_data", _y_img_tex)
 		_shader_material.set_shader_parameter("uv_data", _u_img_tex)
 
-	if video.get_color_profile() == "bt601":
-		_shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
-	else: # bt709 and unknown
-		_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
+	match video.get_color_profile():
+		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
+		"bt2020", "bt2100": _shader_material.set_shader_parameter("color_profile", Vector4(1.4746, 0.16455, 0.57135, 1.8814))
+		_: # bt709 and unknown
+			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 	_shader_material.set_shader_parameter("resolution", _resolution)
 
@@ -300,6 +300,7 @@ func _print_system_debug() -> void:
 		print("GPU name: ", RenderingServer.get_video_adapter_name())
 		print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
 		print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
+
 
 func _print_video_debug() -> void:
 	print_rich("[b]Video debug info")
