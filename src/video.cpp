@@ -91,6 +91,17 @@ int Video::open(String a_path, bool a_load_audio) {
 			resolution.y = av_codec_params->height;
 			color_profile = av_codec_params->color_primaries;
 
+			AVDictionaryEntry *l_rotate_tag = av_dict_get(av_stream_video->metadata, "rotate", nullptr, 0);
+			rotation = l_rotate_tag ? atoi(l_rotate_tag->value) : 0;
+			if (rotation == 0) { // Check modern rotation detecting
+				for (int i = 0; i < av_stream_video->codecpar->nb_coded_side_data; ++i) {
+					const AVPacketSideData *side_data = &av_stream_video->codecpar->coded_side_data[i];
+
+					if (side_data->type == AV_PKT_DATA_DISPLAYMATRIX && side_data->size == sizeof(int32_t) * 9)
+						rotation = av_display_rotation_get(reinterpret_cast<const int32_t *>(side_data->data));
+				}
+			}
+
 			if (av_codec_params->format != AV_PIX_FMT_YUV420P && hw_decoding) {
 				_print_debug("Hardware decoding not supported for this pixel format, switching to software decoding!");
 				hw_decoding = false;

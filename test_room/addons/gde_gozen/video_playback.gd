@@ -37,10 +37,19 @@ var _time_elapsed: float = 0.
 var _frame_time: float = 0
 var _skips: int = 0
 
+var _rotation: int = 0
+var _padding: int = 0
+
 var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
+var _y_img: Image
+var _u_img: Image
+var _v_img: Image
+var _y_img_tex: ImageTexture
+var _u_img_tex: ImageTexture
+var _v_img_tex: ImageTexture
 
 
 #------------------------------------------------ TREE FUNCTIONS
@@ -122,26 +131,70 @@ func update_video(a_video: Video) -> void:
 		print("Framerate: ", video.get_framerate())
 		print("Duration (in frames): ", video.get_frame_duration())
 		print("Padding: ", video.get_padding())
+		print("Rotation: ", video.get_rotation())
+
+	_rotation = video.get_rotation()
+	_padding = video.get_padding()
 
 	_resolution = video.get_resolution()
-	_uv_resolution = Vector2i((_resolution.x + video.get_padding()) / 2, _resolution.y / 2)
+	_uv_resolution = Vector2i((_resolution.x + _padding) / 2, _resolution.y / 2)
 
-	var l_image: Image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+	var l_image: Image
+	if _rotation in [-90, 90]:
+		l_image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_L8)
+	else:
+		l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+
 	texture_rect.texture.set_image(l_image)
-	_shader_material.shader = null
 
 	if video.get_pixel_format().begins_with("yuv"):
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+
+		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8)
+		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
+		_v_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
+
+		if _rotation == -90:
+			_y_img.rotate_90(CLOCKWISE)
+			_u_img.rotate_90(CLOCKWISE)
+			_v_img.rotate_90(CLOCKWISE)
+		elif _rotation == 90:
+			_y_img.rotate_90(COUNTERCLOCKWISE)
+			_u_img.rotate_90(COUNTERCLOCKWISE)
+			_v_img.rotate_90(COUNTERCLOCKWISE)
+		elif _rotation in [-180, 180]:
+			_y_img.rotate_180()
+			_u_img.rotate_180()
+			_v_img.rotate_180()
+
+		_y_img_tex = ImageTexture.create_from_image(_y_img)
+		_u_img_tex = ImageTexture.create_from_image(_u_img)
+		_v_img_tex = ImageTexture.create_from_image(_v_img)
+
+		_shader_material.set_shader_parameter("y_data", _y_img_tex)
+		_shader_material.set_shader_parameter("u_data", _u_img_tex)
+		_shader_material.set_shader_parameter("v_data", _v_img_tex)
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+
+		_y_img_tex = ImageTexture.create_from_image(Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8))
+		_u_img_tex = ImageTexture.create_from_image(Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8))
+
+		_shader_material.set_shader_parameter("y_data", _y_img_tex)
+		_shader_material.set_shader_parameter("uv_data", _u_img_tex)
 
 	match video.get_color_profile():
 		"bt601":
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
 		_: # bt709 and unknown
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
+
+	if _rotation in [-90, 90]:
+		_shader_material.set_shader_parameter("resolution", Vector2i(_resolution.y, _resolution.x))
+	else:
+		_shader_material.set_shader_parameter("resolution", _resolution)
 	
-	_shader_material.set_shader_parameter("resolution", _resolution)
+	_shader_material.set_shader_parameter("rotation", (_rotation))
 
 	audio_player.stream = video.get_audio()
 
@@ -253,11 +306,15 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
+	_y_img.set_data(_y_img.get_width(), _y_img.get_height(), false, _y_img.get_format(), video.get_y_data())
+	_u_img.set_data(_u_img.get_width(), _u_img.get_height(), false, _u_img.get_format(), video.get_u_data())
+
 	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x + video.get_padding(), _resolution.y, false, Image.FORMAT_L8, video.get_y_data())))
-		_shader_material.set_shader_parameter("u_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_u_data())))
-		_shader_material.set_shader_parameter("v_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8, video.get_v_data())))
-	else:
-		_shader_material.set_shader_parameter("y_data", ImageTexture.create_from_image(Image.create_from_data(_resolution.x + video.get_padding(), _resolution.y, false, Image.FORMAT_R8, video.get_y_data())))
-		_shader_material.set_shader_parameter("uv_data", ImageTexture.create_from_image(Image.create_from_data(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8, video.get_u_data())))
+		_v_img.set_data(_v_img.get_width(), _v_img.get_height(), false, _v_img.get_format(), video.get_v_data())
+		_v_img_tex.update(_v_img)
+
+	_y_img_tex.update(_y_img)
+	_u_img_tex.update(_u_img)
+
+	# TODO: Add l_image.rotate_90() and rotate the image data which gets send to the shader
 

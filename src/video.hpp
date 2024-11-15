@@ -39,6 +39,7 @@ private:
 	int response = 0;
 	int padding = 0;
 
+	int8_t rotation = 0;
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
 	
 	int64_t duration = 0;
@@ -117,6 +118,7 @@ public:
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
 	inline int get_padding() { return padding; }
+	inline int get_rotation() { return rotation; }
 
 	inline void set_hw_decoding(bool a_value) {
 		if (loaded)
@@ -165,6 +167,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_width"), &Video::get_width);
 		ClassDB::bind_method(D_METHOD("get_height"), &Video::get_height);
 		ClassDB::bind_method(D_METHOD("get_padding"), &Video::get_padding);
+		ClassDB::bind_method(D_METHOD("get_rotation"), &Video::get_rotation);
 
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
 
