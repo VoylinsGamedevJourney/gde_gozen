@@ -160,12 +160,7 @@ func update_video(a_video: Video) -> void:
 	else: # bt709 and unknown
 		_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
-	if _rotation in [-90, 90]:
-		_shader_material.set_shader_parameter("resolution", Vector2i(_resolution.y, _resolution.x))
-	else:
-		_shader_material.set_shader_parameter("resolution", _resolution)
-	
-	_shader_material.set_shader_parameter("rotation", (_rotation))
+	_shader_material.set_shader_parameter("resolution", _resolution)
 
 	audio_player.stream = video.get_audio()
 
