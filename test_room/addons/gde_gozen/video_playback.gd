@@ -21,7 +21,7 @@ signal _on_next_frame_called(frame_nr) ## _current_frame_changed gets called whe
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
-@export var hardware_decoding: bool = true ## Setting hardware decoding uses the GPU of the system to get the frame data out of video files.
+@export var hardware_decoding: bool = false ## HW decoding is not useful for most cases due to the added performance cost of putting the data from the GPU to the system memory, that's why it is disabled by default. For harder to decode formats this could be useful, but those cases are few. Hardware decoding is [b]NOT[/b] available for Windows due to issues with crashing.
 @export var debug: bool = true ## Setting this value will print debug messages of the video file whilst opening and during playback.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
@@ -39,6 +39,8 @@ var _skips: int = 0
 
 var _rotation: int = 0
 var _padding: int = 0
+var _frame_rate: float = 0.
+var _frame_duration: int = 0
 
 var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
@@ -54,27 +56,20 @@ var _v_img_tex: ImageTexture
 
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
+	_shader_material = ShaderMaterial.new()
+
+	texture_rect.material = _shader_material
 	texture_rect.texture = ImageTexture.new()
 	texture_rect.anchor_right = TextureRect.ANCHOR_END
 	texture_rect.anchor_bottom = TextureRect.ANCHOR_END
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+
 	add_child(texture_rect)
 	add_child(audio_player)
-	
-	_shader_material = ShaderMaterial.new()
-	texture_rect.material = _shader_material
+
 	if debug:
-		print_rich("[b]System info")
-		print("OS name: ", OS.get_name())
-		print("Distro name: ", OS.get_distribution_name())
-		print("OS version: ", OS.get_version())
-		print_rich("Memory info:\n\t", OS.get_memory_info())
-		print("CPU name: ", OS.get_processor_name())
-		print("Core\threads count: ", OS.get_processor_count())
-		print("GPU name: ", RenderingServer.get_video_adapter_name())
-		print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
-		print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
+		_print_system_debug()
 
 
 func _exit_tree() -> void:
@@ -83,7 +78,7 @@ func _exit_tree() -> void:
 
 
 func _ready() -> void:
-	# Function get's run like this because else the project crashes as export variables get set and their setters run before the node is completely ready.
+	## Function get's run like this because else the project crashes as export variables get set and their setters run before the node is completely ready.
 	if path != "":
 		set_video_path(path)
 
@@ -91,21 +86,18 @@ func _ready() -> void:
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(a_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
-	if video != null:
-		close()
-
-	path = a_path
 	if !is_node_ready():
 		return
+	elif video != null:
+		close()
 
 	audio_player.stream = null
 	video = Video.new()
-	video.set_hw_decoding(hardware_decoding)
+	path = a_path
 
-	if debug:
-		video.enable_debug()
-	else:
-		video.disable_debug()
+	# Windows hardware decoding is NOT available so should always be false to prevent crashing.
+	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
+	video.enable_debug() if debug else video.disable_debug()
 
 	var err: int = video.open(path, true)
 	if err:
@@ -121,29 +113,19 @@ func update_video(a_video: Video) -> void:
 		printerr("Video isn't open!")
 		return
 
-	if debug:
-		print_rich("[b]Video debug info")
-		print("Extension: ", path.get_extension())
-		print("Resolution: ", video.get_resolution())
-		print("HW decoding: ", video.get_hw_decoding())
-		print("Pixel format: ", video.get_pixel_format())
-		print("Color profile: ", video.get_color_profile())
-		print("Framerate: ", video.get_framerate())
-		print("Duration (in frames): ", video.get_frame_duration())
-		print("Padding: ", video.get_padding())
-		print("Rotation: ", video.get_rotation())
+	var l_image: Image
 
-	_rotation = video.get_rotation()
 	_padding = video.get_padding()
-
+	_rotation = video.get_rotation()
+	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
+	_frame_duration = video.get_frame_duration()
 	_uv_resolution = Vector2i((_resolution.x + _padding) / 2, _resolution.y / 2)
 
-	var l_image: Image
-	if _rotation in [-90, 90]:
-		l_image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_L8)
-	else:
-		l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+	if debug:
+		_print_video_debug()
+
+	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
 
 	texture_rect.texture.set_image(l_image)
 
@@ -153,19 +135,6 @@ func update_video(a_video: Video) -> void:
 		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8)
 		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
 		_v_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
-
-		if _rotation == -90:
-			_y_img.rotate_90(CLOCKWISE)
-			_u_img.rotate_90(CLOCKWISE)
-			_v_img.rotate_90(CLOCKWISE)
-		elif _rotation == 90:
-			_y_img.rotate_90(COUNTERCLOCKWISE)
-			_u_img.rotate_90(COUNTERCLOCKWISE)
-			_v_img.rotate_90(COUNTERCLOCKWISE)
-		elif _rotation in [-180, 180]:
-			_y_img.rotate_180()
-			_u_img.rotate_180()
-			_v_img.rotate_180()
 
 		_y_img_tex = ImageTexture.create_from_image(_y_img)
 		_u_img_tex = ImageTexture.create_from_image(_u_img)
@@ -177,17 +146,19 @@ func update_video(a_video: Video) -> void:
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
 
-		_y_img_tex = ImageTexture.create_from_image(Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8))
-		_u_img_tex = ImageTexture.create_from_image(Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8))
+		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8)
+		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8)
+
+		_y_img_tex = ImageTexture.create_from_image(_y_img)
+		_u_img_tex = ImageTexture.create_from_image(_u_img)
 
 		_shader_material.set_shader_parameter("y_data", _y_img_tex)
 		_shader_material.set_shader_parameter("uv_data", _u_img_tex)
 
-	match video.get_color_profile():
-		"bt601":
-			_shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
-		_: # bt709 and unknown
-			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
+	if video.get_color_profile() == "bt601":
+		_shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
+	else: # bt709 and unknown
+		_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 	if _rotation in [-90, 90]:
 		_shader_material.set_shader_parameter("resolution", Vector2i(_resolution.y, _resolution.x))
@@ -199,7 +170,7 @@ func update_video(a_video: Video) -> void:
 	audio_player.stream = video.get_audio()
 
 	is_playing = false
-	_frame_time = 1.0 / video.get_framerate()
+	_frame_time = 1.0 / _frame_rate
 	video.seek_frame(0)
 
 	_set_frame_image()
@@ -212,13 +183,13 @@ func seek_frame(a_frame_nr: int) -> void:
 	if !is_open():
 		return
 
-	current_frame = clamp(a_frame_nr, 0, video.get_frame_duration())
+	current_frame = clamp(a_frame_nr, 0, _frame_duration)
 	video.seek_frame(a_frame_nr)
 
 	_set_frame_image()
 
 	audio_player.set_stream_paused(false)
-	audio_player.play(current_frame / video.get_framerate())
+	audio_player.play(current_frame / _frame_rate)
 	audio_player.set_stream_paused(!is_playing)
 
 
@@ -250,7 +221,7 @@ func _process(a_delta: float) -> void:
 			current_frame += 1
 			_skips += 1
 
-		if current_frame >= video.get_frame_duration():
+		if current_frame >= _frame_duration:
 			is_playing = !is_playing
 			audio_player.set_stream_paused(true)
 			_video_ended.emit()
@@ -268,7 +239,7 @@ func play() -> void:
 	is_playing = true
 
 	audio_player.set_stream_paused(false)
-	audio_player.play((current_frame + 1) / video.get_framerate())
+	audio_player.play((current_frame + 1) / _frame_rate)
 	audio_player.set_stream_paused(!is_playing)
 
 	_on_play_pressed.emit()
@@ -284,14 +255,19 @@ func pause() -> void:
 
 
 #------------------------------------------------ GETTERS
-func get_frame_duration() -> int:
-	## Getting the frame duration returns the total amount of frames found in a video file.
-	return video.get_frame_duration()
+func get_video_frame_duration() -> int:
+	## Getting the frame duration returns the total amount of frames found of the video file.
+	return _frame_duration
 
 
-func get_framerate() -> float:
-	## Getting the framerate of a video
-	return video.get_framerate()
+func get_video_framerate() -> float:
+	## Getting the framerate of the video
+	return _frame_rate
+
+
+func get_video_rotation() -> int:
+	## Getting the rotation in degrees of the video
+	return _rotation
 
 
 func is_open() -> bool:
@@ -316,5 +292,30 @@ func _set_frame_image() -> void:
 	_y_img_tex.update(_y_img)
 	_u_img_tex.update(_u_img)
 
-	# TODO: Add l_image.rotate_90() and rotate the image data which gets send to the shader
+
+func _print_system_debug() -> void:
+	print_rich("[b]System info")
+	print("OS name: ", OS.get_name())
+	print("Distro name: ", OS.get_distribution_name())
+	print("OS version: ", OS.get_version())
+	print_rich("Memory info:\n\t", OS.get_memory_info())
+	print("CPU name: ", OS.get_processor_name())
+	print("Core\threads count: ", OS.get_processor_count())
+	if OS.get_name() != "Windows":
+		print("GPU name: ", RenderingServer.get_video_adapter_name())
+		print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
+		print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
+
+func _print_video_debug() -> void:
+	print_rich("[b]Video debug info")
+	print("Extension: ", path.get_extension())
+	print("Resolution: ", _resolution)
+	if OS.get_name() != "Windows":
+		print("HW decoding: ", video.get_hw_decoding())
+	print("Pixel format: ", video.get_pixel_format())
+	print("Color profile: ", video.get_color_profile())
+	print("Framerate: ", _frame_rate)
+	print("Duration (in frames): ", _frame_duration)
+	print("Padding: ", _padding)
+	print("Rotation: ", _rotation)
 

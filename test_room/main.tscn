@@ -58,6 +58,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
+hardware_decoding = false
 
 [node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="VBox"]
 layout_mode = 2
@@ -99,7 +100,7 @@ mouse_filter = 2
 [node name="DebugPanel" type="PanelContainer" parent="Debug"]
 layout_mode = 0
 offset_right = 181.0
-offset_bottom = 77.0
+offset_bottom = 118.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ae1f1")
 
 [node name="DebugGrid" type="GridContainer" parent="Debug/DebugPanel"]
