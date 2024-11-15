@@ -15,6 +15,7 @@ extern "C" {
 	#include <libavutil/avutil.h>
 	#include <libavutil/channel_layout.h>
 	#include <libavutil/dict.h>
+	#include <libavutil/display.h>
 	#include <libavutil/error.h>
 	#include <libavutil/frame.h>
 	#include <libavutil/hwcontext.h>

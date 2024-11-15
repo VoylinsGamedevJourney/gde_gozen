@@ -44,9 +44,9 @@ private:
 	int64_t duration = 0;
 	int64_t frame_duration = 0;
 
-	long start_time_video = 0;
-	long frame_timestamp = 0;
-	long current_pts = 0;
+	int64_t start_time_video = 0;
+	int64_t frame_timestamp = 0;
+	int64_t current_pts = 0;
 
 	double average_frame_duration = 0;
 	double stream_time_base_video = 0;
