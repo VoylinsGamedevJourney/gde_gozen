@@ -6,7 +6,7 @@ extends EditorPlugin
 
 
 func _enter_tree() -> void:
-	add_custom_type("VideoPlayback", "Control", preload("video_playback.gd"), preload("icon.webp"))
+	add_custom_type("VideoPlayback", "Control", preload("video_playback.gd"), load("icon.webp"))
 
 
 func _exit_tree() -> void:
