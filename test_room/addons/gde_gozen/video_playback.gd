@@ -53,6 +53,8 @@ var _y_img_tex: ImageTexture
 var _u_img_tex: ImageTexture
 var _v_img_tex: ImageTexture
 
+var thread: Thread = Thread.new()
+
 
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
@@ -99,11 +101,7 @@ func set_video_path(a_path: String) -> void:
 	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
 	video.enable_debug() if debug else video.disable_debug()
 
-	var err: int = video.open(path, true)
-	if err:
-		printerr("Error opening video: ", err)
-
-	update_video(video)
+	thread.start(_open_video)
 
 
 func update_video(a_video: Video) -> void:
@@ -176,7 +174,7 @@ func update_video(a_video: Video) -> void:
 
 func seek_frame(a_frame_nr: int) -> void:
 	## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
-	if !is_open():
+	if !is_open() and a_frame_nr == current_frame:
 		return
 
 	current_frame = clamp(a_frame_nr, 0, _frame_duration)
@@ -206,6 +204,11 @@ func close() -> void:
 
 #------------------------------------------------ PLAYBACK HANDLING
 func _process(a_delta: float) -> void:
+	if thread.is_started():
+		if !thread.is_alive():
+			thread.wait_to_finish()
+			update_video(video)
+
 	if is_playing:
 		_time_elapsed += a_delta
 		if _time_elapsed < _frame_time:
@@ -287,6 +290,13 @@ func _set_frame_image() -> void:
 
 	_y_img_tex.update(_y_img)
 	_u_img_tex.update(_u_img)
+
+
+#------------------------------------------------ MISC
+func _open_video() -> void:
+	var err: int = video.open(path, true)
+	if err:
+		printerr("Error opening video: ", err)
 
 
 func _print_system_debug() -> void:

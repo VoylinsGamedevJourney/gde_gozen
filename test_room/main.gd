@@ -1,13 +1,17 @@
 extends Control
 
 
+@onready var video_playback: VideoPlayback = %VideoPlayback
+
 @onready var timeline: HSlider = %Timeline
 @onready var play_pause_button: TextureButton = %PlayPauseButton
-@onready var video_playback: VideoPlayback = %VideoPlayback
+
 @onready var current_frame_value: Label = %CurrentFrameValue
 @onready var editor_fps_value: Label = %EditorFPSValue
 @onready var max_frame_value: Label = %MaxFrameValue
 @onready var fps_value: Label = %FPSValue
+
+@onready var loading_screen: Panel = $LoadingPanel
 
 
 var is_dragging: bool = false
@@ -22,12 +26,17 @@ func _ready() -> void:
 	if get_window().files_dropped.connect(_on_video_drop):
 		printerr("Couldn't connect files_dropped!")
 
+	if video_playback._on_video_loaded.connect(after_video_open):
+		printerr("Couldn't connect _on_video_loaded")
+
 	if video_playback._current_frame_changed.connect(
 			func(a_value: int) -> void: 
 				timeline.value = a_value
 				current_frame_value.text = str(a_value)
 				editor_fps_value.text = str(Engine.get_frames_per_second())):
 		printerr("Couldn't connect _current_frame_changed!")
+
+	loading_screen.visible = false
 	
 
 func _input(a_event: InputEvent) -> void:
@@ -44,8 +53,9 @@ func _on_video_drop(a_files: PackedStringArray) -> void:
 
 
 func open_video(a_file: String) -> void:
+	loading_screen.visible = true
+
 	video_playback.set_video_path(a_file)
-	after_video_open()
 
 
 func after_video_open() -> void:
@@ -54,6 +64,7 @@ func after_video_open() -> void:
 		play_pause_button.texture_normal = preload("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png")
 		max_frame_value.text = str(video_playback.get_video_frame_duration())
 		fps_value.text = str(video_playback.get_video_framerate()).left(5)
+		loading_screen.visible = false
 
 
 func _on_play_pause_button_pressed() -> void:
