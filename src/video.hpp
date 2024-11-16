@@ -24,6 +24,7 @@ private:
 	// FFmpeg classes
 	AVFormatContext *av_format_ctx = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
+	AVHWDeviceType device_type;
 	AVBufferRef *hw_device_ctx = nullptr;
 	AVStream *av_stream_video = nullptr;
 
@@ -117,6 +118,9 @@ public:
 
 	inline String get_path() { return path.c_str(); }
 
+	inline void set_prefered_hw_decoder(String a_value) { prefered_hw_decoder = a_value; }
+	inline String get_prefered_decoder() { return prefered_hw_decoder; }
+	
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
@@ -159,8 +163,11 @@ protected:
 		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
-		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame, DEFVAL(false));
+		ClassDB::bind_method(D_METHOD("next_frame"), &Video::next_frame);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
+
+		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
+		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
 
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 

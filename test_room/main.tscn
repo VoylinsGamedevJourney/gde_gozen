@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://b1e501df8faw"]
+[gd_scene load_steps=8 format=3 uid="uid://b1e501df8faw"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_kus11"]
 [ext_resource type="Script" path="res://addons/gde_gozen/video_playback.gd" id="2_p7wtn"]
@@ -16,6 +16,9 @@ content_margin_right = 7.0
 content_margin_bottom = 7.0
 bg_color = Color(0.230469, 0.230469, 0.230469, 0.556863)
 corner_radius_bottom_right = 14
+
+[sub_resource type="LabelSettings" id="LabelSettings_30qi2"]
+font_size = 23
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -58,6 +61,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
+debug = true
 
 [node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="VBox"]
 layout_mode = 2
@@ -153,6 +157,31 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "0.0"
 horizontal_alignment = 2
+
+[node name="LoadingPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="LoadingPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.5
+offset_top = -11.5
+offset_right = 140.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Video is loading, a moment please ..."
+label_settings = SubResource("LabelSettings_30qi2")
 
 [connection signal="drag_ended" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_drag_ended"]
 [connection signal="drag_started" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_drag_started"]

@@ -32,6 +32,7 @@ var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
 var current_frame: int = 0: set = _set_current_frame ## Current frame number which the video playback is at.
 
+var hardware_decoding: bool = false ## Use your CPU/GPU decoder (if available). This should be set before opening a video! Default value is true inside of the Video class, when creating a new Video class and you want to disable hardware decoding, you should set the value before using Video.open() for it to have effect. NOTE: At this point Hardware decoding isn't working properly yet!
 
 var _time_elapsed: float = 0.
 var _frame_time: float = 0
@@ -212,6 +213,7 @@ func _process(a_delta: float) -> void:
 	if is_playing:
 		_time_elapsed += a_delta
 		if _time_elapsed < _frame_time:
+			_video_ended.emit()
 			return
 
 		_skips = 0

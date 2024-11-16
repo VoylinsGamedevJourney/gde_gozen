@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Installing dependencies
         run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
-      
+
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
