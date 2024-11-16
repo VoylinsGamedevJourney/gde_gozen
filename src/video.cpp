@@ -722,12 +722,8 @@ enum AVPixelFormat Video::_get_hw_format(const enum AVPixelFormat *a_pix_fmt) {
 void Video::_seek_frame(int a_frame_nr) {
 	avcodec_flush_buffers(av_codec_ctx_video);
 
-	if (a_frame_nr == 0)
-		response = av_seek_frame(av_format_ctx, -1, start_time_video, AVSEEK_FLAG_BACKWARD);
-	else {
-		frame_timestamp = (int64_t)(a_frame_nr * average_frame_duration);
-		response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD);
-	}
+	frame_timestamp = (int64_t)(a_frame_nr * average_frame_duration);
+	response = av_seek_frame(av_format_ctx, -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
 }
 
 void Video::_print_debug(std::string a_text) {

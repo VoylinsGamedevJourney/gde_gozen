@@ -58,7 +58,6 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
-hardware_decoding = false
 
 [node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="VBox"]
 layout_mode = 2
@@ -73,7 +72,7 @@ layout_mode = 2
 [node name="Timeline" type="HSlider" parent="VBox/BottomPanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-value = 1.0
+ticks_on_borders = true
 
 [node name="ButtonsHBox" type="HBoxContainer" parent="VBox/BottomPanel/VBox"]
 custom_minimum_size = Vector2(0, 20)
