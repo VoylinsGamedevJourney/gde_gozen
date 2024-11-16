@@ -31,6 +31,8 @@ private:
 	AVFrame *av_hw_frame = nullptr;
 	AVPacket *av_packet = nullptr;
 
+	struct SwsContext *sws_ctx = nullptr;
+
 	enum AVHWDeviceType hw_decoder;
 	enum AVColorPrimaries color_profile;
 	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
@@ -57,6 +59,7 @@ private:
 	bool loaded = false; // Is true after open()
 	bool hw_decoding = true; // Set by user
 	bool debug = false;
+	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
 
 	std::string path = "";
 	std::string pixel_format = "";

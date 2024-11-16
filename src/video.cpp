@@ -249,10 +249,29 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Preparing the data array's
 	if (!hw_decoding) {
-		y_data.resize(av_frame->linesize[0] * resolution.y);
-		u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
-		v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
-		padding = av_frame->linesize[0] - resolution.x;
+		if (av_frame->format == AV_PIX_FMT_YUV420P) {
+			y_data.resize(av_frame->linesize[0] * resolution.y);
+			u_data.resize(av_frame->linesize[1] * (resolution.y / 2));
+			v_data.resize(av_frame->linesize[2] * (resolution.y / 2));
+			padding = av_frame->linesize[0] - resolution.x;
+		} else {
+			using_sws = true;
+			sws_ctx = sws_getContext(
+							resolution.x, resolution.y, av_codec_ctx_video->pix_fmt,
+							resolution.x, resolution.y, AV_PIX_FMT_YUV420P,
+							SWS_BICUBIC, NULL, NULL, NULL);
+
+			// We will use av_hw_frame to convert the frame data to as we won't use it anyway without hw decoding.
+			av_hw_frame = av_frame_alloc();
+			sws_scale_frame(sws_ctx, av_hw_frame, av_frame);
+
+			y_data.resize(av_hw_frame->linesize[0] * resolution.y);
+			u_data.resize(av_hw_frame->linesize[1] * (resolution.y / 2));
+			v_data.resize(av_hw_frame->linesize[2] * (resolution.y / 2));
+			padding = av_hw_frame->linesize[0] - resolution.x;
+
+			av_frame_unref(av_hw_frame);
+		}
 	} else {
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0)
 			_printerr_debug("Error transferring the frame to system memory!");
@@ -301,11 +320,13 @@ void Video::close() {
 	loaded = false;
 
 	if (av_frame) av_frame_free(&av_frame);
-	if (hw_decoding && av_hw_frame) av_frame_free(&av_hw_frame);
+	if (av_hw_frame) av_frame_free(&av_hw_frame);
 	if (av_packet) av_packet_free(&av_packet);
 
 	if (av_codec_ctx_video) avcodec_free_context(&av_codec_ctx_video);
 	if (av_format_ctx) avformat_close_input(&av_format_ctx);
+
+	if (sws_ctx) sws_freeContext(sws_ctx);
 
 	av_frame = nullptr;
 	av_packet = nullptr;
@@ -613,9 +634,20 @@ void Video::_copy_frame_data() {
 			return;
 		}
 
-		memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
-		memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
-		memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
+		if (using_sws) {
+			sws_scale_frame(sws_ctx, av_hw_frame, av_frame);
+
+			memcpy(y_data.ptrw(), av_hw_frame->data[0], y_data.size());
+			memcpy(u_data.ptrw(), av_hw_frame->data[1], u_data.size());
+			memcpy(v_data.ptrw(), av_hw_frame->data[2], v_data.size());
+
+			av_frame_unref(av_hw_frame);
+		} else {
+			memcpy(y_data.ptrw(), av_frame->data[0], y_data.size());
+			memcpy(u_data.ptrw(), av_frame->data[1], u_data.size());
+			memcpy(v_data.ptrw(), av_frame->data[2], v_data.size());
+		}
+
 		return;
 	}
 }
