@@ -378,9 +378,15 @@ int Video::_get_audio(AVStream *a_stream_audio) {
 		return -2;
 	}
 
+	AVChannelLayout l_ch_layout;
 	struct SwrContext *l_swr_ctx = nullptr;
+	if (l_codec_ctx_audio->ch_layout.nb_channels <= 3) 
+		l_ch_layout = l_codec_ctx_audio->ch_layout;
+	else
+		l_ch_layout = AV_CHANNEL_LAYOUT_STEREO;
+
 	response = swr_alloc_set_opts2(
-		&l_swr_ctx, &l_codec_ctx_audio->ch_layout, AV_SAMPLE_FMT_S16,
+		&l_swr_ctx, &l_ch_layout, AV_SAMPLE_FMT_S16,
 		l_codec_ctx_audio->sample_rate, &l_codec_ctx_audio->ch_layout,
 		l_codec_ctx_audio->sample_fmt, l_codec_ctx_audio->sample_rate, 0,
 		nullptr);
@@ -401,9 +407,7 @@ int Video::_get_audio(AVStream *a_stream_audio) {
 	}
 
 	// Set the seeker to the beginning
-	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE
-		? a_stream_audio->start_time
-		: 0;
+	int start_time_audio = a_stream_audio->start_time != AV_NOPTS_VALUE ? a_stream_audio->start_time : 0;
 	avcodec_flush_buffers(l_codec_ctx_audio);
 
 	response = av_seek_frame(av_format_ctx, -1, start_time_audio, AVSEEK_FLAG_BACKWARD);
@@ -438,7 +442,7 @@ int Video::_get_audio(AVStream *a_stream_audio) {
 
 		// Copy decoded data to new frame
 		l_decoded_frame->format = AV_SAMPLE_FMT_S16;
-		l_decoded_frame->ch_layout = av_frame->ch_layout;
+		l_decoded_frame->ch_layout = l_ch_layout;
 		l_decoded_frame->sample_rate = av_frame->sample_rate;
 		l_decoded_frame->nb_samples = swr_get_out_samples(l_swr_ctx, av_frame->nb_samples);
 
