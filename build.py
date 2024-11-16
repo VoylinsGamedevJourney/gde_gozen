@@ -2,6 +2,9 @@ import subprocess
 
 # NOTE: You will need to compile the editor with 'dlink_enabled=yes' to have GDExtension support in web builds
 
+# Command for quick-building test:
+# scons -j10 target=template_debug dev_build=yes platform=linux arch=x86_64 location=test_room/addons/gde_gozen/bin use_system=no recompile_ffmpeg=no
+
 if __name__ == '__main__':
     platform = 'linux'
     arch = 'x86_64'
