@@ -18,8 +18,10 @@ var was_playing: bool = false
 func _ready() -> void:
 	if OS.get_cmdline_args().size() > 1:
 		open_video(OS.get_cmdline_args()[1])
+
 	if get_window().files_dropped.connect(_on_video_drop):
 		printerr("Couldn't connect files_dropped!")
+
 	if video_playback._current_frame_changed.connect(
 			func(a_value: int) -> void: 
 				timeline.value = a_value

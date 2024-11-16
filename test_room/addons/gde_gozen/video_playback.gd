@@ -167,6 +167,7 @@ func update_video(a_video: Video) -> void:
 	is_playing = false
 	_frame_time = 1.0 / _frame_rate
 	video.seek_frame(0)
+	current_frame = 0
 
 	_set_frame_image()
 
