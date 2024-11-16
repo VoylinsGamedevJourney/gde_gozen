@@ -6,7 +6,7 @@ extends EditorPlugin
 
 
 func _enter_tree() -> void:
-	add_custom_type("VideoPlayback", "Control", load("video_playback.gd"), load("icon.webp"))
+	add_custom_type("VideoPlayback", "Control", load("res://addons/gde_gozen/video_playback.gd"), load("res://addons/gde_gozen/icon.webp"))
 
 
 func _exit_tree() -> void:
