@@ -24,7 +24,6 @@ private:
 	// FFmpeg classes
 	AVFormatContext *av_format_ctx = nullptr;
 	AVCodecContext *av_codec_ctx_video = nullptr;
-	AVHWDeviceType device_type;
 	AVBufferRef *hw_device_ctx = nullptr;
 	AVStream *av_stream_video = nullptr;
 
@@ -118,9 +117,6 @@ public:
 
 	inline String get_path() { return path.c_str(); }
 
-	inline void set_prefered_hw_decoder(String a_value) { prefered_hw_decoder = a_value; }
-	inline String get_prefered_decoder() { return prefered_hw_decoder; }
-	
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
