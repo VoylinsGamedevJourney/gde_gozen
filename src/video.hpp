@@ -165,6 +165,9 @@ protected:
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
 		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
 
+		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
+		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
+
 		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
 
 		ClassDB::bind_method(D_METHOD("get_path"), &Video::get_path);
@@ -176,12 +179,6 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_rotation"), &Video::get_rotation);
 
 		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
-
-		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
-		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
-
-		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
-		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
 
 		ClassDB::bind_method(D_METHOD("enable_debug"), &Video::enable_debug);
 		ClassDB::bind_method(D_METHOD("disable_debug"), &Video::disable_debug);
