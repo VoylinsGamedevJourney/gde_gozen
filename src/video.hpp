@@ -12,7 +12,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 
-#include "ffmpeg_includes.hpp"
+#include "ffmpeg.hpp"
 
 
 using namespace godot;
@@ -78,17 +78,12 @@ private:
 
 	// Private functions
 	static enum AVPixelFormat _get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt);
+	const AVCodec *_get_hw_codec();
 	
-
-	void _get_frame(AVCodecContext *a_codec_ctx, int a_stream_id);
-	void _get_frame_audio(AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
 	void _copy_frame_data();
 	void _clean_frame_data();
 
-	const AVCodec *_get_hw_codec();
-    enum AVPixelFormat _get_hw_format(const enum AVPixelFormat *a_pix_fmt);
-
-	void _seek_frame(int a_frame_nr);
+	int _seek_frame(int a_frame_nr);
 
 	void _print_debug(std::string a_text);
 	void _printerr_debug(std::string a_text);
@@ -145,8 +140,6 @@ public:
 	inline PackedByteArray get_y_data() { return y_data; }
 	inline PackedByteArray get_u_data() { return u_data; }
 	inline PackedByteArray get_v_data() { return v_data; }
-
-	void print_av_error(const char *a_message);
 
 
 protected:
