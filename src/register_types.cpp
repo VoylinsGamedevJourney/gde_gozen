@@ -3,6 +3,7 @@
 using namespace godot;
 
 #include "video.hpp"
+#include "audio.hpp"
 #include "renderer.hpp"
 
 
@@ -11,6 +12,7 @@ void initialize_gozen_library_init_module(ModuleInitializationLevel p_level) {
 		return;
 	
 	ClassDB::register_class<Video>();
+	ClassDB::register_class<Audio>();
 	ClassDB::register_class<Renderer>();
 }
 
