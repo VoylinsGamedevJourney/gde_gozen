@@ -30,6 +30,7 @@ extern "C" {
 }
 
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 
@@ -46,4 +47,6 @@ public:
 	static void enable_multithreading(AVCodecContext *&a_codec_ctx, const AVCodec *&a_codec);
 	static int get_frame(AVFormatContext *a_format_ctx, AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
 	static enum AVPixelFormat get_hw_format(const enum AVPixelFormat *a_pix_fmt, enum AVPixelFormat *a_hw_pix_fmt);
+
+	static AudioStreamWAV *get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream);
 };
