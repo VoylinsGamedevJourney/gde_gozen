@@ -9,6 +9,8 @@ GDE GoZen is part of the GoZen project, a video editor made with Godot, which wo
 ## Download compiled version
 The addon is available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). Source code stay's available for free so you can technically compile everything yourself, but if you also want to support the work which I've put into this and the future work which I'll put into this I'd really appreciate getting the compiled version from my ko-fi page.
 
+At this moment the GDExtension is only supporting **Godot 4.3+**. Changing some of the static typed variables may make it possible to be used in other Godot 4.0+ version but this is not tested.
+
 ## Compiling the GDExtension
 
 Feeling more adventurous and want to compile by yoursel? For all compiling information you can go to [Compiling info readme](https://github.com/VoylinsGamedevJourney/gde_gozen/blob/master/COMPILE_INFO.md).
