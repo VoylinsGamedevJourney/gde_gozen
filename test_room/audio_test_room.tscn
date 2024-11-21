@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://ds3xtdcbgtvw5"]
+
+[ext_resource type="Script" path="res://audio_test_room.gd" id="1_dqjus"]
+
+[node name="AudioTestRoom" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dqjus")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+autoplay = true
