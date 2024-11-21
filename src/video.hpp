@@ -104,14 +104,11 @@ public:
 	bool next_frame(bool a_skip = false);
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
-	int _get_audio(AVStream* a_stream_audio);
-
-	inline float get_framerate() { return framerate; }
-
-	inline int get_frame_duration() { return frame_duration; };
 
 	inline String get_path() { return path.c_str(); }
 
+	inline float get_framerate() { return framerate; }
+	inline int get_frame_duration() { return frame_duration; };
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
