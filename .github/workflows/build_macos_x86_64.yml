@@ -35,7 +35,7 @@ jobs:
           path: .scons-cache/
           key: macos_debug
       - name: Build MacOS debug
-        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+        run: scons -j4 target=template_debug platform=macos arch=x86_64 dev_build=yes recompile_ffmpeg=yes
       - name: Save cache macos_debug
         id: cache-macos-debug-save
         uses: actions/cache/save@v4
@@ -50,7 +50,7 @@ jobs:
           path: .scons-cache/
           key: macos_release
       - name: Build MacOS release
-        run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=macos arch=x86_64 recompile_ffmpeg=no
       - name: Save cache macos_release
         id: cache-macos-release-save
         uses: actions/cache/save@v4
@@ -78,4 +78,3 @@ jobs:
           name: test_room
           path: test_room/
           retention-days: 1
-
