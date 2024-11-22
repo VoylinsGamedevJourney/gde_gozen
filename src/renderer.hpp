@@ -5,7 +5,7 @@
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "ffmpeg_includes.hpp"
+#include "ffmpeg.hpp"
 
 using namespace godot;
 
@@ -85,10 +85,6 @@ public:
 	};
 
 	~Renderer();
-
-	static Dictionary get_supported_codecs();
-	static bool is_video_codec_supported(RENDERER_VIDEO_CODEC a_codec);
-	static bool is_audio_codec_supported(RENDERER_AUDIO_CODEC a_codec);
 
 	inline void set_output_file_path(String a_file_path) { file_path = a_file_path; }
 	inline String get_output_file_path(String a_file_path) { return file_path; }
@@ -186,10 +182,6 @@ protected:
 		BIND_ENUM_CONSTANT(H264_PRESET_SLOWER);
 		BIND_ENUM_CONSTANT(H264_PRESET_VERYSLOW);
 
-
-		ClassDB::bind_static_method("Renderer", D_METHOD("get_supported_codecs"), &Renderer::get_supported_codecs);
-		ClassDB::bind_static_method("Renderer", D_METHOD("is_video_codec_supported", "a_video_codec"), &Renderer::is_video_codec_supported);
-		ClassDB::bind_static_method("Renderer", D_METHOD("is_audio_codec_supported", "a_audio_codec"), &Renderer::is_audio_codec_supported);
 
 		ClassDB::bind_method(D_METHOD("set_output_file_path", "a_file_path"), &Renderer::set_output_file_path);
 		ClassDB::bind_method(D_METHOD("get_output_file_path"), &Renderer::get_output_file_path);
