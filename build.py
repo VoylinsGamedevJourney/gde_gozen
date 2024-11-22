@@ -16,10 +16,13 @@ if __name__ == '__main__':
     print('Select platform:')
     print('1. Linux; (default)')
     print('2. Windows;')
+    print('3. MacOS;')
 
     match input('> '):
         case '2':
             platform = 'windows'
+        case '3':
+            platform = 'macos'
 
     print('Select target:')
     print('1. Debug; (default)')
