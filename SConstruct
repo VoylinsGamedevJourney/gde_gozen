@@ -36,6 +36,8 @@ if 'linux' in platform:
         platform += '_full'
         os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
         if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+            print('Compiling FFmpeg for Linux')
+
             ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
 
             os.chdir('ffmpeg')
@@ -70,7 +72,10 @@ if 'linux' in platform:
             'swscale'])
 elif 'windows' in platform:
     os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
+
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+        print('Compiling FFmpeg for Windows')
+
         if os_platform.system().lower() == 'linux':
             ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
             ffmpeg_args += ' --enable-cross-compile'
@@ -111,6 +116,52 @@ elif 'windows' in platform:
     env.Append(CPPPATH=['ffmpeg/bin/include'])
     env.Append(LIBPATH=['ffmpeg/bin/bin'])
     os.system(f'cp ffmpeg/bin/bin/*.dll {location}/{platform}/{target}')
+elif 'macos' in platform:
+    # Cross compiling not possible, need a MacOS system
+    os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
+
+    if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+        print('Compiling FFmpeg for MacOS')
+
+        ffmpeg_args += ' --target-os=darwin'
+        ffmpeg_args += ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"'
+        ffmpeg_args += ' --extra-ldflags="-mmacosx-version-min=10.13"'
+
+        os.chdir('ffmpeg')
+        os.system('make distclean')
+        time.sleep(5)
+
+        os.system(f'./configure --prefix=./bin {ffmpeg_args}')
+        time.sleep(5)
+
+        os.system(f'make -j {jobs}')
+        os.system(f'make -j {jobs} install')
+        os.chdir('..')
+
+    env.Append(CPPPATH=['ffmpeg/bin/include'])
+    env.Append(LIBPATH=[
+        'ffmpeg/bin/lib',
+        '/usr/local/lib'  # Default macOS library path
+    ])
+    env.Append(LIBS=[
+        'avcodec',
+        'avformat',
+        'avdevice',
+        'avutil',
+        'swresample',
+        'swscale'
+    ])
+
+    # macOS-specific linking flags
+    env.Append(LINKFLAGS=[
+        '-stdlib=libc++',
+        '-framework', 'CoreFoundation',
+        '-framework', 'CoreVideo',
+        '-framework', 'CoreMedia',
+        '-framework', 'AVFoundation'
+    ])
+
+    os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}')
 
 CacheDir('.scons-cache')
 Decider('MD5')
