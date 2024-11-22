@@ -1,22 +1,27 @@
-name: Check Windows build
-run-name: Check build for Windows
+name: Build GDE GoZen - Windows
+run-name: Building GDE GoZen - Windows
 on: 
   workflow_dispatch:
     inputs:
-      artifact:
+      artifact_addon:
         description: 'Get artifacts'
         required: true
         default: false
         type: boolean
-        
+      artifact_test_room:
+        description: 'Get test_room'
+        required: true
+        default: false
+        type: boolean
+
 jobs:
-  windows-build:
+  build:
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm ffmpeg git bash yasm python python-pip scons gcc diffutils make mingw-w64 tree
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
 
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -28,7 +33,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: windows_debug
+          key: windows_debug_addon
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
       - name: Save cache windows_debug
@@ -39,11 +44,11 @@ jobs:
           key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
 
       - name: Restore cached windows_release
-        id: cache-windows-release
+        id: cache-windows-release-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: windows_release
+          key: windows_release_addon
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
       - name: Save cache windows_release
@@ -51,11 +56,26 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-windows-release.outputs.cache-primary-key }}
+          key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
 
-      - name: Uploading GDExtension artifact release
-        if: ${{ github.event.inputs.artifact == 'true' }}
+      - name: Copying libs
+        run: |
+          cp -r bin/* test_room/addons/gde_gozen/bin/
+          cp LICENSE test_room/addons/gde_gozen/
+
+      - name: Uploading addon build
+        if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_windows_build
-          path: bin/windows/
+          name: Addon_GDE_GoZen
+          path: test_room/addons/
+          retention-days: 1
+
+      - name: Uploading test room build
+        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_room
+          path: test_room/
+          retention-days: 1
+
