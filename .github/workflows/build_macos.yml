@@ -1,0 +1,82 @@
+name: Build GDE GoZen - MacOS
+run-name: Building GDE GoZen - MacOS
+on: 
+  workflow_dispatch:
+    inputs:
+      artifact_addon:
+        description: 'Get artifacts'
+        required: true
+        default: false
+        type: boolean
+      artifact_test_room:
+        description: 'Get test_room'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Installing dependencies
+        run: |
+          brew update
+          brew install git yasm python scons gcc diffutils make wget unzip tar ffmpeg
+
+
+      - name: Restore cached macos_debug
+        id: cache-macos-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: macos_debug
+      - name: Build MacOS debug
+        run: scons -j4 target=template_debug platform=macos arch=arm64 use_system=yes dev_build=yes
+      - name: Save cache macos_debug
+        id: cache-macos-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-macos-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached macos_release
+        id: cache-macos-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: macos_release
+      - name: Build MacOS release
+        run: scons -j4 target=template_release platform=macos arch=arm64 use_system=yes
+      - name: Save cache macos_release
+        id: cache-macos-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-macos-release-restore.outputs.cache-primary-key }}
+
+      - name: Copying libs
+        run: |
+          cp -r bin/* test_room/addons/gde_gozen/bin/
+          cp LICENSE test_room/addons/gde_gozen/
+
+      - name: Uploading addon build
+        if: ${{ github.event.inputs.artifact_addon == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Addon_GDE_GoZen
+          path: test_room/addons/
+          retention-days: 1
+
+      - name: Uploading test room build
+        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_room
+          path: test_room/
+          retention-days: 1
+
