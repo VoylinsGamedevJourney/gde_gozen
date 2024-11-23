@@ -11,3 +11,5 @@ linux.release.x86_64 = "res://addons/gde_gozen/bin/linux_full/release/libgozen.l
 windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows/debug/libgozen.windows.template_debug.dev.x86_64.dll"
 windows.release.x86_64 = "res://addons/gde_gozen/bin/windows/release/libgozen.windows.template_release.x86_64.dll"
 
+macos.debug.arm64 = "res://addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib"
+macos.release.arm64 = "res://addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.x86_64.dylib"
