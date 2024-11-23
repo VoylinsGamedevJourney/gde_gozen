@@ -1,0 +1,307 @@
+name: build_gde_gozen
+run-name: Building addon/test_room
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Addon version'
+        required: false
+        default: "4.0"
+      target:
+        description: 'Choose operating system:'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - linux
+          - linux-full
+          - windows
+          - macos
+          - all
+      get_addon:
+        description: 'Get test room'
+        required: true
+        default: false
+        type: boolean
+      get_test_room:
+        description: 'Get test room'
+        required: true
+        default: false
+        type: boolean
+
+
+jobs:
+  build-linux:
+    if: ${{ inputs.target == 'linux' || inputs.target == 'all' }}
+
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore cached linux_debug
+        id: cache-linux-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_debug
+      - name: Build Linux debug
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
+      - name: Save cache linux_debug
+        id: cache-linux-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-linux-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached linux_release
+        id: cache-linux-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_release_addon
+      - name: Build Linux release
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
+      - name: Save cache linux_release
+        id: cache-linux-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-linux-release-restore.outputs.cache-primary-key }}
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_bin_v${{ inputs.version }}
+          path: bin/
+          retention-days: 1
+
+
+  build-linux-full:
+    if: ${{ inputs.target == 'linux-full' || inputs.target == 'all' }}
+
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore cached linux_full_debug
+        id: cache-linux-full-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_full_debug_addon
+      - name: Build Linux full debug
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
+      - name: Save cache linux_full_debug
+        id: cache-linux-full-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-linux-full-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached linux_full_release
+        id: cache-linux-full-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_full_release_addon
+      - name: Build Linux full release
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
+      - name: Save cache linux_full_release
+        id: cache-linux-full-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-linux-full-release-restore.outputs.cache-primary-key }}
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_full_bin_v${{ inputs.version }}
+          path: bin/
+          retention-days: 1
+
+
+  build-windows:
+    if: ${{ inputs.target == 'windows' || inputs.target == 'all' }}
+
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore cached windows_debug
+        id: cache-windows-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: windows_debug_addon
+      - name: Build Windows debug
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+      - name: Save cache windows_debug
+        id: cache-windows-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached windows_release
+        id: cache-windows-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: windows_release_addon
+      - name: Build Windows release
+        run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+      - name: Save cache windows_release
+        id: cache-windows-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_windows_bin_v${{ inputs.version }}
+          path: bin/
+          retention-days: 1
+
+
+  build-macos:
+    if: ${{ inputs.target == 'macos' || inputs.target == 'all' }}
+
+    runs-on: macos-latest
+    steps:
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Installing dependencies
+        run: |
+          brew update
+          brew install yasm scons diffutils make unzip ffmpeg
+
+      - name: Restore cached macos_debug
+        id: cache-macos-debug-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: macos_debug
+      - name: Build MacOS debug
+        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+      - name: Save cache macos_debug
+        id: cache-macos-debug-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-macos-debug-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached macos_release
+        id: cache-macos-release-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: macos_release
+      - name: Build MacOS release
+        run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+      - name: Save cache macos_release
+        id: cache-macos-release-save
+        uses: actions/cache/save@v4
+        with:
+          path: .scons-cache/
+          key: ${{ steps.cache-macos-release-restore.outputs.cache-primary-key }}
+
+      - name: Correct MacOS Binary paths
+        run: |
+          python macos_rpath_fix.py
+          otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
+          otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_macos_bin_v${{ inputs.version }}
+          path: bin/
+          retention-days: 1
+
+
+  build-addon:
+    if: ${{ inputs.get_addon == 'true' || inputs.get_test_room == 'true' }}
+    needs: [build-linux, build-linux-full, build-windows, build-macos]
+
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Prepare linux artifacts
+        if: ${{ inputs.target == 'linux' || inputs.target == 'all' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: gde_gozen_linux_bin_v${{ inputs.version }}
+
+      - name: Prepare linux-full artifacts
+        if: ${{ inputs.target == 'linux-full' || inputs.target == 'all' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: gde_gozen_linux_full_bin_v${{ inputs.version }}
+
+      - name: Prepare windows artifacts
+        if: ${{ inputs.target == 'windows' || inputs.target == 'all' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: gde_gozen_windows_full_bin_v${{ inputs.version }}
+          
+      - name: Prepare macos artifacts
+        if: ${{ inputs.target == 'macos' || inputs.target == 'all' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: gde_gozen_macos_full_bin_v${{ inputs.version }}
+
+      - name: Copying binaries + license
+        run: |
+          cp -r bin/* test_room/addons/gde_gozen/bin/
+          cp LICENSE test_room/addons/gde_gozen/
+
+      - name: Updating version number
+        run: sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
+
+
+      - name: Upload addon
+        if: ${{ inputs.get_addon == 'true' || inputs.target == 'all' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_v${{ inputs.version }}
+          path: test_room/addons/
+          retention-days: 1
+
+      - name: Upload test_room
+        if: ${{ inputs.get_test_room == 'true' || inputs.target == 'all' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_test_room_v${{ inputs.version }}
+          path: test_room/
+          retention-days: 1
