@@ -62,7 +62,7 @@ jobs:
         if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Addon_GDE_GoZen
+          name: Addon_GDE_GoZen_Linux
           path: test_room/addons/
           retention-days: 1
 
@@ -70,6 +70,6 @@ jobs:
         if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: test_room
+          name: Test_room_GDE_GoZen_Linux
           path: test_room/
           retention-days: 1
