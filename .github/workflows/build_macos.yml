@@ -26,7 +26,7 @@ jobs:
       - name: Installing dependencies
         run: |
           brew update
-          brew install git yasm python scons gcc diffutils make wget unzip ffmpeg
+          brew install yasm scons diffutils make unzip ffmpeg
 
       - name: Restore cached macos_debug
         id: cache-macos-debug-restore
@@ -58,6 +58,13 @@ jobs:
           path: .scons-cache/
           key: ${{ steps.cache-macos-release-restore.outputs.cache-primary-key }}
 
+      - name: Correct MacOS Binary paths
+        run: |
+          python macos_rpath_fix.py
+          otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
+          otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
+
+
       - name: Copying libs
         run: |
           cp -r bin/* test_room/addons/gde_gozen/bin/
@@ -67,7 +74,7 @@ jobs:
         if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Addon_GDE_GoZen
+          name: Addon_GDE_GoZen_MacOS
           path: test_room/addons/
           retention-days: 1
 
@@ -75,7 +82,7 @@ jobs:
         if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: test_room
+          name: Test_room_GDE_GoZen_MacOS
           path: test_room/
           retention-days: 1
 

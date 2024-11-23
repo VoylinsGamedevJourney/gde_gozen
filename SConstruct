@@ -118,7 +118,7 @@ elif 'windows' in platform:
     os.system(f'cp ffmpeg/bin/bin/*.dll {location}/{platform}/{target}')
 elif 'macos' in platform:
     # Cross compiling not possible, need a MacOS system
-    os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
+    os.makedirs(f'{location}/{platform}/{target}/lib', exist_ok=True)
 
     if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
         print('Compiling FFmpeg for MacOS')
@@ -158,10 +158,11 @@ elif 'macos' in platform:
         '-framework', 'CoreFoundation',
         '-framework', 'CoreVideo',
         '-framework', 'CoreMedia',
-        '-framework', 'AVFoundation'
+        '-framework', 'AVFoundation',
+        '-rpath', '@loader_path/lib',
     ])
 
-    os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}')
+    os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}/lib')
 
 CacheDir('.scons-cache')
 Decider('MD5')
