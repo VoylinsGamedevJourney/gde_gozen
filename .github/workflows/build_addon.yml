@@ -7,33 +7,9 @@ on:
         description: 'Addon version'
         required: false
         default: "4.0"
-      target:
-        description: 'Choose operating system:'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - linux
-          - linux-full
-          - windows
-          - macos
-          - all
-      get_addon:
-        description: 'Get test room'
-        required: true
-        default: false
-        type: boolean
-      get_test_room:
-        description: 'Get test room'
-        required: true
-        default: false
-        type: boolean
-
 
 jobs:
   build-linux:
-    if: ${{ inputs.target == 'linux' || inputs.target == 'all' }}
-
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -83,10 +59,7 @@ jobs:
           path: bin/
           retention-days: 1
 
-
   build-linux-full:
-    if: ${{ inputs.target == 'linux-full' || inputs.target == 'all' }}
-
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -136,10 +109,7 @@ jobs:
           path: bin/
           retention-days: 1
 
-
   build-windows:
-    if: ${{ inputs.target == 'windows' || inputs.target == 'all' }}
-
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
@@ -189,10 +159,7 @@ jobs:
           path: bin/
           retention-days: 1
 
-
   build-macos:
-    if: ${{ inputs.target == 'macos' || inputs.target == 'all' }}
-
     runs-on: macos-latest
     steps:
       - name: Checkout submodules
@@ -248,50 +215,53 @@ jobs:
           path: bin/
           retention-days: 1
 
-
   build-addon:
-    if: ${{ inputs.get_addon == 'true' || inputs.get_test_room == 'true' }}
     needs: [build-linux, build-linux-full, build-windows, build-macos]
-
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
     steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Prepare linux artifacts
-        if: ${{ inputs.target == 'linux' || inputs.target == 'all' }}
         uses: actions/download-artifact@v4
         with:
+          path: bin/
           name: gde_gozen_linux_bin_v${{ inputs.version }}
 
       - name: Prepare linux-full artifacts
-        if: ${{ inputs.target == 'linux-full' || inputs.target == 'all' }}
         uses: actions/download-artifact@v4
         with:
+          path: bin/
           name: gde_gozen_linux_full_bin_v${{ inputs.version }}
 
       - name: Prepare windows artifacts
-        if: ${{ inputs.target == 'windows' || inputs.target == 'all' }}
         uses: actions/download-artifact@v4
         with:
-          name: gde_gozen_windows_full_bin_v${{ inputs.version }}
+          path: bin/
+          name: gde_gozen_windows_bin_v${{ inputs.version }}
           
       - name: Prepare macos artifacts
-        if: ${{ inputs.target == 'macos' || inputs.target == 'all' }}
         uses: actions/download-artifact@v4
         with:
-          name: gde_gozen_macos_full_bin_v${{ inputs.version }}
+          path: bin/
+          name: gde_gozen_macos_bin_v${{ inputs.version }}
 
       - name: Copying binaries + license
         run: |
-          cp -r bin/* test_room/addons/gde_gozen/bin/
+          cp -r bin test_room/addons/gde_gozen/
           cp LICENSE test_room/addons/gde_gozen/
 
       - name: Updating version number
         run: sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
 
-
       - name: Upload addon
-        if: ${{ inputs.get_addon == 'true' || inputs.target == 'all' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_v${{ inputs.version }}
@@ -299,9 +269,9 @@ jobs:
           retention-days: 1
 
       - name: Upload test_room
-        if: ${{ inputs.get_test_room == 'true' || inputs.target == 'all' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_test_room_v${{ inputs.version }}
           path: test_room/
           retention-days: 1
+
