@@ -34,31 +34,46 @@ No error code but returns an empty picture when an error occured.
 
 - 0: OK;
 - -1: Renderer not fully ready (some variables aren't set);
-- -2: Failed to open video context;
-- -3: Failed to setup video encoder; 
-- -4: failed to setup audio encoder;
-- -5: Failed to setup video stream;
-- -6: Failed to setup audio stream;
-- -7: Couldn't create packet;
-- -8: Couldn't create frame;
-- -10: Couldn't create SWR;
-- -11: Failed to open video file;
-- -12: Failed to write stream header;
+- -2: Path is not set;
+- -3: Video codec not set;
+- -4: Failed to open file for writing;
+- -5: Failed to setup video codec;
+- -6: Failed to setup video stream;
+- -7: Failed to open video codec;
+- -8: Failed to allocate av packet and/or av frame;
+- -9: Failed to copy video params;
+- -10: Failed to open output file;
+- -11: Failed to write headers;
+- -12: Failed to create SWS context;
 
 ### send_frame
 
 - 0: OK;
-- -1: Video codec isn't open;
-- -2: Frame is not write-able;
-- -3: Couldn't send frame to encoder; 
+- -1: Audio codec is set but audio isn't added yet;
+- -2: Video codec isn't open;
+- -3: Frame is not write-able;
+- -4: Failed to convert image data;
+- -5: Failed to send frame to encoder; 
+- -6: Renderer isn't open;
 
 Any other response is an FFmpeg error code which has to do with sending, receiving, and writing frames.
 
 ### send_audio
 
 - 0: OK;
-- -1: Audio rendering is not enabled;
-- -2: Audio codec isn't open;
+- -1: Audio codec not set;
+- -2: Audio already added;
+- -3: Failed to setup audio stream;
+- -4: Failed to find audio codec;
+- -5: Failed to allocate audio codec context;
+- -6: Renderer isn't open;
+- -7: Failed to allocate packet and/or frame;
+- -8: Failed to copy channel layout;
+- -9: Failed to get frame buffer;
+- -10: Failed to make frame writable;
+- -11: Error sending frame to encoder;
+- -12: Error encoding audio frame;
+- -13: Error writing packet;
 
 ### close
 
