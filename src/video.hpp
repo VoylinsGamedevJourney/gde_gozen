@@ -128,7 +128,7 @@ public:
 	inline String get_prefered_hw_decoder() { return prefered_hw_decoder.c_str(); }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
-	inline void disable_debug() { debug = false; }
+	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }
 	inline bool get_debug_enabled() { return debug; }
 
 	inline String get_pixel_format() { return pixel_format.c_str(); }
