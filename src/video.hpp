@@ -57,7 +57,7 @@ private:
 	float framerate = 0.;
 
 	bool loaded = false; // Is true after open()
-	bool hw_decoding = true; // Set by user
+	bool hw_decoding = false; // Set by user
 	bool debug = false;
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
 
