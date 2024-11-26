@@ -13,9 +13,23 @@ arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
 location = ARGUMENTS.get('location', 'bin')
+gpl = ARGUMENTS.get('enable_gpl', 'no')
 
 
-ffmpeg_args = '--enable-shared --enable-gpl'
+ffmpeg_args = '--enable-shared'
+if gpl == 'yes':
+    print('GPL3 enabled')
+    ffmpeg_args += ' --enable-gpl --enable-version3'  # Licensing stuff
+    ffmpeg_args += ' --enable-lto --enable-libdrm --enable-libmfx --enable-libopenmpt --enable-libv4l2'  # Not certain but we (may) need it
+    ffmpeg_args += ' --enable-libaom --enable-libdav1d --enable-librav1e --enable-libsvtav1'  # AV1 stuff
+    ffmpeg_args += ' --enable-libtheora --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265'  # Video codecs
+    ffmpeg_args += ' --enable-libass'  # Subtitle stuff
+    ffmpeg_args += ' --enable-libiec61883'  # MPEG stuff
+    ffmpeg_args += ' --enable-libjack --enable-libmp3lame --enable-libopus --enable-libpulse --enable-libsoxr --enable-libvorbis'  # Sound stuff
+    ffmpeg_args += ' --enable-libopencore_amrnb --enable-libopencore_amrwb'
+    ffmpeg_args += ' --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-nvdec --enable-nvenc --enable-cuda-llvm'
+    ffmpeg_args += ' --enable-opencl --enable-opengl --enable-vulkan'  # GPU stuff
+
 ffmpeg_args += ' --disable-postproc'
 ffmpeg_args += ' --disable-avfilter'
 ffmpeg_args += ' --disable-programs --disable-ffmpeg --disable-ffplay --disable-ffprobe'
