@@ -1,5 +1,5 @@
-name: build_gde_gozen
-run-name: Building addon/test_room
+name: build_gde_gozen_gplv3
+run-name: Building addon/test_room with GPLv3
 on: 
   workflow_dispatch:
     inputs:
@@ -29,7 +29,7 @@ jobs:
           path: .scons-cache/
           key: linux_debug
       - name: Build Linux debug
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes enable_gpl=yes
       - name: Save cache linux_debug
         id: cache-linux-debug-save
         uses: actions/cache/save@v4
@@ -44,7 +44,7 @@ jobs:
           path: .scons-cache/
           key: linux_release_addon
       - name: Build Linux release
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes enable_gpl=yes
       - name: Save cache linux_release
         id: cache-linux-release-save
         uses: actions/cache/save@v4
@@ -55,7 +55,7 @@ jobs:
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_bin_v${{ inputs.version }}_gplv3
           path: bin/
           retention-days: 1
 
@@ -79,7 +79,7 @@ jobs:
           path: .scons-cache/
           key: linux_full_debug_addon
       - name: Build Linux full debug
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes enable_gpl=yes
       - name: Save cache linux_full_debug
         id: cache-linux-full-debug-save
         uses: actions/cache/save@v4
@@ -94,7 +94,7 @@ jobs:
           path: .scons-cache/
           key: linux_full_release_addon
       - name: Build Linux full release
-        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no enable_gpl=yes
       - name: Save cache linux_full_release
         id: cache-linux-full-release-save
         uses: actions/cache/save@v4
@@ -105,7 +105,7 @@ jobs:
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_full_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_full_bin_v${{ inputs.version }}_gplv3
           path: bin/
           retention-days: 1
 
@@ -129,7 +129,7 @@ jobs:
           path: .scons-cache/
           key: windows_debug_addon
       - name: Build Windows debug
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
       - name: Save cache windows_debug
         id: cache-windows-debug-save
         uses: actions/cache/save@v4
@@ -144,7 +144,7 @@ jobs:
           path: .scons-cache/
           key: windows_release_addon
       - name: Build Windows release
-        run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no enable_gpl=yes
       - name: Save cache windows_release
         id: cache-windows-release-save
         uses: actions/cache/save@v4
@@ -155,7 +155,7 @@ jobs:
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_windows_bin_v${{ inputs.version }}
+          name: gde_gozen_windows_bin_v${{ inputs.version }}_gplv3
           path: bin/
           retention-days: 1
 
@@ -179,7 +179,7 @@ jobs:
           path: .scons-cache/
           key: macos_debug
       - name: Build MacOS debug
-        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
       - name: Save cache macos_debug
         id: cache-macos-debug-save
         uses: actions/cache/save@v4
@@ -194,7 +194,7 @@ jobs:
           path: .scons-cache/
           key: macos_release
       - name: Build MacOS release
-        run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no enable_gpl=yes
       - name: Save cache macos_release
         id: cache-macos-release-save
         uses: actions/cache/save@v4
@@ -211,7 +211,7 @@ jobs:
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_macos_bin_v${{ inputs.version }}
+          name: gde_gozen_macos_bin_v${{ inputs.version }}_gplv3
           path: bin/
           retention-days: 1
 
@@ -264,13 +264,13 @@ jobs:
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_v${{ inputs.version }}
+          name: gde_gozen_v${{ inputs.version }}_gplv3
           path: test_room/addons/
           retention-days: 1
 
       - name: Upload test_room
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_test_room_v${{ inputs.version }}
+          name: gde_gozen_test_room_v${{ inputs.version }}_gplv3
           path: test_room/
           retention-days: 1
