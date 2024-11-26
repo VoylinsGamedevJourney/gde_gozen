@@ -11,6 +11,7 @@ if __name__ == '__main__':
     target = 'debug'
     extra_args = ''
     use_system = False
+    gpl = ''
 
     print('GoZen GDExtension builder')
     print('Select platform:')
@@ -54,6 +55,16 @@ if __name__ == '__main__':
         match input('> '):
             case '2':
                 extra_args += ' recompile_ffmpeg=no'
+
+    print('Use GPL3:')
+    print('1. No; (default)')
+    print('2. Yes.')
+
+    match input('> '):
+        case '2':
+            extra_args += 'enable_gpl=yes'
+        case _:
+            extra_args += 'enable_gpl=no'
 
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():
