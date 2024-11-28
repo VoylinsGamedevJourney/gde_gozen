@@ -1,5 +1,7 @@
 extends Control
 
+@onready var player: AudioStreamPlayer = $AudioStreamPlayer
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -9,7 +11,7 @@ func _ready() -> void:
 	
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
-	$AudioStreamPlayer.stream = Audio.get_wav(a_files[0])
+	player.stream = Audio.get_wav(a_files[0])
 	print("Audio loaded")
-	$AudioStreamPlayer.play()
+	player.play()
 
