@@ -44,7 +44,6 @@ int Renderer::open() {
 		avformat_alloc_output_context2(&av_format_ctx, NULL, "mpeg", path.utf8());
 	} if (!av_format_ctx)
 		return -4;
-	
 
 	av_output_format = av_format_ctx->oformat;
 
@@ -329,8 +328,8 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 		return -1;
 	}
 	
-	const uint8_t *l_input_data = a_wav_data.ptr();
-	int l_input_size = a_wav_data.size();
+	const uint8_t *l_input_data = a_wav_data.ptr() + 44;
+	int l_input_size = a_wav_data.size() - 44;
 
 	AVFrame *l_frame_in = av_frame_alloc();
 	if (!l_frame_in) {
@@ -344,7 +343,7 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 	l_frame_in->sample_rate = a_mix_rate;
 
 	int l_total_samples = l_input_size / (av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * 2); // Stereo
-	const uint8_t ** l_data = &l_input_data;	
+	const uint8_t ** l_data = &l_input_data;
 
 	// Allocate a buffer for the output in the target format
 	AVFrame *l_frame_out = av_frame_alloc();
