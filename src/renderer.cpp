@@ -1,6 +1,5 @@
 #include "renderer.hpp"
 
-// TODO: Only show encoders to people which support S16
 
 Renderer::~Renderer() {
 	close();
@@ -46,6 +45,7 @@ int Renderer::open() {
 	} if (!av_format_ctx)
 		return -4;
 	
+
 	av_output_format = av_format_ctx->oformat;
 
 	// Setting up video stream
@@ -81,9 +81,12 @@ int Renderer::open() {
 	av_codec_ctx_video->pix_fmt = AV_PIX_FMT_YUV420P;
 	av_codec_ctx_video->width = resolution.x; // Resolution must be a multiple of two
 	av_codec_ctx_video->height = resolution.y;
-	av_stream_video->time_base = (AVRational){1, (int)framerate};
-	av_codec_ctx_video->time_base = av_stream_video->time_base;
+	av_codec_ctx_video->time_base = (AVRational){1, (int)framerate};
+	av_stream_video->time_base = av_codec_ctx_video->time_base;
+
 	av_codec_ctx_video->framerate = (AVRational){(int)framerate, 1};
+	av_stream_video->avg_frame_rate = av_codec_ctx_video->framerate;
+
 	av_codec_ctx_video->gop_size = gop_size;
 
 	if (av_codec_ctx_video->codec_id == AV_CODEC_ID_MPEG2VIDEO)
