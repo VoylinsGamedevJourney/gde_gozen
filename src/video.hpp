@@ -149,7 +149,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
 
 		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
-		ClassDB::bind_method(D_METHOD("next_frame"), &Video::next_frame);
+		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame);
 		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
 
 		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
