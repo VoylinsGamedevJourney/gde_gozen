@@ -4,107 +4,128 @@ import platform as os_platform
 import time
 
 
+LIBS_COMMON = [
+    'avcodec',
+    'avformat',
+    'avdevice',
+    'avutil',
+    'swresample',
+    'swscale']
+SLEEP_TIME = 3
+
+
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
 
-
+gpl = ARGUMENTS.get('enable_gpl', 'no')
 jobs = ARGUMENTS.get('jobs', 4)
 arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
 location = ARGUMENTS.get('location', 'bin')
-gpl = ARGUMENTS.get('enable_gpl', 'no')
+use_system = ARGUMENTS.get('use_system', 'yes')
+recompile_ffmpeg = ARGUMENTS.get('recompile_ffmpeg', 'yes')
 
 
-ffmpeg_args = '--enable-shared'
+ffmpeg_args = '--enable-shared --quiet' +\
+              ' --disable-postproc --disable-avfilter --disable-sndio' +\
+              ' --disable-programs --disable-ffmpeg --disable-ffplay' +\
+              ' --disable-ffprobe --disable-doc --disable-htmlpages' +\
+              ' --disable-manpages --disable-podpages --disable-txtpages' +\
+              f' --arch={arch}'
+
 if gpl == 'yes':
     print('GPL3 enabled')
-    ffmpeg_args += ' --enable-gpl --enable-version3'  # Licensing stuff
-    ffmpeg_args += ' --enable-lto --enable-libdrm --enable-libmfx --enable-libopenmpt --enable-libv4l2'  # Not certain but we (may) need it
-    ffmpeg_args += ' --enable-libaom --enable-libdav1d --enable-librav1e --enable-libsvtav1'  # AV1 stuff
-    ffmpeg_args += ' --enable-libtheora --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265'  # Video codecs
-    ffmpeg_args += ' --enable-libass'  # Subtitle stuff
-    ffmpeg_args += ' --enable-libiec61883'  # MPEG stuff
-    ffmpeg_args += ' --enable-libjack --enable-libmp3lame --enable-libopus --enable-libpulse --enable-libsoxr --enable-libvorbis'  # Sound stuff
-    ffmpeg_args += ' --enable-libopencore_amrnb --enable-libopencore_amrwb'
-    ffmpeg_args += ' --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-nvdec --enable-nvenc --enable-cuda-llvm'
-    ffmpeg_args += ' --enable-opencl --enable-opengl --enable-vulkan'  # GPU stuff
+    ffmpeg_args += ' --enable-gpl --enable-version3' +\
+                   ' --enable-lto --enable-libdrm --enable-libvpl' +\
+                   ' --enable-libopenmpt --enable-libv4l2' +\
+                   ' --enable-libopencore_amrnb --enable-libopencore_amrwb' +\
+                   ' --enable-libdav1d --enable-librav1e' +\
+                   ' --enable-libsvtav1 --enable-libtheora --enable-libvpx' +\
+                   ' --enable-libwebp --enable-libx264 --enable-libx265' +\
+                   ' --enable-libiec61883 --enable-libass --enable-libjack' +\
+                   ' --enable-libmp3lame --enable-libopus --enable-libpulse' +\
+                   ' --enable-libsoxr --enable-libvorbis --enable-libxcb' +\
+                   ' --enable-libxml2 --enable-libxvid --enable-libzimg' +\
+                   ' --enable-nvdec --enable-nvenc --enable-cuda-llvm' +\
+                   ' --enable-opencl --enable-opengl --enable-vulkan'
 
-ffmpeg_args += ' --disable-postproc'
-ffmpeg_args += ' --disable-avfilter'
-ffmpeg_args += ' --disable-programs --disable-ffmpeg --disable-ffplay --disable-ffprobe'
-ffmpeg_args += ' --disable-doc --disable-htmlpages --disable-manpages --disable-podpages --disable-txtpages'
-ffmpeg_args += ' --quiet'
-ffmpeg_args += ' --disable-sndio'
-ffmpeg_args += f' --arch={arch}'
+    if 'linux' in platform:
+        ffmpeg_args += ' --enable-libaom'
+
+# LINUX ############################################################### LINUX #
+# For people who don't need the FFmpeg libs (FFmpeg 6+ already installed)
+if 'linux' in platform and use_system == 'yes':
+    os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
+    env.Append(
+        LINKFLAGS=['-static-libstdc++'],
+        CPPPATH=['/usr/include/ffmpeg/'],
+        LIBS=LIBS_COMMON)
 
 
-if 'linux' in platform:
-    if ARGUMENTS.get('use_system', 'yes') == 'yes':  # For people who don't need the FFmpeg libs
-        os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
+# LINUX_FULL ##################################################### LINUX_FULL #
+# For people needing FFmpeg binaries (Ubuntu, ... don't have FFmpeg 6+ yet)
+elif 'linux' in platform:
+    platform += '_full'
+    os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
 
-        env.Append(LINKFLAGS=['-static-libstdc++'])
-        env.Append(CPPPATH=['/usr/include/ffmpeg/'])
-        env.Append(LIBS=['avcodec', 'avformat', 'avdevice', 'avutil', 'swresample'])
-    else:  # For people needing FFmpeg binaries
-        platform += '_full'
-        os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
-        if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
-            print('Compiling FFmpeg for Linux')
+    if recompile_ffmpeg == 'yes':
+        print('Compiling FFmpeg for Linux')
+        ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"' +\
+                       ' --target-os=linux'
 
-            ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
+        os.chdir('ffmpeg')
+        os.system('make distclean')
+        time.sleep(SLEEP_TIME)
 
-            os.chdir('ffmpeg')
-            os.system('make distclean')
-            time.sleep(5)
+        os.system(f'./configure --prefix=./bin {ffmpeg_args}')
+        time.sleep(SLEEP_TIME)
 
-            os.system(f'./configure --prefix=./bin {ffmpeg_args} --target-os=linux')
-            time.sleep(5)
+        os.system(f'make -j {jobs}')
+        os.system(f'make -j {jobs} install')
+        os.chdir('..')
 
-            os.system(f'make -j {jobs}')
-            os.system(f'make -j {jobs} install')
-            os.chdir('..')
-
-        env.Append(LINKFLAGS=['-static-libstdc++'])
-        env.Append(CPPFLAGS=['-Iffmpeg/bin', '-Iffmpeg/bin/include'])
-        env.Append(LIBPATH=[
+    env.Append(
+        LINKFLAGS=['-static-libstdc++'],
+        CPPFLAGS=[
+            '-Iffmpeg/bin',
+            '-Iffmpeg/bin/include'],
+        LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
             'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
-            'ffmpeg/bin/lib'])
+            'ffmpeg/bin/lib'],
+        LIBS=LIBS_COMMON)
 
-        print(os.system(f'cp ffmpeg/bin/lib/*.so* {location}/{platform}/{target}'))
-        env.Append(LIBS=[
-            'avcodec',
-            'avformat',
-            'avdevice',
-            'avutil',
-            'swresample',
-            'swscale'])
+    os.system(f'cp ffmpeg/bin/lib/*.so* {location}/{platform}/{target}')
+
+
+# WINDOWS ########################################################### WINDOWS #
+# For people who for some reason use Windows
 elif 'windows' in platform:
     os.makedirs(f'{location}/{platform}/{target}', exist_ok=True)
 
-    if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+    if recompile_ffmpeg == 'yes':
         print('Compiling FFmpeg for Windows')
 
         if os_platform.system().lower() == 'linux':
-            ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32- --target-os=mingw32'
-            ffmpeg_args += ' --enable-cross-compile'
-            ffmpeg_args += ' --extra-ldflags="-static"'
-            ffmpeg_args += ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
+            ffmpeg_args += ' --cross-prefix=x86_64-w64-mingw32-' +\
+                           ' --target-os=mingw32 --enable-cross-compile' +\
+                           ' --extra-ldflags="-static"' +\
+                           ' --extra-cflags="-fPIC" --extra-ldflags="-fpic"'
         else:
             ffmpeg_args += ' --target-os=windows'
 
         os.chdir('ffmpeg')
         os.system('make distclean')
-        time.sleep(5)
+        time.sleep(SLEEP_TIME)
 
         os.environ['PATH'] = '/opt/bin:' + os.environ['PATH']
         os.system(f'./configure --prefix=./bin {ffmpeg_args}')
-        time.sleep(5)
+        time.sleep(SLEEP_TIME)
 
         os.system(f'make -j {jobs}')
         os.system(f'make -j {jobs} install')
@@ -119,69 +140,76 @@ elif 'windows' in platform:
             'swresample.lib',
             'swscale.lib'])
     else:
-        env.Append(LIBS=[
-            'avcodec',
-            'avformat',
-            'avdevice',
-            'avutil',
-            'swresample',
-            'swscale'])
+        env.Append(LIBS=LIBS_COMMON)
 
-    env.Append(CPPPATH=['ffmpeg/bin/include'])
-    env.Append(LIBPATH=['ffmpeg/bin/bin'])
+    env.Append(
+        CPPPATH=['ffmpeg/bin/include'],
+        LIBPATH=['ffmpeg/bin/bin'])
     os.system(f'cp ffmpeg/bin/bin/*.dll {location}/{platform}/{target}')
+
+
+# MACOS ############################################################### MACOS #
+# For the people who don't like money and/or right to repair
+# NOTE: Cross compiling not possible, need a MacOS system
 elif 'macos' in platform:
-    # Cross compiling not possible, need a MacOS system
+
     os.makedirs(f'{location}/{platform}/{target}/lib', exist_ok=True)
 
-    if ARGUMENTS.get('recompile_ffmpeg', 'yes') == 'yes':
+    if recompile_ffmpeg == 'yes':
         print('Compiling FFmpeg for MacOS')
 
-        ffmpeg_args += ' --target-os=darwin'
-        ffmpeg_args += ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"'
-        ffmpeg_args += ' --extra-ldflags="-mmacosx-version-min=10.13"'
+        ffmpeg_args += ' --target-os=darwin' +\
+                       ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"' +\
+                       ' --extra-ldflags="-mmacosx-version-min=10.13"'
 
         os.chdir('ffmpeg')
         os.system('make distclean')
-        time.sleep(5)
+        time.sleep(SLEEP_TIME)
 
         os.system(f'./configure --prefix=./bin {ffmpeg_args}')
-        time.sleep(5)
+        time.sleep(SLEEP_TIME)
 
         os.system(f'make -j {jobs}')
         os.system(f'make -j {jobs} install')
         os.chdir('..')
 
-    env.Append(CPPPATH=['ffmpeg/bin/include'])
-    env.Append(LIBPATH=[
-        'ffmpeg/bin/lib',
-        '/usr/local/lib'  # Default macOS library path
-    ])
-    env.Append(LIBS=[
-        'avcodec',
-        'avformat',
-        'avdevice',
-        'avutil',
-        'swresample',
-        'swscale'
-    ])
-
-    # macOS-specific linking flags
-    env.Append(LINKFLAGS=[
-        '-stdlib=libc++',
-        '-framework', 'CoreFoundation',
-        '-framework', 'CoreVideo',
-        '-framework', 'CoreMedia',
-        '-framework', 'AVFoundation',
-        '-rpath', '@loader_path/lib',
-    ])
+    env.Append(
+        CPPPATH=['ffmpeg/bin/include'],
+        LIBPATH=[
+            'ffmpeg/bin/lib',
+            '/usr/local/lib'],  # Default macOS library path
+        LIBS=LIBS_COMMON,
+        LINKFLAGS=[  # macOS-specific linking flags
+            '-stdlib=libc++',
+            '-framework', 'CoreFoundation',
+            '-framework', 'CoreVideo',
+            '-framework', 'CoreMedia',
+            '-framework', 'AVFoundation',
+            '-rpath', '@loader_path/lib']
+    )
 
     os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}/lib')
 
+elif 'web' in platform:
+    print('Exporting for web isn\'t supported yet!')
+elif 'android' in platform:
+    print('Exporting for Android isn\'t supported yet!')
+else:
+    print('Invalid platform!')
+
+
+# Caching stuff
 CacheDir('.scons-cache')
 Decider('MD5')
 
+# Godot compiling stuff
 src = Glob('src/*.cpp')
-libpath = '{}/{}/{}/libgozen{}{}'.format(location, platform, target, env['suffix'], env['SHLIBSUFFIX'])
+libpath = '{}/{}/{}/libgozen{}{}'.format(
+    location,
+    platform,
+    target,
+    env['suffix'],
+    env['SHLIBSUFFIX'])
+
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
