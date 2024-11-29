@@ -61,10 +61,8 @@ if __name__ == '__main__':
                       '2. Yes.')
 
                 match input('> '):
-                    case '2':
-                        extra_args += 'enable_gpl=yes'
-                    case _:
-                        extra_args += 'enable_gpl=no'
+                    case '2': extra_args += ' enable_gpl=yes'
+                    case _: extra_args += ' enable_gpl=no'
 
     user_input = input('Number of threads/cores for compiling> ')
     if user_input.isdigit():
