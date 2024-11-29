@@ -12,7 +12,7 @@ PackedStringArray Renderer::get_available_codecs(int a_codec_id) {
 	void *l_i = nullptr;
 
 	while ((l_codec = av_codec_iterate(&l_i)))
-		if (l_codec->id == a_codec_id and av_codec_is_encoder(l_codec))
+		if (l_codec->id == a_codec_id && av_codec_is_encoder(l_codec))
 			l_data.append(l_codec->name);
 
 	return l_data;
@@ -80,10 +80,10 @@ int Renderer::open() {
 	av_codec_ctx_video->pix_fmt = AV_PIX_FMT_YUV420P;
 	av_codec_ctx_video->width = resolution.x; // Resolution must be a multiple of two
 	av_codec_ctx_video->height = resolution.y;
-	av_codec_ctx_video->time_base = (AVRational){1, (int)framerate};
+	av_codec_ctx_video->time_base = AVRational{1, (int)framerate};
 	av_stream_video->time_base = av_codec_ctx_video->time_base;
 
-	av_codec_ctx_video->framerate = (AVRational){(int)framerate, 1};
+	av_codec_ctx_video->framerate = AVRational{(int)framerate, 1};
 	av_stream_video->avg_frame_rate = av_codec_ctx_video->framerate;
 
 	av_codec_ctx_video->gop_size = gop_size;
@@ -169,7 +169,7 @@ int Renderer::open() {
 				}
 			}
 		}
-		av_codec_ctx_audio->time_base = (AVRational){1, av_codec_ctx_audio->sample_rate};
+		av_codec_ctx_audio->time_base = AVRational{1, av_codec_ctx_audio->sample_rate};
 		av_stream_audio->time_base = av_codec_ctx_audio->time_base;
 
 		AVChannelLayout l_ch_layout = AV_CHANNEL_LAYOUT_STEREO;
