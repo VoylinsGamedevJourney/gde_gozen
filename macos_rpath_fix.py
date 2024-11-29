@@ -1,6 +1,10 @@
 import os
-import sys
-import subprocess
+
+# This is a fix for the MacOS builds to get the libraries to properly connect to
+# the gdextension library. Without it, the FFmpeg libraries can't be found.
+
+
+print("Updating @loader_path for MacOS builds.")
 
 
 debug_binary = 'bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib'
