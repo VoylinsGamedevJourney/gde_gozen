@@ -8,6 +8,11 @@ on:
         required: true
         default: false
         type: boolean
+      artifact_test_room:
+        description: 'Get test_room'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build:
