@@ -24,8 +24,8 @@ if __name__ == '__main__':
     match input('> '):
         case '2': platform = 'windows'
         case '3': platform = 'macos'
-        case '3': platform = 'web dlink_enabled=yes'
-        case '3': platform = 'android'
+        case '4': platform = 'web dlink_enabled=yes'
+        case '5': platform = 'android'
 
     print('Select target:\n'
           '1. Debug; (default):\n'

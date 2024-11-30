@@ -36,22 +36,22 @@ ffmpeg_args = '--enable-shared --quiet' +\
 
 if gpl == 'yes':
     print('GPL3 enabled')
-    ffmpeg_args += ' --enable-gpl --enable-version3' +\
-                   ' --enable-lto --enable-libdrm --enable-libvpl' +\
-                   ' --enable-libopenmpt --enable-libv4l2' +\
-                   ' --enable-libopencore_amrnb --enable-libopencore_amrwb' +\
-                   ' --enable-libdav1d --enable-librav1e' +\
-                   ' --enable-libsvtav1 --enable-libtheora --enable-libvpx' +\
-                   ' --enable-libwebp --enable-libx264 --enable-libx265' +\
-                   ' --enable-libiec61883 --enable-libass --enable-libjack' +\
-                   ' --enable-libmp3lame --enable-libopus --enable-libpulse' +\
-                   ' --enable-libsoxr --enable-libvorbis --enable-libxcb' +\
-                   ' --enable-libxml2 --enable-libxvid --enable-libzimg' +\
-                   ' --enable-nvdec --enable-nvenc --enable-cuda-llvm' +\
-                   ' --enable-opencl --enable-opengl --enable-vulkan'
+    ffmpeg_args += ' --enable-gpl --enable-version3 --enable-lto' +\
+                   ' --enable-cuda-llvm --enable-opengl'
 
+    # NOTE: These libraries are needed for rendering and other things, this
+    # means that rendering right now is only possible on Linux systems.
     if 'linux' in platform:
-        ffmpeg_args += ' --enable-libaom'
+        ffmpeg_args += ' --enable-libaom --enable-nvdec --enable-nvenc' +\
+                       ' --enable-libopus --enable-libpulse --enable-opencl' +\
+                       ' --enable-libtheora --enable-libvpx --enable-libvpl' +\
+                       ' --enable-libass --enable-libdav1d --enable-libdrm' +\
+                       ' --enable-libmp3lame --enable-libvorbis' +\
+                       ' --enable-librav1e --enable-libsvtav1' +\
+                       ' --enable-libx264 --enable-libx265' +\
+                       ' --enable-libxml2 --enable-libxvid' +\
+                       ' --enable-libsoxr --enable-vulkan' +\
+                       ' --enable-libopenmpt'
 
 # LINUX ############################################################### LINUX #
 # For people who don't need the FFmpeg libs (FFmpeg 6+ already installed)
