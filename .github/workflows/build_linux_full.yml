@@ -14,12 +14,12 @@ on:
         default: false
         type: boolean
       artifact_addon_gpl:
-        description: 'Get artifacts'
+        description: 'Get artifacts GPL'
         required: true
         default: false
         type: boolean
       artifact_test_room_gpl:
-        description: 'Get test_room'
+        description: 'Get test_room GPL'
         required: true
         default: false
         type: boolean
@@ -136,7 +136,7 @@ jobs:
       - name: Copying libs
         run: |
           cp -r bin/* test_room/addons/gde_gozen/bin/
-          cp LICENSE test_room/addons/gde_gozen/
+          cp LICENSE.GPL3 test_room/addons/gde_gozen/
 
       - name: Uploading addon build
         if: ${{ github.event.inputs.artifact_addon_gpl == 'true' }}
@@ -153,3 +153,4 @@ jobs:
           name: Test_room_GDE_GoZen_Linux_Full_GPL
           path: test_room/
           retention-days: 1
+
