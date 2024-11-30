@@ -22,6 +22,7 @@ signal _on_next_frame_called(frame_nr: int) ## _current_frame_changed gets calle
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 @export var hardware_decoding: bool = false ## HW decoding is not useful for most cases due to the added performance cost of putting the data from the GPU to the system memory, that's why it is disabled by default. For harder to decode formats this could be useful, but those cases are few. Hardware decoding is [b]NOT[/b] available for Windows due to issues with crashing.
+@export var enable_audio: bool = true ## If you want audio playback or not. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
 @export var debug: bool = false ## Setting this value will print debug messages of the video file whilst opening and during playback.
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
@@ -165,8 +166,9 @@ func update_video(a_video: Video) -> void:
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 	_shader_material.set_shader_parameter("resolution", _resolution)
-
-	audio_player.stream = video.get_audio()
+	
+	if enable_audio:
+		audio_player.stream = video.get_audio()
 
 	is_playing = false
 	_frame_time = 1.0 / _frame_rate
@@ -190,9 +192,10 @@ func seek_frame(a_frame_nr: int) -> void:
 	else:
 		_set_frame_image()
 
-	audio_player.set_stream_paused(false)
-	audio_player.play(current_frame / _frame_rate)
-	audio_player.set_stream_paused(!is_playing)
+	if enable_audio:
+		audio_player.set_stream_paused(false)
+		audio_player.play(current_frame / _frame_rate)
+		audio_player.set_stream_paused(!is_playing)
 
 
 func next_frame(a_skip: bool = false) -> void:
@@ -232,7 +235,10 @@ func _process(a_delta: float) -> void:
 
 		if current_frame >= _frame_duration:
 			is_playing = !is_playing
-			audio_player.set_stream_paused(true)
+
+			if enable_audio:
+				audio_player.set_stream_paused(true)
+
 			_video_ended.emit()
 		else:
 			while _skips != 1:
@@ -247,9 +253,10 @@ func play() -> void:
 		return
 	is_playing = true
 
-	audio_player.set_stream_paused(false)
-	audio_player.play((current_frame + 1) / _frame_rate)
-	audio_player.set_stream_paused(!is_playing)
+	if enable_audio:
+		audio_player.set_stream_paused(false)
+		audio_player.play((current_frame + 1) / _frame_rate)
+		audio_player.set_stream_paused(!is_playing)
 
 	_on_play_pressed.emit()
 
@@ -259,7 +266,10 @@ func pause() -> void:
 	if video != null and !is_open():
 		return
 	is_playing = false
-	audio_player.set_stream_paused(true)
+	
+	if enable_audio:
+		audio_player.set_stream_paused(true)
+
 	_on_pause_pressed.emit()
 
 
@@ -304,7 +314,7 @@ func _set_frame_image() -> void:
 
 #------------------------------------------------ MISC
 func _open_video() -> void:
-	var err: int = video.open(path, true)
+	var err: int = video.open(path, enable_audio)
 	if err:
 		printerr("Error opening video: ", err)
 
