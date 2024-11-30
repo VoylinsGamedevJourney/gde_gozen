@@ -65,7 +65,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg aom nvidia-utils opus pulseaudio opencl-headers opencl-clhpp libtheora libvpx libvpl libass dav1d libdrm lame libvorbis rav1e svt-av1 x264 x265 libxml2 xvidcore libsoxr vulkan-headers vulkan-validation-layers libopenmpt
 
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg aom nvidia-utils opus pulseaudio opencl-headers opencl-clhpp libtheora libvpx libvpl libass dav1d libdrm lame libvorbis rav1e svt-av1 x264 x265 libxml2 xvidcore libsoxr vulkan-headers vulkan-validation-layers libopenmpt
 
       - name: Checkout submodules
         uses: actions/checkout@v4
