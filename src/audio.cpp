@@ -6,17 +6,17 @@ AudioStreamWAV *Audio::get_wav(String a_path) {
 	AudioStreamWAV *l_audio = nullptr;
 
 	if (!l_format_ctx) {
-		UtilityFunctions::printerr("Couldn't allocate av format context!");
+		error = GoZenError::ERR_CREATING_AV_FORMAT_FAILED;
 		return nullptr;
 	}
 
 	if (avformat_open_input(&l_format_ctx, a_path.utf8(), NULL, NULL)) {
-		UtilityFunctions::printerr("Couldn't open audio file!");
+		error = GoZenError::ERR_OPENING_AUDIO;
 		return nullptr;
 	}
 
 	if (avformat_find_stream_info(l_format_ctx, NULL)) {
-		UtilityFunctions::printerr("Couldn't find stream info!");
+		error = GoZenError::ERR_NO_STREAM_INFO_FOUND;
 		return nullptr;
 	}
 
@@ -34,5 +34,6 @@ AudioStreamWAV *Audio::get_wav(String a_path) {
 
 	avformat_close_input(&l_format_ctx);
 
+	error = OK;
 	return l_audio;
 }

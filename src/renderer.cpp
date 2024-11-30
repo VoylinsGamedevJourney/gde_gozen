@@ -19,20 +19,17 @@ PackedStringArray Renderer::get_available_codecs(int a_codec_id) {
 }
 
 int Renderer::open() {
-	if (renderer_open) {
-		UtilityFunctions::printerr("Render already open!");
-		return -1;
-	} else {
-		if (path == "") {
-			UtilityFunctions::printerr("Path is not set!");
-			return -2;
-		} else if (video_codec_id == AV_CODEC_ID_NONE) {
-			UtilityFunctions::printerr("Video codec not set!");
-			return -3;
-		} else if (audio_codec_id == AV_CODEC_ID_NONE) {
+	if (renderer_open)
+		return GoZenError::ERR_ALREADY_OPEN_RENDERER;
+	else {
+		if (path == "")
+			return GoZenError::ERR_NO_PATH_SET;
+		else if (video_codec_id == AV_CODEC_ID_NONE)
+			return GoZenError::ERR_NO_CODEC_SET_VIDEO;
+		else if (audio_codec_id == AV_CODEC_ID_NONE)
 			_print_debug("Audio codec not set, not rendering audio!");
-		} else if (audio_codec_id != AV_CODEC_ID_NONE && sample_rate == -1) {
-			UtilityFunctions::printerr("A sample rate needs to be set for audio exporting!");
+		else if (audio_codec_id != AV_CODEC_ID_NONE && sample_rate == -1) {
+			_printerr_debug("A sample rate needs to be set for audio exporting!");
 			audio_codec_id = AV_CODEC_ID_NONE;
 		}
 	}
@@ -43,7 +40,7 @@ int Renderer::open() {
 		UtilityFunctions::printerr("Couldn't allocate av format context by looking at path extension, using MPEG!");
 		avformat_alloc_output_context2(&av_format_ctx, NULL, "mpeg", path.utf8());
 	} if (!av_format_ctx)
-		return -4;
+		return GoZenError::ERR_CREATING_AV_FORMAT_FAILED;
 
 	av_output_format = av_format_ctx->oformat;
 
@@ -51,27 +48,22 @@ int Renderer::open() {
 	const AVCodec *av_codec_video = avcodec_find_encoder(video_codec_id);
 	if (!av_codec_video) {
 		UtilityFunctions::printerr("Video codec '", avcodec_get_name(video_codec_id), "' not found!");
-		return -5;
+		return GoZenError::ERR_FAILED_OPEN_VIDEO_CODEC;
 	}
 
 	av_packet_video = av_packet_alloc();
-	if (!av_packet_video) {
-		UtilityFunctions::printerr("Couldn't allocate packet!");
-		return -8;
-	}
+	if (!av_packet_video)
+		return GoZenError::ERR_FAILED_ALLOC_PACKET;
 
 	av_stream_video = avformat_new_stream(av_format_ctx, NULL);
-	if (!av_stream_video) {
-		UtilityFunctions::printerr("Couldn't create stream!");
-		return -6;
-	}
+	if (!av_stream_video)
+		return GoZenError::ERR_FAILED_CREATING_STREAM;
+
 	av_stream_video->id = av_format_ctx->nb_streams-1;
 
 	av_codec_ctx_video = avcodec_alloc_context3(av_codec_video);
-	if (!av_codec_ctx_video) {
-		UtilityFunctions::printerr("Couldn't allocate video codec context!");
-		return -5;
-	}
+	if (!av_codec_ctx_video)
+		return GoZenError::ERR_FAILED_ALLOC_VIDEO_CODEC;
 
 	FFmpeg::enable_multithreading(av_codec_ctx_video, av_codec_video);
 
@@ -107,54 +99,45 @@ int Renderer::open() {
 	response = avcodec_open2(av_codec_ctx_video, av_codec_video, NULL);
 	if (response < 0) {
 		FFmpeg::print_av_error("Couldn't open video codec context!", response);
-		return -7;
+		return GoZenError::ERR_FAILED_OPEN_VIDEO_CODEC;
 	}
 
 	av_frame_video = av_frame_alloc();
-	if (!av_frame_video) {
-		UtilityFunctions::printerr("Couldn't allocate frame!");
-		return -100;
-	}
+	if (!av_frame_video)
+		return GoZenError::ERR_FAILED_ALLOC_FRAME;
 
 	av_frame_video->format = av_codec_ctx_video->pix_fmt;
 	av_frame_video->width = resolution.x;
 	av_frame_video->height = resolution.y;
-	if (av_frame_get_buffer(av_frame_video, 0)) {
-		UtilityFunctions::printerr("Couldn't allocate frame data!");
-		return -8;
-	}
+
+	if (av_frame_get_buffer(av_frame_video, 0))
+		return GoZenError::ERR_GET_FRAME_BUFFER;
 
 	// Copy video stream params to muxer
 	if (avcodec_parameters_from_context(av_stream_video->codecpar, av_codec_ctx_video) < 0) {
-		UtilityFunctions::printerr("Couldn't copy video stream params!");
-		return -9;
+		return GoZenError::ERR_COPY_STREAM_PARAMS;
 	}
 
 	if (audio_codec_id != AV_CODEC_ID_NONE) {
 		const AVCodec *av_codec_audio = avcodec_find_encoder(audio_codec_id);
 		if (!av_codec_audio) {
 			UtilityFunctions::printerr("Audio codec '", avcodec_get_name(audio_codec_id), "' not found!");
-			return -4;
+			return GoZenError::ERR_FAILED_FINDING_AUDIO_ENCODER;
 		}
 
 		av_packet_audio = av_packet_alloc();
-		if (!av_packet_audio) {
-			UtilityFunctions::printerr("Couldn't allocate packet!");
-			return -540;
-		}
+		if (!av_packet_audio)
+			return GoZenError::ERR_FAILED_ALLOC_PACKET;
 
 		av_stream_audio = avformat_new_stream(av_format_ctx, NULL);
-		if (!av_stream_audio) {
-			UtilityFunctions::printerr("Couldn't create new stream!");
-			return -3;
-		}
+		if (!av_stream_audio)
+			return GoZenError::ERR_FAILED_CREATING_STREAM;
+
 		av_stream_audio->id = av_format_ctx->nb_streams-1;
 
 		av_codec_ctx_audio = avcodec_alloc_context3(av_codec_audio);
-		if (!av_codec_ctx_audio) {
-			UtilityFunctions::printerr("Couldn't allocate audio codec context!");
-			return -5;
-		}
+		if (!av_codec_ctx_audio)
+			return GoZenError::ERR_FAILED_ALLOC_AUDIO_CODEC;
 
 		FFmpeg::enable_multithreading(av_codec_ctx_audio, av_codec_audio);
 
@@ -179,14 +162,12 @@ int Renderer::open() {
 		response = avcodec_open2(av_codec_ctx_audio, av_codec_audio, NULL);
 		if (response < 0) {
 			FFmpeg::print_av_error("Couldn't open audio codec!", response);
-			return -4;
+			return GoZenError::ERR_FAILED_OPEN_AUDIO_CODEC;
 		}
 
 		// Copy audio stream params to muxer
-		if (avcodec_parameters_from_context(av_stream_audio->codecpar, av_codec_ctx_audio)) {
-			UtilityFunctions::printerr("Couldn't copy audio stream params!");
-			return -4;
-		}
+		if (avcodec_parameters_from_context(av_stream_audio->codecpar, av_codec_ctx_audio))
+			return GoZenError::ERR_COPY_STREAM_PARAMS;
 
 		if (av_output_format->flags & AVFMT_GLOBALHEADER)
 			av_codec_ctx_audio->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -199,7 +180,7 @@ int Renderer::open() {
 		response = avio_open(&av_format_ctx->pb, path.utf8(), AVIO_FLAG_WRITE);
 		if (response < 0) {
 			FFmpeg::print_av_error("Couldn't open output file!", response);
-			return -10;
+			return GoZenError::ERR_OPENING_VIDEO;
 		}
 	}
 
@@ -207,7 +188,7 @@ int Renderer::open() {
 	response = avformat_write_header(av_format_ctx, NULL);
 	if (response < 0) {
 		FFmpeg::print_av_error("Error when writing header!", response);
-		return -11;
+		return GoZenError::ERR_WRITING_HEADER;
 	}
 
 	// Setting up SWS
@@ -215,10 +196,8 @@ int Renderer::open() {
 		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_RGBA,
 		av_frame_video->width, av_frame_video->height, AV_PIX_FMT_YUV420P,
 		SWS_BILINEAR, NULL, NULL, NULL); // TODO: Future option to change SWS_BILINEAR
-	if (!sws_ctx) {
-		UtilityFunctions::printerr("Couldn't get sws context!");
-		return -12;
-	}
+	if (!sws_ctx)
+		return GoZenError::ERR_CREATING_SWS;
 
 	frame_nr = 0;
 	renderer_open = true;
@@ -226,21 +205,15 @@ int Renderer::open() {
 }
 
 int Renderer::send_frame(Ref<Image> a_image) {
-	if (!renderer_open) {
-		UtilityFunctions::printerr("Renderer isn't open!");
-		return -6;
-	} else if (audio_codec_id != AV_CODEC_ID_NONE && !audio_added) {
-		UtilityFunctions::printerr("Audio codec set but not added yet!");
-		return -1;
-	} else if (!av_codec_ctx_video) {
-		UtilityFunctions::printerr("Video codec isn't open!");
-		return -2;
-	}
+	if (!renderer_open)
+		return GoZenError::ERR_NOT_OPEN_RENDERER;
+	else if (audio_codec_id != AV_CODEC_ID_NONE && !audio_added)
+		return GoZenError::ERR_AUDIO_NOT_SEND;
+	else if (!av_codec_ctx_video)
+		return GoZenError::ERR_FAILED_OPEN_VIDEO_CODEC;
 
-	if (av_frame_make_writable(av_frame_video) < 0) {
-		UtilityFunctions::printerr("Video frame is not writeable!");
-		return -3;
-	}
+	if (av_frame_make_writable(av_frame_video) < 0)
+		return GoZenError::ERR_FRAME_NOT_WRITABLE;
 
 	uint8_t *l_src_data[4] = { a_image->get_data().ptrw(), NULL, NULL, NULL };
 	int l_src_linesize[4] = { av_frame_video->width * 4, 0, 0, 0 };
@@ -250,7 +223,7 @@ int Renderer::send_frame(Ref<Image> a_image) {
 			av_frame_video->data, av_frame_video->linesize);
 	if (response < 0) {
 		FFmpeg::print_av_error("Scaling frame data failed!", response);
-		return -4;
+		return GoZenError::ERR_SCALING_FAILED;
 	}
 
 	av_frame_video->pts = frame_nr;
@@ -260,7 +233,7 @@ int Renderer::send_frame(Ref<Image> a_image) {
 	response = avcodec_send_frame(av_codec_ctx_video, av_frame_video);
 	if (response < 0) {
 		FFmpeg::print_av_error("Error sending video frame!", response);
-		return -5;
+		return GoZenError::ERR_FAILED_SENDING_FRAME;
 	}
 
 	av_packet_video = av_packet_alloc();
@@ -271,9 +244,8 @@ int Renderer::send_frame(Ref<Image> a_image) {
 			break;
 		else if (response < 0) {
 			FFmpeg::print_av_error("Error encoding video frame!", response);
-			response = -1;
 			av_packet_free(&av_packet_video);
-			return response;
+			return GoZenError::ERR_ENCODING_FRAME;
 		}
 
 		// Rescale output packet timestamp values from codec to stream timebase
@@ -286,27 +258,23 @@ int Renderer::send_frame(Ref<Image> a_image) {
 			FFmpeg::print_av_error("Error whilst writing output packet!", response);
 			response = -1;
 			av_packet_free(&av_packet_video);
-			return response;
+			return GoZenError::ERR_ENCODING_FRAME;
 		}
 
 		av_packet_unref(av_packet_video);
 	}
 
 	av_packet_free(&av_packet_video);
-	return 0;
+	return OK;
 }
 
 int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
-	if (!renderer_open) {
-		UtilityFunctions::printerr("Renderer isn't open!");
-		return -6;
-	} else if (audio_codec_id == AV_CODEC_ID_NONE) {
-		UtilityFunctions::printerr("Audio not enabled for this renderer!");
-		return -1;
-	} else if (audio_added) {
-		UtilityFunctions::printerr("Audio already added!");
-		return -2;
-	}
+	if (!renderer_open)
+		return GoZenError::ERR_NOT_OPEN_RENDERER;
+	else if (audio_codec_id == AV_CODEC_ID_NONE)
+		return GoZenError::ERR_AUDIO_NOT_ENABLED;
+	else if (audio_added)
+		return GoZenError::ERR_AUDIO_ALREADY_SEND;
 
 	SwrContext *l_swr_ctx = nullptr;
 
@@ -317,15 +285,11 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 		&l_ch_layout, av_codec_ctx_audio->sample_fmt, av_codec_ctx_audio->sample_rate,
 		&l_ch_layout, AV_SAMPLE_FMT_S16, a_mix_rate,
 		0, NULL);
-	if (!l_swr_ctx) {
-		UtilityFunctions::printerr("Failed to allocate SWR!");
-		return -1;
-	}
-
-	if (swr_init(l_swr_ctx) < 0) {
-		UtilityFunctions::printerr("Failed to initialize SWR!");
+	if (!l_swr_ctx)
+		return GoZenError::ERR_CREATING_SWR;
+	else if (swr_init(l_swr_ctx) < 0) {
 		swr_free(&l_swr_ctx);
-		return -1;
+		return GoZenError::ERR_CREATING_SWR;
 	}
 	
 	const uint8_t *l_input_data = a_wav_data.ptr() + 44;
@@ -333,9 +297,8 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 
 	AVFrame *l_frame_in = av_frame_alloc();
 	if (!l_frame_in) {
-		UtilityFunctions::printerr("Couldn't allocate av frame in!");
 		swr_free(&l_swr_ctx);
-		return -1;
+		return GoZenError::ERR_FAILED_ALLOC_FRAME;
 	}
 
 	l_frame_in->ch_layout = l_ch_layout;
@@ -348,10 +311,10 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 	// Allocate a buffer for the output in the target format
 	AVFrame *l_frame_out = av_frame_alloc();
 	if (!l_frame_out) {
-		UtilityFunctions::printerr("Couldn't allocate av frame out!");
 		av_frame_free(&l_frame_in);
 		swr_free(&l_swr_ctx);
-		return -1;
+
+		return GoZenError::ERR_FAILED_ALLOC_FRAME;
 	}
 
 	l_frame_out->ch_layout = av_codec_ctx_audio->ch_layout;
@@ -363,11 +326,11 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 
 	av_packet_audio = av_packet_alloc();
 	if (!av_packet_audio) {
-		UtilityFunctions::printerr("Couldn't allocate av packet!");
 		av_frame_free(&l_frame_in);
 		av_frame_free(&l_frame_out);
 		swr_free(&l_swr_ctx);
-		return -1;
+
+		return GoZenError::ERR_FAILED_ALLOC_PACKET;
 	}
 
 	av_packet_audio->pts = l_frame_out->pts; // PTS from the frame (if available)
@@ -382,11 +345,11 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 			l_swr_ctx, l_frame_out->data, l_samples_to_convert,
 			l_data, l_samples_to_convert);
 		if (l_converted_samples < 0) {
-			UtilityFunctions::printerr("Error during resampling!");
 			av_frame_free(&l_frame_in);
 			av_frame_free(&l_frame_out);
 			swr_free(&l_swr_ctx);
-			return -12340;
+
+			return GoZenError::ERR_FAILED_RESAMPLE;
 		}
 
 		// Send audio frame to the encoder
@@ -396,7 +359,8 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 			av_frame_free(&l_frame_in);
 			av_frame_free(&l_frame_out);
 			swr_free(&l_swr_ctx);
-			return -10;
+
+			return GoZenError::ERR_FAILED_SENDING_FRAME;
 		}
 
 		while ((response = avcodec_receive_packet(av_codec_ctx_audio, av_packet_audio)) >= 0) {
@@ -411,7 +375,8 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 				av_frame_free(&l_frame_in);
 				av_frame_free(&l_frame_out);
 				swr_free(&l_swr_ctx);
-				return -320;
+
+				return GoZenError::ERR_ENCODING_FRAME;
 			}
 			av_packet_unref(av_packet_audio);
 		}
@@ -424,7 +389,13 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 	int response = avcodec_send_frame(av_codec_ctx_audio, nullptr);
 	if (response < 0) {
 		FFmpeg::print_av_error("Error flushing audio encoder!", response);
-		return -1;
+
+		av_frame_free(&l_frame_in);
+		av_frame_free(&l_frame_out);
+		av_packet_free(&av_packet_audio);
+		swr_free(&l_swr_ctx);
+
+		return GoZenError::ERR_FAILED_FLUSH;
 	}
 
 	// Drain the encoder
@@ -435,8 +406,14 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 		response = av_interleaved_write_frame(av_format_ctx, av_packet_audio);
 		if (response < 0) {
 			FFmpeg::print_av_error("Error writing flushed audio packet!", response);
+
 			av_packet_free(&av_packet_audio);
-			return -320;
+			av_frame_free(&l_frame_in);
+			av_frame_free(&l_frame_out);
+			av_packet_free(&av_packet_audio);
+			swr_free(&l_swr_ctx);
+
+			return GoZenError::ERR_FAILED_FLUSH;
 		}
 
 		av_packet_unref(av_packet_audio);
@@ -455,9 +432,9 @@ int Renderer::send_audio(PackedByteArray a_wav_data, int a_mix_rate) {
 	return OK;
 }
 
-int Renderer::close() {
+void Renderer::close() {
 	if (av_codec_ctx_video == nullptr)
-		return -1;
+		return;
 
 	av_write_trailer(av_format_ctx);
 
@@ -475,8 +452,6 @@ int Renderer::close() {
 		avio_closep(&av_format_ctx->pb);
 
 	avformat_free_context(av_format_ctx);
-
-	return OK;
 }
 
 void Renderer::_print_debug(std::string a_text) {

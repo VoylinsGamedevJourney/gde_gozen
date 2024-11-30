@@ -29,6 +29,7 @@
 
 #include "ffmpeg.hpp"
 #include "avio_audio.hpp"
+#include "gozen_error.hpp"
 
 
 using namespace godot;
@@ -137,7 +138,7 @@ public:
 	int send_frame(Ref<Image> a_image);
 	int send_audio(PackedByteArray a_wav_data, int a_mix_rate);
 
-	int close();
+	void close();
 
 	static PackedStringArray get_available_codecs(int a_codec_id);
 

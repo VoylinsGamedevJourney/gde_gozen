@@ -69,7 +69,5 @@ func _on_video_loaded() -> void:
 		if renderer.send_frame(viewport.get_texture().get_image()):
 			print("Something went wrong sending frame!")
 	
-	if renderer.close():
-		print("Something went wrong closing renderer!")
-
+	renderer.close()
 	print("Video got rendered in: ", Time.get_ticks_usec() - l_time)

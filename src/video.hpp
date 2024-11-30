@@ -13,6 +13,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 
 #include "ffmpeg.hpp"
+#include "gozen_error.hpp"
 
 
 using namespace godot;
@@ -101,7 +102,7 @@ public:
 
 	inline bool is_open() { return loaded; }
 
-	bool seek_frame(int a_frame_nr);
+	int seek_frame(int a_frame_nr);
 	bool next_frame(bool a_skip = false);
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };

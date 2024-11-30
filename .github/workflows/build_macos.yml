@@ -1,4 +1,4 @@
-name: Build GDE GoZen - MacOS
+name: MacOS
 run-name: Building GDE GoZen - MacOS
 on: 
   workflow_dispatch:
