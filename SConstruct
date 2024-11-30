@@ -36,8 +36,7 @@ ffmpeg_args = '--enable-shared --quiet' +\
 
 if gpl == 'yes':
     print('GPL3 enabled')
-    ffmpeg_args += ' --enable-gpl --enable-version3 --enable-lto' +\
-                   ''
+    ffmpeg_args += ' --enable-gpl --enable-version3 --enable-lto'
 
     # NOTE: These libraries are needed for rendering and other things, this
     # means that rendering right now is only possible on Linux systems.

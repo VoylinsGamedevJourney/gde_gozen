@@ -233,25 +233,25 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: bin/
-          name: gde_gozen_linux_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_bin_v${{ inputs.version }}_gplv3
 
       - name: Prepare linux-full artifacts
         uses: actions/download-artifact@v4
         with:
           path: bin/
-          name: gde_gozen_linux_full_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_full_bin_v${{ inputs.version }}_gplv3
 
       - name: Prepare windows artifacts
         uses: actions/download-artifact@v4
         with:
           path: bin/
-          name: gde_gozen_windows_bin_v${{ inputs.version }}
+          name: gde_gozen_windows_bin_v${{ inputs.version }}_gplv3
           
       - name: Prepare macos artifacts
         uses: actions/download-artifact@v4
         with:
           path: bin/
-          name: gde_gozen_macos_bin_v${{ inputs.version }}
+          name: gde_gozen_macos_bin_v${{ inputs.version }}_gplv3
 
       - name: Copying binaries + license
         run: |
