@@ -47,7 +47,7 @@ if __name__ == '__main__':
             case _: extra_args += ' use_system=no'
 
     if not use_system:
-        print('Recompile FFmpeg:\n',
+        print('(Re)compile FFmpeg:\n',
               '1. Yes; (default)\n',
               '2. No.')
 

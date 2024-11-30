@@ -1,44 +1,49 @@
 # Compiling GDEGoZen
 
-Compiling this GDExtension can be done in 2 different way's, using the python file `build.py` or by using the command line.
+> [!CAUTION]
+> At this moment only Linux and Windows are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ...
+Compiling this GDExtension can be done in two different ways:
+
+- Using the python file `build.py`;
+- By using [EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu);
+- By using the command line and scons;
+
 
 > [!IMPORTANT]
-> At this moment only Linux and Windows are supported!
+> Before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, please check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
+
+> [!TIP]
+> If you don't want to compile the GDExtension yourself **and** want to easily receive the updates of GDE GoZen then you can always get the addon on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). These compiled versions get updated with every release, so you don't have to spend your time, electricity and pc resources on compiling. With the added benefit that you are helping to fund this project, which is very much appreciated! :D
 
 ## Using build.py
 
-Pretty straight forward, just run the script and enter the numbers of the selection you want. There is an option for using the system FFmpeg, if the system does not have FFmpeg installed (Version 6+) you should not use the system install and you'll have to compile FFmpeg libraries from scratch to accompany the GDExtension file. For Windows you don't have a choice as the FFmpeg libraries need to be included for it to work.
+For this, and all other options, you need Python3 and scons installed on your system. Also update the git submodules! To compile it's pretty straight forward, just run the script inside your terminal (on Windows use Powershell) with the command `python build.py` or `python3 build.py` depending on your distribution and OS. After that you'll be asked several questions for how you want to compile the GDExtension, enter the numbers of the selection you want and press enter.
+
+There is an option for using the system FFmpeg, if the system does not have FFmpeg installed (Version 6+) you should not use the system install and you'll have to compile FFmpeg libraries from scratch to accompany the GDExtension file. Note that this is only applicable for Linux users! For Windows you don't have a choice as the FFmpeg libraries need to be included for it to work as there are no globally installed FFmpeg libraries.
+
+GPL should **ONLY** be enabled when your project is open source and you need rendering capabilities. If you just want video playback then this part is not needed anyway. What this does is allow for more codec support, which is needed for certain encoders. Take in mind that when enabling this, you'll also need to select to rebuild the FFmpeg libraries.
+
+> [!NOTE]
+> When you build GDE GoZen for the first time, it'll take a good amount of time. Also make certain that you are compiling the FFmpeg libraries as this is necessary for things to work!
+
+## Using EasyMenu
+
+[EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu) is a tool I made myself to help people compile the software which I make. You can get the working version from the [release section](https://github.com/VoylinsGamedevJourney/easy_menu/releases) on the repo.
+
+You will need to press the buttons to update the git submodules and also enable `(Re)compile FFmpeg` on your first build. Also same as for building using `build.py`, read the GPL part as this is important to know before selecting it.
 
 ## Using the command line
 
-Using the command line is pretty straightforward. Use `scons` with any of the stuff you want afterwards:
+Using the command line is pretty straightforward, but I ask that if you never compiled with the command line before and don't want to learn how to do this, that you please use the EasyMenu option, or the build.py option.
 
-### Multi-threaded compiling
+To compile from the command line use `scons` with the default Godot compile commands afterwards:
+- `-j<number of threads>`: multi-threaded compiling;
+- `target=<template>`: is specificially for Godot, so use or `template_debug` or `template_release`;
+- `platform=<OS>`: `linux` or `windows` are supported right now, other platforms such as `macos`, `android`, and `web` aren't yet supported;
+- `arch=<architecture>`: only supported architecture is `x86_64`, no guarantee that `x86_32`, `arm64`, `arm32` and `rv64` work.
 
-`-j` directly followed by the amount of cores/threads which you want to use for compiling.
-
-### Target
-
-`target=` is specificially for Godot, so use or `template_debug` or `template_release`.
-
-### Platform
-
-`platform=` followed by eather `linux` or `windows` as at this moment MacOS isn't supported.
-
-### Architecture
-
-`arch=` is a bit more difficult, but will generally be `x86_64` as this is for 64 bit systems which most pc's are running, for 32 bit systems use `x86_32`. However there is also `arm64` and `arm32` for arm based systems. There is also `rv64` for Linux systems which you probably won't need anytime soon.
-
-### Extra arguments
-
-#### Linux: Use system FFmpeg
-
-`use_system=` is talking about the FFmpeg install on your system. This is only required for Linux builds, default is to use the system FFmpeg (this only works when the FFmpeg which is installed is over version 6). If you want to include the FFmpeg libraries you'll need to set this to `no`, else don't use this tag or say `yes`. 
-
-### Recompile FFmpeg
-
-`recompile_ffmpeg=` is set to yes by default, but when making consequential builds, you probably don't need this to happen so for the second run of the same OS you could set this to `no`. This is helpful when building the template_debug and template_release directly after each other.
-
-### Enable small
-
-`enable_small=` is a command which will make FFmpeg take longer to compile but will save in space as the libraries will be smaller in size. Set this to `yes` to use it.
+Then there are the extra arguments which are GDE GoZen specific:
+- `use_system=<yes/no>`: only use `no` if you are compiling for Linux systems which have FFmpeg 6+ installed;
+- `recompile_ffmpeg=<yes/no>`: on first compile runs, this should be `yes` for each OS;
+- `enable_gpl=<yes/no>`: if you need rendering capabilites and your project is licensed under GPL, you can set this to true;
+- `location=<bin>`: if you just need the binaries, pass bin and they'll be build in the bin folder, for the addon pass the test room's addon folder.
