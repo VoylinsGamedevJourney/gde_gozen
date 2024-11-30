@@ -30,22 +30,22 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Restore cached windows_debug
         id: cache-windows-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: windows_debug_addon
+
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+
       - name: Save cache windows_debug
         id: cache-windows-debug-save
         uses: actions/cache/save@v4
@@ -59,8 +59,10 @@ jobs:
         with:
           path: .scons-cache/
           key: windows_release_addon
+
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+
       - name: Save cache windows_release
         id: cache-windows-release-save
         uses: actions/cache/save@v4
@@ -95,22 +97,22 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Restore cached windows_debug
         id: cache-windows-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: windows_debug_addon
+
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
+
       - name: Save cache windows_debug
         id: cache-windows-debug-save
         uses: actions/cache/save@v4
@@ -124,8 +126,10 @@ jobs:
         with:
           path: .scons-cache/
           key: windows_release_addon
+
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no enable_gpl=yes
+
       - name: Save cache windows_release
         id: cache-windows-release-save
         uses: actions/cache/save@v4

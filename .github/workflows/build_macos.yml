@@ -28,24 +28,24 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Installing dependencies
-        run: |
-          brew update
-          brew install yasm scons diffutils make unzip ffmpeg
-
       - name: Restore cached macos_debug
         id: cache-macos-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: macos_debug
+
+      - name: Installing dependencies
+        run: |
+          brew update
+          brew install yasm scons diffutils make unzip ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build MacOS debug
         run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+
       - name: Save cache macos_debug
         id: cache-macos-debug-save
         uses: actions/cache/save@v4
@@ -59,8 +59,10 @@ jobs:
         with:
           path: .scons-cache/
           key: macos_release
+
       - name: Build MacOS release
         run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+
       - name: Save cache macos_release
         id: cache-macos-release-save
         uses: actions/cache/save@v4
@@ -73,7 +75,6 @@ jobs:
           python macos_rpath_fix.py
           otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
           otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
-
 
       - name: Copying libs
         run: |
@@ -100,24 +101,24 @@ jobs:
     needs: build
     runs-on: macos-latest
     steps:
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Installing dependencies
-        run: |
-          brew update
-          brew install yasm scons diffutils make unzip ffmpeg
-
       - name: Restore cached macos_debug
         id: cache-macos-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: macos_debug
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Installing dependencies
+        run: |
+          brew update
+          brew install yasm scons diffutils make unzip ffmpeg
       - name: Build MacOS debug
         run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
+
       - name: Save cache macos_debug
         id: cache-macos-debug-save
         uses: actions/cache/save@v4
@@ -131,8 +132,10 @@ jobs:
         with:
           path: .scons-cache/
           key: macos_release
+
       - name: Build MacOS release
         run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no enable_gpl=yes
+
       - name: Save cache macos_release
         id: cache-macos-release-save
         uses: actions/cache/save@v4
