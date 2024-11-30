@@ -14,22 +14,22 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Restore cached linux_debug
         id: cache-linux-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: linux_debug
+
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build Linux debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes
+
       - name: Save cache linux_debug
         id: cache-linux-debug-save
         uses: actions/cache/save@v4
@@ -43,8 +43,10 @@ jobs:
         with:
           path: .scons-cache/
           key: linux_release_addon
+
       - name: Build Linux release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes
+
       - name: Save cache linux_release
         id: cache-linux-release-save
         uses: actions/cache/save@v4
@@ -64,22 +66,22 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Restore cached linux_full_debug
         id: cache-linux-full-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: linux_full_debug_addon
+
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build Linux full debug
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes
+
       - name: Save cache linux_full_debug
         id: cache-linux-full-debug-save
         uses: actions/cache/save@v4
@@ -93,8 +95,10 @@ jobs:
         with:
           path: .scons-cache/
           key: linux_full_release_addon
+
       - name: Build Linux full release
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no
+
       - name: Save cache linux_full_release
         id: cache-linux-full-release-save
         uses: actions/cache/save@v4
@@ -114,22 +118,22 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Restore cached windows_debug
         id: cache-windows-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: windows_debug_addon
+
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build Windows debug
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+
       - name: Save cache windows_debug
         id: cache-windows-debug-save
         uses: actions/cache/save@v4
@@ -143,8 +147,10 @@ jobs:
         with:
           path: .scons-cache/
           key: windows_release_addon
+
       - name: Build Windows release
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+
       - name: Save cache windows_release
         id: cache-windows-release-save
         uses: actions/cache/save@v4
@@ -162,24 +168,24 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Installing dependencies
-        run: |
-          brew update
-          brew install yasm scons diffutils make unzip ffmpeg
-
       - name: Restore cached macos_debug
         id: cache-macos-debug-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
           key: macos_debug
+
+      - name: Installing dependencies
+        run: |
+          brew update
+          brew install yasm scons diffutils make unzip ffmpeg
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Build MacOS debug
         run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+
       - name: Save cache macos_debug
         id: cache-macos-debug-save
         uses: actions/cache/save@v4
@@ -193,8 +199,10 @@ jobs:
         with:
           path: .scons-cache/
           key: macos_release
+
       - name: Build MacOS release
         run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+
       - name: Save cache macos_release
         id: cache-macos-release-save
         uses: actions/cache/save@v4

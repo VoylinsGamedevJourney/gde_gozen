@@ -14,43 +14,45 @@ jobs:
     container:
       image: archlinux:latest
     steps:
+      - name: Restore cached linux_debug gpl
+        id: cache-linux-debug-gpl-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_debug_gpl
+
       - name: Installing dependencies
         run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
-
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Restore cached linux_debug
-        id: cache-linux-debug-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: .scons-cache/
-          key: linux_debug
-      - name: Build Linux debug
+      - name: Build Linux debug gpl
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=yes dev_build=yes enable_gpl=yes
-      - name: Save cache linux_debug
-        id: cache-linux-debug-save
+
+      - name: Save cache linux_debug_gpl
+        id: cache-linux-debug-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-linux-debug-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-linux-debug-gpl-restore.outputs.cache-primary-key }}
 
-      - name: Restore cached linux_release
-        id: cache-linux-release-restore
+      - name: Restore cached linux_release_gpl
+        id: cache-linux-release-gpl-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_release_addon
-      - name: Build Linux release
+          key: linux_release_gpl_addon
+
+      - name: Build Linux release gpl
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=yes enable_gpl=yes
-      - name: Save cache linux_release
-        id: cache-linux-release-save
+
+      - name: Save cache linux_release_gpl
+        id: cache-linux-release-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-linux-release-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-linux-release-gpl-restore.outputs.cache-primary-key }}
 
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
@@ -64,43 +66,45 @@ jobs:
     container:
       image: archlinux:latest
     steps:
+      - name: Restore cached linux_full_debug_gpl
+        id: cache-linux-full-debug-gpl-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: linux_full_debug_gpl_addon
+
       - name: Installing dependencies
         run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg aom nvidia-utils opus pulseaudio opencl-headers opencl-clhpp libtheora libvpx libvpl libass dav1d libdrm lame libvorbis rav1e svt-av1 x264 x265 libxml2 xvidcore libsoxr vulkan-headers vulkan-validation-layers libopenmpt
-
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Restore cached linux_full_debug
-        id: cache-linux-full-debug-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: .scons-cache/
-          key: linux_full_debug_addon
-      - name: Build Linux full debug
+      - name: Build Linux full debug gpl
         run: scons -j4 target=template_debug platform=linux arch=x86_64 use_system=no dev_build=yes enable_gpl=yes
-      - name: Save cache linux_full_debug
-        id: cache-linux-full-debug-save
+
+      - name: Save cache linux_full_debug_gpl
+        id: cache-linux-full-debug-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-linux-full-debug-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-linux-full-debug-gpl-restore.outputs.cache-primary-key }}
 
-      - name: Restore cached linux_full_release
-        id: cache-linux-full-release-restore
+      - name: Restore cached linux_full_release_gpl
+        id: cache-linux-full-release-gpl-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: linux_full_release_addon
-      - name: Build Linux full release
+          key: linux_full_release_gpl_addon
+
+      - name: Build Linux full release gpl
         run: scons -j4 target=template_release platform=linux arch=x86_64 use_system=no recompile_ffmpeg=no enable_gpl=yes
-      - name: Save cache linux_full_release
-        id: cache-linux-full-release-save
+
+      - name: Save cache linux_full_release_gpl
+        id: cache-linux-full-release-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-linux-full-release-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-linux-full-release-gpl-restore.outputs.cache-primary-key }}
 
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
@@ -114,43 +118,45 @@ jobs:
     container:
       image: archlinux:latest
     steps:
+      - name: Restore cached windows_debug_gpl
+        id: cache-windows-debug-gpl-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .scons-cache/
+          key: windows_debug_gpl_addon
+
       - name: Installing dependencies
         run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg aom nvidia-utils opus pulseaudio opencl-headers opencl-clhpp libtheora libvpx libvpl libass dav1d libdrm lame libvorbis rav1e svt-av1 x264 x265 libxml2 xvidcore libsoxr vulkan-headers vulkan-validation-layers libopenmpt
-
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Restore cached windows_debug
-        id: cache-windows-debug-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: .scons-cache/
-          key: windows_debug_addon
-      - name: Build Windows debug
+      - name: Build Windows debug gpl
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
-      - name: Save cache windows_debug
-        id: cache-windows-debug-save
+
+      - name: Save cache windows_debug_gpl
+        id: cache-windows-debug-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-windows-debug-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-windows-debug-gpl-restore.outputs.cache-primary-key }}
 
-      - name: Restore cached windows_release
-        id: cache-windows-release-restore
+      - name: Restore cached windows_release_gpl
+        id: cache-windows-release-gpl-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: windows_release_addon
-      - name: Build Windows release
+          key: windows_release_gpl_addon
+
+      - name: Build Windows release gpl
         run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no enable_gpl=yes
-      - name: Save cache windows_release
-        id: cache-windows-release-save
+
+      - name: Save cache windows_release_gpl
+        id: cache-windows-release-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-windows-release-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-windows-release-gpl-restore.outputs.cache-primary-key }}
 
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
@@ -162,45 +168,47 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - name: Checkout submodules
-        uses: actions/checkout@v4
+      - name: Restore cached macos_debug_gpl
+        id: cache-macos-debug-gpl-restore
+        uses: actions/cache/restore@v4
         with:
-          submodules: recursive
+          path: .scons-cache/
+          key: macos_debug_gpl
 
       - name: Installing dependencies
         run: |
           brew update
           brew install yasm scons diffutils make unzip ffmpeg
-
-      - name: Restore cached macos_debug
-        id: cache-macos-debug-restore
-        uses: actions/cache/restore@v4
+      - name: Checkout submodules
+        uses: actions/checkout@v4
         with:
-          path: .scons-cache/
-          key: macos_debug
+          submodules: recursive
       - name: Build MacOS debug
         run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes enable_gpl=yes
-      - name: Save cache macos_debug
-        id: cache-macos-debug-save
+
+      - name: Save cache macos_debug_gpl
+        id: cache-macos-debug-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-macos-debug-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-macos-debug-gpl-restore.outputs.cache-primary-key }}
 
-      - name: Restore cached macos_release
-        id: cache-macos-release-restore
+      - name: Restore cached macos_release_gpl
+        id: cache-macos-release-gpl-restore
         uses: actions/cache/restore@v4
         with:
           path: .scons-cache/
-          key: macos_release
-      - name: Build MacOS release
+          key: macos_release_gpl
+
+      - name: Build MacOS release gpl
         run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no enable_gpl=yes
-      - name: Save cache macos_release
-        id: cache-macos-release-save
+
+      - name: Save cache macos_release_gpl
+        id: cache-macos-release-gpl-save
         uses: actions/cache/save@v4
         with:
           path: .scons-cache/
-          key: ${{ steps.cache-macos-release-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cache-macos-release-gpl-restore.outputs.cache-primary-key }}
 
       - name: Correct MacOS Binary paths
         run: |
