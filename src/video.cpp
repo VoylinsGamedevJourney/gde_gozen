@@ -226,6 +226,9 @@ int Video::open(String a_path, bool a_load_audio) {
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
 		interlaced = av_frame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST ? 1 : 2;
 
+	// Checking color range
+	full_color_range = av_frame->color_range == AVCOL_RANGE_JPEG;
+
 	// Getting frame rate
 	framerate = av_q2d(av_guess_frame_rate(av_format_ctx, av_stream_video, av_frame));
 	if (framerate == 0) {
