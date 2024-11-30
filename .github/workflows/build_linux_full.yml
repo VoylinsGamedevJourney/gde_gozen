@@ -1,4 +1,4 @@
-name: Build GDE GoZen - Linux full
+name: Linux full
 run-name: Building GDE GoZen - Linux full
 on: 
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Build GDE GoZen - Windows
+name: Windows
 run-name: Building GDE GoZen - Windows
 on: 
   workflow_dispatch:

@@ -42,32 +42,26 @@ enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPix
 
 //----------------------------------------------- NON-STATIC FUNCTIONS
 int Video::open(String a_path, bool a_load_audio) {
-	if (loaded) {
-		UtilityFunctions::printerr("Video is already open");
-		return -100;
-	}
+	if (loaded)
+		return GoZenError::ERR_ALREADY_OPEN_VIDEO;
 
 	path = a_path.utf8();
 
 	// Allocate video file context
 	av_format_ctx = avformat_alloc_context();
-	if (!av_format_ctx) {
-		UtilityFunctions::printerr("Couldn't allocate av format context!");
-		return -1;
-	}
-
+	if (!av_format_ctx)
+		return GoZenError::ERR_CREATING_AV_FORMAT_FAILED;
+	
 	// Open file with avformat
 	if (avformat_open_input(&av_format_ctx, path.c_str(), NULL, NULL)) {
-		UtilityFunctions::printerr("Couldn't open video file!");
 		close();
-		return -1;
+		return GoZenError::ERR_OPENING_VIDEO;
 	}
 
 	// Find stream information
 	if (avformat_find_stream_info(av_format_ctx, NULL)) {
-		UtilityFunctions::printerr("Couldn't find stream info!");
 		close();
-		return -1;
+		return GoZenError::ERR_NO_STREAM_INFO_FOUND;
 	}
 
 	// Getting the audio and video stream
@@ -79,7 +73,6 @@ int Video::open(String a_path, bool a_load_audio) {
 			continue;
 		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
 			if (a_load_audio && (audio = FFmpeg::get_audio(av_format_ctx, av_format_ctx->streams[i])) == nullptr) {
-				
 				close();
 				return response;
 			}
@@ -119,19 +112,17 @@ int Video::open(String a_path, bool a_load_audio) {
 		av_codec_video = avcodec_find_decoder(av_stream_video->codecpar->codec_id);
 
 	if (!av_codec_video) {
-		UtilityFunctions::printerr("Couldn't find any codec decoder for video!");
 		close();
-		return -3;
+		return GoZenError::ERR_FAILED_FINDING_VIDEO_DECODER;
 	}
 
 	// Allocate codec context for decoder
 	av_codec_ctx_video = avcodec_alloc_context3(av_codec_video);
 	if (av_codec_ctx_video == NULL) {
-		UtilityFunctions::printerr("Couldn't allocate codec context for video!");
 		close();
-		return -3;
+		return GoZenError::ERR_FAILED_ALLOC_VIDEO_CODEC;
 	}
-
+	
 	if (hw_decoding && hw_device_ctx) {
 		av_codec_ctx_video->hw_device_ctx = hw_device_ctx;
 
@@ -157,18 +148,16 @@ int Video::open(String a_path, bool a_load_audio) {
 
 	// Copying parameters
 	if (avcodec_parameters_to_context(av_codec_ctx_video, av_stream_video->codecpar)) {
-		UtilityFunctions::printerr("Couldn't initialize video codec context!");
 		close();
-		return -3;
+		return GoZenError::ERR_FAILED_INIT_VIDEO_CODEC;
 	}
 
 	FFmpeg::enable_multithreading(av_codec_ctx_video, av_codec_video);
 	
 	// Open codec - Video
 	if (avcodec_open2(av_codec_ctx_video, av_codec_video, NULL)) {
-		UtilityFunctions::printerr("Couldn't open video codec!");
 		close();
-		return -3;
+		return GoZenError::ERR_FAILED_OPEN_VIDEO_CODEC;
 	}
 
 	float l_aspect_ratio = av_q2d(av_stream_video->codecpar->sample_aspect_ratio);
@@ -184,42 +173,38 @@ int Video::open(String a_path, bool a_load_audio) {
 	start_time_video = av_stream_video->start_time != AV_NOPTS_VALUE ? (int64_t)(av_stream_video->start_time * stream_time_base_video) : 0;
 
 	// Getting some data out of first frame
-	av_packet = av_packet_alloc();
-	av_frame = av_frame_alloc();
-	if (!av_packet || !av_frame) {
-		UtilityFunctions::printerr("Couldn't allocate packet or frame for video!");
+	if (!(av_packet = av_packet_alloc())) {
 		close();
-		return -12;
+		return GoZenError::ERR_FAILED_ALLOC_PACKET;
 	}
 
-	if (hw_decoding) {
-		av_hw_frame = av_frame_alloc();
+	if (!(av_frame = av_frame_alloc())) {
+		close();
+		return GoZenError::ERR_FAILED_ALLOC_FRAME;
+	}
 
-		if (!av_hw_frame) {
-			UtilityFunctions::printerr("Couldn't allocate hw frame for video!");
-			close();
-			return -12;
-		}
+	if (hw_decoding && !(av_hw_frame = av_frame_alloc())) {
+		close();
+		return GoZenError::ERR_FAILED_ALLOC_FRAME;
 	}
 
 	avcodec_flush_buffers(av_codec_ctx_video);
 	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
 	if (l_duration_from_bitrate) {
-		UtilityFunctions::printerr("This video file is not usable!");
 		close();
-		return -5;
+		return GoZenError::ERR_INVALID_VIDEO;
 	}
 
 	if ((response = _seek_frame(0)) < 0) {
 		FFmpeg::print_av_error("Seeking to beginning error: ", response);
 		close();
-		return -5;
+		return GoZenError::ERR_SEEKING;
 	}
 
 	if ((response = FFmpeg::get_frame(av_format_ctx, av_codec_ctx_video, av_stream_video->index, av_frame, av_packet))) {
 		FFmpeg::print_av_error("Something went wrong getting first frame!", response);
 		close();
-		return -5;
+		return GoZenError::ERR_SEEKING;
 	}
 	
 	// Checking for interlacing and what type of interlacing
@@ -232,9 +217,8 @@ int Video::open(String a_path, bool a_load_audio) {
 	// Getting frame rate
 	framerate = av_q2d(av_guess_frame_rate(av_format_ctx, av_stream_video, av_frame));
 	if (framerate == 0) {
-		UtilityFunctions::printerr("Invalid frame-rate for video found!");
 		close();
-		return -6;
+		return GoZenError::ERR_INVALID_FRAMERATE;
 	}
 
 	// Setting variables
@@ -283,9 +267,8 @@ int Video::open(String a_path, bool a_load_audio) {
 	duration = av_format_ctx->duration;
 	if (av_stream_video->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
 		if (duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
-			UtilityFunctions::printerr("Video file is not usable!");
 			close();
-			return -7;
+			return GoZenError::ERR_INVALID_VIDEO;
 		} else {
 			AVRational l_temp_rational = AVRational{1, AV_TIME_BASE};
 			if (l_temp_rational.num != av_stream_video->time_base.num || l_temp_rational.num != av_stream_video->time_base.num)
@@ -328,27 +311,22 @@ void Video::close() {
 	av_format_ctx = nullptr;
 }
 
-bool Video::seek_frame(int a_frame_nr) {
-	if (!loaded) {
-		UtilityFunctions::printerr("Video isn't open yet!");
-		return false;
-	}
+int Video::seek_frame(int a_frame_nr) {
+	if (!loaded)
+		return GoZenError::ERR_NOT_OPEN_VIDEO;
 
 	// Video seeking
-	if ((response = _seek_frame(a_frame_nr)) < 0) {
-		UtilityFunctions::printerr("Can't seek video file!");
-		return false;
-	}
+	if ((response = _seek_frame(a_frame_nr)) < 0)
+		return GoZenError::ERR_SEEKING;
 	
 	while (true) {
 		if ((response = FFmpeg::get_frame(av_format_ctx, av_codec_ctx_video, av_stream_video->index, av_frame, av_packet))) {
 			if (response == AVERROR_EOF) {
 				_printerr_debug("End of file reached! Going back 1 frame!");
 
-				if ((response = _seek_frame(a_frame_nr--)) < 0) {
-					UtilityFunctions::printerr("Can't seek video file!");
-					return false;
-				}
+				if ((response = _seek_frame(a_frame_nr--)) < 0)
+					return GoZenError::ERR_SEEKING;
+
 				continue;
 			}
 			FFmpeg::print_av_error("Problem happened getting frame in seek_frame! ", response);
@@ -372,14 +350,12 @@ bool Video::seek_frame(int a_frame_nr) {
 	av_frame_unref(av_frame);
 	av_packet_unref(av_packet);
 
-	return response != 1;
+	return OK;
 }
 
 bool Video::next_frame(bool a_skip) {
-	if (!loaded) {
-		UtilityFunctions::printerr("Video isn't open yet!");
+	if (!loaded)
 		return false;
-	}
 
 	FFmpeg::get_frame(av_format_ctx, av_codec_ctx_video, av_stream_video->index, av_frame, av_packet);
 
