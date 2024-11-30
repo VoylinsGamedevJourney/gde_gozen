@@ -126,7 +126,7 @@ func update_video(a_video: Video) -> void:
 	_resolution = video.get_resolution()
 	_frame_duration = video.get_frame_duration()
 	_uv_resolution = Vector2i(int((_resolution.x + _padding) / 2.), int(_resolution.y / 2.))
-	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_L8)
+	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
 	if debug:
 		_print_video_debug()
@@ -134,9 +134,12 @@ func update_video(a_video: Video) -> void:
 	(texture_rect.texture as ImageTexture).set_image(l_image)
 
 	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p.gdshader")
+		if video.is_full_color_range():
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
+		else:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
 
-		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8)
+		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_R8)
 		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
 		_v_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
 
@@ -148,9 +151,12 @@ func update_video(a_video: Video) -> void:
 		_shader_material.set_shader_parameter("u_data", _u_img_tex)
 		_shader_material.set_shader_parameter("v_data", _v_img_tex)
 	else:
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12.gdshader")
+		if video.is_full_color_range():
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12_full.gdshader")
+		else:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12_standard.gdshader")
 
-		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_L8)
+		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_R8)
 		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8)
 
 		_y_img_tex = ImageTexture.create_from_image(_y_img)
@@ -248,7 +254,7 @@ func _process(a_delta: float) -> void:
 
 
 func play() -> void:
-	## Start the video playback. This will play untill reaching the end of the video and then pause and go back to the start.
+	## Start the video playback. This will play until reaching the end of the video and then pause and go back to the start.
 	if video != null and !is_open() and is_playing:
 		return
 	is_playing = true

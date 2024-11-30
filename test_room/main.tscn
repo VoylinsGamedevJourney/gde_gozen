@@ -63,9 +63,6 @@ layout_mode = 2
 script = ExtResource("2_p7wtn")
 debug = true
 
-[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="VBox"]
-layout_mode = 2
-
 [node name="BottomPanel" type="PanelContainer" parent="VBox"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fiepf")

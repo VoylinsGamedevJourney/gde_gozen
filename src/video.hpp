@@ -60,6 +60,7 @@ private:
 	bool hw_decoding = false; // Set by user
 	bool debug = false;
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
+	bool full_color_range = true;
 
 	std::string path = "";
 	std::string pixel_format = "";
@@ -134,6 +135,8 @@ public:
 	inline String get_pixel_format() { return pixel_format.c_str(); }
 	inline String get_color_profile() { return av_color_primaries_name(color_profile); }
 
+	inline bool is_full_color_range() { return full_color_range; }
+
 	inline PackedByteArray get_y_data() { return y_data; }
 	inline PackedByteArray get_u_data() { return u_data; }
 	inline PackedByteArray get_v_data() { return v_data; }
@@ -176,6 +179,8 @@ protected:
 
 		ClassDB::bind_method(D_METHOD("get_pixel_format"), &Video::get_pixel_format);
 		ClassDB::bind_method(D_METHOD("get_color_profile"), &Video::get_color_profile);
+
+		ClassDB::bind_method(D_METHOD("is_full_color_range"), &Video::is_full_color_range);
 
 		ClassDB::bind_method(D_METHOD("get_y_data"), &Video::get_y_data);
 		ClassDB::bind_method(D_METHOD("get_u_data"), &Video::get_u_data);
