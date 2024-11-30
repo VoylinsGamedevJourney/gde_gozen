@@ -37,7 +37,7 @@ ffmpeg_args = '--enable-shared --quiet' +\
 if gpl == 'yes':
     print('GPL3 enabled')
     ffmpeg_args += ' --enable-gpl --enable-version3 --enable-lto' +\
-                   ' --enable-cuda-llvm --enable-opengl'
+                   ''
 
     # NOTE: These libraries are needed for rendering and other things, this
     # means that rendering right now is only possible on Linux systems.
@@ -46,12 +46,12 @@ if gpl == 'yes':
                        ' --enable-libopus --enable-libpulse --enable-opencl' +\
                        ' --enable-libtheora --enable-libvpx --enable-libvpl' +\
                        ' --enable-libass --enable-libdav1d --enable-libdrm' +\
+                       ' --enable-libsoxr --enable-vulkan --enable-opengl' +\
                        ' --enable-libmp3lame --enable-libvorbis' +\
                        ' --enable-librav1e --enable-libsvtav1' +\
                        ' --enable-libx264 --enable-libx265' +\
                        ' --enable-libxml2 --enable-libxvid' +\
-                       ' --enable-libsoxr --enable-vulkan' +\
-                       ' --enable-libopenmpt'
+                       ' --enable-libopenmpt --enable-cuda-llvm'
 
 # LINUX ############################################################### LINUX #
 # For people who don't need the FFmpeg libs (FFmpeg 6+ already installed)
