@@ -19,9 +19,9 @@ void fragment() {
     float U = texture(u_data, uv).r;
     float V = texture(v_data, uv).r;
 
-	Y = (Y * 255. - 16.) * 255. / 219.;
-	U = (U * 255. - 128.) * 255. / 244.;
-	V = (V * 255. - 128.) * 255. / 244.;
+	Y = (Y * 255. - 16.) / 219.;
+	U = (U * 255. - 128.) / 244.;
+	V = (V * 255. - 128.) / 244.;
 
 	float R = Y + color_profile.x * V;
 	float G = Y - color_profile.y * U - color_profile.z * V;
