@@ -326,7 +326,8 @@ func _set_frame_image() -> void:
 func _open_video() -> void:
 	var err: int = video.open(path, enable_audio)
 	if err:
-		printerr("Error opening video: ", err)
+		printerr("Error opening video!")
+		GoZenError.print_error(err)
 
 
 func _print_system_debug() -> void:

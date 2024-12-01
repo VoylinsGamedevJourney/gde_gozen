@@ -37,7 +37,6 @@ func _on_video_loaded() -> void:
 	renderer.set_framerate(video_playback.video.get_framerate())
 	renderer.set_resolution(video_playback.video.get_resolution())
 	renderer.set_bit_rate(4000000)
-	renderer.set_framerate(30)
 	renderer.set_path("/storage/test.mp4")
 	renderer.set_video_codec_id(Renderer.VIDEO_CODEC.V_H264)
 	renderer.set_audio_codec_id(Renderer.AUDIO_CODEC.A_AAC)

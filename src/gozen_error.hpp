@@ -116,6 +116,8 @@ protected:
 		BIND_ENUM_CONSTANT(ERR_SCALING_FAILED);
 
 		BIND_ENUM_CONSTANT(ERR_CREATING_SWR);
+
+		ClassDB::bind_static_method("GoZenError", D_METHOD("print_error"), &GoZenError::print_error);
 	}
 };
 
