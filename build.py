@@ -78,6 +78,17 @@ if __name__ == '__main__':
         case '2': extra_args += ' location=test_room/addons/gde_gozen/bin'
         case _: extra_args += ' location=bin'
 
+    print('Init/Update submodules:\n'
+          '1. No; (default)\n'
+          '2. Init;\n'
+          '3. Update.')
+
+    match input('> '):
+        case '2':
+            subprocess.run('git submodule update --init --recursive')
+        case '3':
+            subprocess.run('git submodule update --recursive --remote')
+
     subprocess.run(f'scons -j{jobs} target=template_{target} '
                    'platform={platform} arch={arch} {extra_args}',
                    shell=True, cwd='./')

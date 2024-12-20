@@ -1,19 +1,16 @@
-# Compiling GDEGoZen
-
-> [!CAUTION]
-> At this moment only Linux and Windows are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ...
-Compiling this GDExtension can be done in two different ways:
-
-- Using the python file `build.py`;
-- By using [EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu);
-- By using the command line and scons;
-
-
-> [!IMPORTANT]
-> Before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, please check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
+# Compiling GDE GoZen
 
 > [!TIP]
 > If you don't want to compile the GDExtension yourself **and** want to easily receive the updates of GDE GoZen then you can always get the addon on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). These compiled versions get updated with every release, so you don't have to spend your time, electricity and pc resources on compiling. With the added benefit that you are helping to fund this project, which is very much appreciated! :D
+
+Compiling this GDExtension can be done in three different ways:
+- Using the python file `build.py`;
+- Using [EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu);
+- Using the command line and scons;
+
+## Before you do anything
+
+Install python, scons, and git! Also, initialize the submodules of the git repo with `git submodule update --init --recursive`. Updating the submodules can be done with `git submodule update --recursive --remote`. Without doing this you'll get errors that the scons file could not be found.
 
 ## Using build.py
 
@@ -30,7 +27,7 @@ GPL should **ONLY** be enabled when your project is open source and you need ren
 
 [EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu) is a tool I made myself to help people compile the software which I make. You can get the working version from the [release section](https://github.com/VoylinsGamedevJourney/easy_menu/releases) on the repo.
 
-You will need to press the buttons to update the git submodules and also enable `(Re)compile FFmpeg` on your first build. Also same as for building using `build.py`, read the GPL part as this is important to know before selecting it.
+Add the executable to the GDE GoZen folder, or open the `easy_menu.conf` file with the executable. You will need to press the buttons to update the git submodules and also enable `(Re)compile FFmpeg` on your first build. Also same as for building using `build.py`, read the GPL part as this is important to know before selecting it.
 
 ## Using the command line
 
@@ -47,3 +44,11 @@ Then there are the extra arguments which are GDE GoZen specific:
 - `recompile_ffmpeg=<yes/no>`: on first compile runs, this should be `yes` for each OS;
 - `enable_gpl=<yes/no>`: if you need rendering capabilites and your project is licensed under GPL, you can set this to true;
 - `location=<bin>`: if you just need the binaries, pass bin and they'll be build in the bin folder, for the addon pass the test room's addon folder.
+
+## Struggling and need help?
+
+> [!CAUTION]
+> At this moment only Linux and Windows are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ...
+
+You can join our Discord server to ask for help, but before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, **please** check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
+
