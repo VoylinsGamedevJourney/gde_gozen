@@ -23,7 +23,9 @@ if __name__ == '__main__':
 
     match input('> '):
         case '2': platform = 'windows'
-        case '3': platform = 'macos'
+        case '3':
+            platform = 'macos'
+            arch = 'arm64'
         case '4': platform = 'web dlink_enabled=yes'
         case '5': platform = 'android'
 
@@ -92,4 +94,3 @@ if __name__ == '__main__':
     subprocess.run(f'scons -j{jobs} target=template_{target} '
                    f'platform={platform} arch={arch} {extra_args}',
                    shell=True, cwd='./')
-
