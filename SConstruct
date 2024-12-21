@@ -19,7 +19,7 @@ env.Append(CPPPATH=['src'])
 
 gpl = ARGUMENTS.get('enable_gpl', 'no')
 jobs = ARGUMENTS.get('jobs', 4)
-arch = ARGUMENTS.get('arch', 'x86_64')
+arch = ARGUMENTS.get('arch', 'arm64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
 location = ARGUMENTS.get('location', 'bin')
@@ -148,7 +148,7 @@ elif 'windows' in platform:
 
 
 # MACOS ############################################################### MACOS #
-# For the people who don't like money and/or right to repair
+# For the people who like shiny/working computers but don't like money and/or right to repair
 # NOTE: Cross compiling not possible, need a MacOS system
 elif 'macos' in platform:
 
@@ -157,8 +157,7 @@ elif 'macos' in platform:
     if recompile_ffmpeg == 'yes':
         print('Compiling FFmpeg for MacOS')
 
-        ffmpeg_args += ' --target-os=darwin' +\
-                       ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"' +\
+        ffmpeg_args += ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"' +\
                        ' --extra-ldflags="-mmacosx-version-min=10.13"'
 
         os.chdir('ffmpeg')
@@ -174,11 +173,21 @@ elif 'macos' in platform:
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
+        DYLD_LIBRARY_PATH=['test_room/addons/gde_gozen/bin/macos/debug/lib'],
         LIBPATH=[
             'ffmpeg/bin/lib',
+            'test_room/addons/gde_gozen/bin/macos/debug/lib',
+            'ffmpeg/bin/include/libavcodec',
+            'ffmpeg/bin/include/libavformat',
+            'ffmpeg/bin/include/libavdevice',
+            'ffmpeg/bin/include/libavutil',
+            'ffmpeg/bin/include/libswresample',
+            'ffmpeg/bin/include/libswscale',
+            'ffmpeg/bin/lib'
             '/usr/local/lib'],  # Default macOS library path
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
+            #'-install_name @executable_path/libWhatever.dylib',
             '-stdlib=libc++',
             '-framework', 'CoreFoundation',
             '-framework', 'CoreVideo',

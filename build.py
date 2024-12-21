@@ -19,13 +19,21 @@ if __name__ == '__main__':
           '2. Windows;\n'
           '3. MacOS; (Not working)\n'
           '4. Web; (Not working)\n'
-          '4. Android; (Not working)')
+          '5. Android; (Not working)')
 
     match input('> '):
         case '2': platform = 'windows'
         case '3': platform = 'macos'
         case '4': platform = 'web dlink_enabled=yes'
         case '5': platform = 'android'
+
+    print('Select arch:\n'
+          '1. x86_64; (default)\n'
+          '2. arm64;')
+
+    match input('> '):
+        case '2': arch = 'arm64'
+
 
     print('Select target:\n'
           '1. Debug; (default):\n'

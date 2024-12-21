@@ -17,7 +17,7 @@ Install python, scons, and git! Also, initialize the submodules of the git repo 
 
 ## Using build.py
 
-For this, and all other options, you need Python3 and scons installed on your system. Also update the git submodules! To compile it's pretty straight forward, just run the script inside your terminal (on Windows use Powershell) with the command `python build.py` or `python3 build.py` depending on your distribution and OS. After that you'll be asked several questions for how you want to compile the GDExtension, enter the numbers of the selection you want and press enter.
+For this, and all other options, you need Python3 (minimum python 3.10) and scons installed on your system. Also update the git submodules! To compile it's pretty straight forward, just run the script inside your terminal (on Windows use Powershell) with the command `python build.py` or `python3 build.py` depending on your distribution and OS. After that you'll be asked several questions for how you want to compile the GDExtension, enter the numbers of the selection you want and press enter.
 
 There is an option for using the system FFmpeg, if the system does not have FFmpeg installed (Version 6+) you should not use the system install and you'll have to compile FFmpeg libraries from scratch to accompany the GDExtension file. Note that this is only applicable for Linux users! For Windows you don't have a choice as the FFmpeg libraries need to be included for it to work as there are no globally installed FFmpeg libraries.
 
