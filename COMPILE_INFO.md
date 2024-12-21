@@ -8,6 +8,9 @@ Compiling this GDExtension can be done in three different ways:
 - Using [EasyMenu](https://github.com/VoylinsGamedevJourney/easy_menu);
 - Using the command line and scons;
 
+For the people who need extra help, feel free to watch this video:
+https://youtu.be/62smFmZyekg
+
 ## Before you do anything
 
 Install python, scons, and git! Also, initialize the submodules of the git repo with `git submodule update --init --recursive`. Updating the submodules can be done with `git submodule update --recursive --remote`. Without doing this you'll get errors that the scons file could not be found.

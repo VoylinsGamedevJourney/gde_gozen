@@ -9,8 +9,8 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 
 ## Current support
 
-Godot version: 4.3+
-OS support: Linux & Windows
+- Godot version: 4.3+
+- OS support: Linux & Windows
 
 Work is being done to support MacOS, Web, and Android. But due to time and/or hardware limitations, it may take some time to get proper support for these platforms.
 
