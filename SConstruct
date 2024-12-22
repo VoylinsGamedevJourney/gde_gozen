@@ -2,7 +2,7 @@
 import os
 import platform as os_platform
 import time
-
+import macos_rpath_fix
 
 LIBS_COMMON = [
     'avcodec',
@@ -19,7 +19,7 @@ env.Append(CPPPATH=['src'])
 
 gpl = ARGUMENTS.get('enable_gpl', 'no')
 jobs = ARGUMENTS.get('jobs', 4)
-arch = ARGUMENTS.get('arch', 'arm64')
+arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
 location = ARGUMENTS.get('location', 'bin')
@@ -171,32 +171,35 @@ elif 'macos' in platform:
         os.system(f'make -j {jobs} install')
         os.chdir('..')
 
+    libPath = f'{location}/{platform}/{target}/lib'
+
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
-        DYLD_LIBRARY_PATH=['test_room/addons/gde_gozen/bin/macos/debug/lib'],
         LIBPATH=[
             'ffmpeg/bin/lib',
-            'test_room/addons/gde_gozen/bin/macos/debug/lib',
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
             'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
-            'ffmpeg/bin/lib'
+            libPath,
             '/usr/local/lib'],  # Default macOS library path
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
-            #'-install_name @executable_path/libWhatever.dylib',
             '-stdlib=libc++',
             '-framework', 'CoreFoundation',
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', '@loader_path/lib']
+            '-rpath', libPath]
     )
+    # also ich muss es händisch in testtoom/bin/lib kopieren
+    os.makedirs(libPath, exist_ok=True)
+    os.system(f'cp ffmpeg/bin/lib/*.dylib {libPath}')
 
-    os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}/lib')
+    macos_rpath_fix.main()
+
 
 elif 'web' in platform:
     print('Exporting for web isn\'t supported yet!')
