@@ -23,7 +23,7 @@ arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').replace('template_', '')
 platform = ARGUMENTS.get('platform', 'linux')
 location = ARGUMENTS.get('location', 'bin')
-use_system = ARGUMENTS.get('use_system', 'yes')
+use_system = ARGUMENTS.get('use_system', 'no')
 recompile_ffmpeg = ARGUMENTS.get('recompile_ffmpeg', 'yes')
 
 
