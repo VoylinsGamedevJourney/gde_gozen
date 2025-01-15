@@ -5,11 +5,141 @@ compatibility_minimum = "4.3"
 
 [libraries]
 
-linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_full/debug/libgozen.linux.template_debug.dev.x86_64.so"
-linux.release.x86_64 = "res://addons/gde_gozen/bin/linux_full/release/libgozen.linux.template_release.x86_64.so"
+linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux/libgozen.linux.template_debug.dev.x86_64.so"
+linux.release.x86_64 = "res://addons/gde_gozen/bin/linux/libgozen.linux.template_release.x86_64.so"
 
-windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows/debug/libgozen.windows.template_debug.dev.x86_64.dll"
-windows.release.x86_64 = "res://addons/gde_gozen/bin/windows/release/libgozen.windows.template_release.x86_64.dll"
+windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows/libgozen.windows.template_debug.dev.x86_64.dll"
+windows.release.x86_64 = "res://addons/gde_gozen/bin/windows/libgozen.windows.template_release.x86_64.dll"
 
-macos.debug.arm64 = "res://addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib"
-macos.release.arm64 = "res://addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.x86_64.dylib"
+macos.debug.arm64 = "res://addons/gde_gozen/bin/macos/libgozen.macos.template_debug.dev.arm64.dylib"
+macos.release.arm64 = "res://addons/gde_gozen/bin/macos/libgozen.macos.template_release.x86_64.dylib"
+
+[icon]
+
+Video = "res://addons/gde_gozen/icon.svg"
+Renderer = "res://addons/gde_gozen/icon.svg"
+Audio = "res://addons/gde_gozen/icon.svg"
+
+[dependencies]
+
+linux.debug = {
+    "res://addons/gde_gozen/bin/linux/libavcodec.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavcodec.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavcodec.so.60.31.102" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavdevice.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavdevice.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavdevice.so.60.3.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavformat.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavformat.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavformat.so.60.16.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavutil.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavutil.so.58" : "",
+    "res://addons/gde_gozen/bin/linux/libavutil.so.58.29.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libswresample.so" : "",
+    "res://addons/gde_gozen/bin/linux/libswresample.so.4" : "",
+    "res://addons/gde_gozen/bin/linux/libswresample.so.4.12.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libswscale.so" : "",
+    "res://addons/gde_gozen/bin/linux/libswscale.so.7" : "",
+    "res://addons/gde_gozen/bin/linux/libswscale.so.7.5.100" : ""
+}
+linux.release = {
+    "res://addons/gde_gozen/bin/linux/libavcodec.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavcodec.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavcodec.so.60.31.102" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavdevice.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavdevice.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavdevice.so.60.3.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavformat.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavformat.so.60" : "",
+    "res://addons/gde_gozen/bin/linux/libavformat.so.60.16.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libavutil.so" : "",
+    "res://addons/gde_gozen/bin/linux/libavutil.so.58" : "",
+    "res://addons/gde_gozen/bin/linux/libavutil.so.58.29.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libswresample.so" : "",
+    "res://addons/gde_gozen/bin/linux/libswresample.so.4" : "",
+    "res://addons/gde_gozen/bin/linux/libswresample.so.4.12.100" : "",
+
+    "res://addons/gde_gozen/bin/linux/libswscale.so" : "",
+    "res://addons/gde_gozen/bin/linux/libswscale.so.7" : "",
+    "res://addons/gde_gozen/bin/linux/libswscale.so.7.5.100" : ""
+}
+
+windows.debug = {
+    "res://addons/gde_gozen/bin/windows/avcodec-60.dll" : "",
+    "res://addons/gde_gozen/bin/windows/avdevice-60.dll" : "",
+    "res://addons/gde_gozen/bin/windows/avformat-60.dll" : "",
+	"res://addons/gde_gozen/bin/windows/avutil-58.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows/swresample-4.dll" : "",
+	"res://addons/gde_gozen/bin/windows/swscale-7.dll" : ""
+}
+windows.release = {
+    "res://addons/gde_gozen/bin/windows/avcodec-60.dll" : "",
+    "res://addons/gde_gozen/bin/windows/avdevice-60.dll" : "",
+    "res://addons/gde_gozen/bin/windows/avformat-60.dll" : "",
+    "res://addons/gde_gozen/bin/windows/avutil-58.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows/swresample-4.dll" : "",
+	"res://addons/gde_gozen/bin/windows/swscale-7.dll" : ""
+}
+
+macos.debug = {
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.60.dylib" : "Contents/Frameworks",
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.60.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.60.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.60.16.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.58.dylib" : "Contents/Frameworks",
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.58.29.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.4.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.4.12.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.7.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.7.5.100.dylib" : "Contents/Frameworks"
+}
+macos.release = {
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.60.dylib" : "Contents/Frameworks",
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.60.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.60.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavformat.60.16.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.58.dylib" : "Contents/Frameworks",
+	"res://addons/gde_gozen/bin/macos/Content/Frameworks/libavutil.58.29.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.4.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswresample.4.12.100.dylib" : "Contents/Frameworks",
+
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.7.dylib" : "Contents/Frameworks",
+    "res://addons/gde_gozen/bin/macos/Content/Frameworks/libswscale.7.5.100.dylib" : "Contents/Frameworks"
+}
+

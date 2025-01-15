@@ -15,9 +15,9 @@ void fragment() {
     uv *= resolution / vec2(textureSize(y_data, 0));
     uv = clamp(uv, vec2(0.0), vec2(1.0));
 
-    float Y = texture(y_data, uv).r;
-    float U = texture(u_data, uv).r;
-    float V = texture(v_data, uv).r;
+    float Y = float(texture(y_data, uv).r);
+    float U = float(texture(u_data, uv).r);
+    float V = float(texture(v_data, uv).r);
 
 	Y = (Y * 255. - 16.) / 219.;
 	U = (U * 255. - 128.) / 244.;
