@@ -2,7 +2,7 @@
 import os
 import platform as os_platform
 import time
-
+import macos_rpath_fix
 
 LIBS_COMMON = [
     'avcodec',
@@ -148,7 +148,7 @@ elif 'windows' in platform:
 
 
 # MACOS ############################################################### MACOS #
-# For the people who don't like money and/or right to repair
+# For the people who like shiny/working computers but don't like money and/or right to repair
 # NOTE: Cross compiling not possible, need a MacOS system
 elif 'macos' in platform:
 
@@ -157,8 +157,7 @@ elif 'macos' in platform:
     if recompile_ffmpeg == 'yes':
         print('Compiling FFmpeg for MacOS')
 
-        ffmpeg_args += ' --target-os=darwin' +\
-                       ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"' +\
+        ffmpeg_args += ' --extra-cflags="-fPIC -mmacosx-version-min=10.13"' +\
                        ' --extra-ldflags="-mmacosx-version-min=10.13"'
 
         os.chdir('ffmpeg')
@@ -172,10 +171,19 @@ elif 'macos' in platform:
         os.system(f'make -j {jobs} install')
         os.chdir('..')
 
+    libPath = f'{location}/{platform}/{target}/lib'
+
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
         LIBPATH=[
             'ffmpeg/bin/lib',
+            'ffmpeg/bin/include/libavcodec',
+            'ffmpeg/bin/include/libavformat',
+            'ffmpeg/bin/include/libavdevice',
+            'ffmpeg/bin/include/libavutil',
+            'ffmpeg/bin/include/libswresample',
+            'ffmpeg/bin/include/libswscale',
+            libPath,
             '/usr/local/lib'],  # Default macOS library path
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -184,10 +192,14 @@ elif 'macos' in platform:
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', '@loader_path/lib']
+            '-rpath', libPath]
     )
+    # also ich muss es händisch in testtoom/bin/lib kopieren
+    os.makedirs(libPath, exist_ok=True)
+    os.system(f'cp ffmpeg/bin/lib/*.dylib {libPath}')
 
-    os.system(f'cp ffmpeg/bin/lib/*.dylib {location}/{platform}/{target}/lib')
+    macos_rpath_fix.main()
+
 
 elif 'web' in platform:
     print('Exporting for web isn\'t supported yet!')
