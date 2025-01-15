@@ -1,5 +1,5 @@
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6) 
-[![Linux](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux.yml) [![Linux full](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux_full.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux_full.yml) [![Build GDE GoZen - Windows](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_windows.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_windows.yml)
+[![Linux](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_linux.yml) [![Build GDE GoZen - Windows](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_windows.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_windows.yml)  [![MacOS](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_macos.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/build_macos.yml)
 
 <img src="./assets/icon.svg" alt="GoZen Logo" width="300"/>
 
