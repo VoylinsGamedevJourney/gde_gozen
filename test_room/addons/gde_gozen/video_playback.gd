@@ -27,7 +27,9 @@ signal playback_ready ## Emitted when the node if fully setup and ready for play
 
 var video: Video = null ## The video object uses GDEGoZen to function, this class interacts with a library called FFmpeg to get the audio and the frame data.
 
-var texture_rect: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
+
+
+var video_texture: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.
 
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
@@ -46,13 +48,6 @@ var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
-var _y_img: Image
-var _u_img: Image
-var _v_img: Image
-var _y_img_tex: ImageTexture
-var _u_img_tex: ImageTexture
-var _v_img_tex: ImageTexture
-
 var _thread: Thread = Thread.new()
 
 
@@ -60,14 +55,14 @@ var _thread: Thread = Thread.new()
 func _enter_tree() -> void:
 	_shader_material = ShaderMaterial.new()
 
-	texture_rect.material = _shader_material
-	texture_rect.texture = ImageTexture.new()
-	texture_rect.anchor_right = TextureRect.ANCHOR_END
-	texture_rect.anchor_bottom = TextureRect.ANCHOR_END
-	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	video_texture.material = _shader_material
+	video_texture.texture = ImageTexture.new()
+	video_texture.anchor_right = TextureRect.ANCHOR_END
+	video_texture.anchor_bottom = TextureRect.ANCHOR_END
+	video_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	video_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 
-	add_child(texture_rect)
+	add_child(video_texture)
 	add_child(audio_player)
 
 	if debug:
@@ -131,39 +126,18 @@ func update_video(a_video: Video) -> void:
 	if debug:
 		_print_video_debug()
 
-	(texture_rect.texture as ImageTexture).set_image(l_image)
+	video_texture.texture.set_image(l_image)
 
 	if video.get_pixel_format().begins_with("yuv"):
 		if video.is_full_color_range():
 			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
 		else:
 			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
-
-		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_R8)
-		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
-		_v_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_R8)
-
-		_y_img_tex = ImageTexture.create_from_image(_y_img)
-		_u_img_tex = ImageTexture.create_from_image(_u_img)
-		_v_img_tex = ImageTexture.create_from_image(_v_img)
-
-		_shader_material.set_shader_parameter("y_data", _y_img_tex)
-		_shader_material.set_shader_parameter("u_data", _u_img_tex)
-		_shader_material.set_shader_parameter("v_data", _v_img_tex)
 	else:
 		if video.is_full_color_range():
 			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12_full.gdshader")
 		else:
 			_shader_material.shader = preload("res://addons/gde_gozen/shaders/nv12_standard.gdshader")
-
-		_y_img = Image.create_empty(_resolution.x + _padding, _resolution.y, false, Image.FORMAT_R8)
-		_u_img = Image.create_empty(_uv_resolution.x, _uv_resolution.y, false, Image.FORMAT_RG8)
-
-		_y_img_tex = ImageTexture.create_from_image(_y_img)
-		_u_img_tex = ImageTexture.create_from_image(_u_img)
-
-		_shader_material.set_shader_parameter("y_data", _y_img_tex)
-		_shader_material.set_shader_parameter("uv_data", _u_img_tex)
 
 	match video.get_color_profile():
 		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
@@ -300,6 +274,12 @@ func is_open() -> bool:
 	return video != null and video.is_open()
 
 
+func _get_img_tex(a_data: PackedByteArray, a_width: int, a_height: int, a_r8: bool = true) -> ImageTexture:
+	return ImageTexture.create_from_image(Image.create_from_data(
+			a_width, a_height, false,
+			Image.FORMAT_R8 if a_r8 else Image.FORMAT_RG8, a_data))
+
+
 #------------------------------------------------ SETTERS
 func _set_current_frame(a_value: int) -> void:
 	current_frame = a_value
@@ -307,15 +287,27 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	_y_img.set_data(_y_img.get_width(), _y_img.get_height(), false, _y_img.get_format(), video.get_y_data())
-	_u_img.set_data(_u_img.get_width(), _u_img.get_height(), false, _u_img.get_format(), video.get_u_data())
+	_shader_material.set_shader_parameter("y_data", _get_img_tex(
+		video.get_y_data(),
+		_resolution.x + _padding,
+		_resolution.y))
 
 	if video.get_pixel_format().begins_with("yuv"):
-		_v_img.set_data(_v_img.get_width(), _v_img.get_height(), false, _v_img.get_format(), video.get_v_data())
-		_v_img_tex.update(_v_img)
+		_shader_material.set_shader_parameter("u_data", _get_img_tex(
+				video.get_u_data(),
+				_uv_resolution.x,
+				_uv_resolution.y))
+		_shader_material.set_shader_parameter("v_data", _get_img_tex(
+				video.get_v_data(),
+				_uv_resolution.x,
+				_uv_resolution.y))
+	else:
+		_shader_material.set_shader_parameter("u_data", _get_img_tex(
+				video.get_u_data(),
+				_uv_resolution.x,
+				_uv_resolution.y,
+				false))
 
-	_y_img_tex.update(_y_img)
-	_u_img_tex.update(_u_img)
 
 
 #------------------------------------------------ MISC
