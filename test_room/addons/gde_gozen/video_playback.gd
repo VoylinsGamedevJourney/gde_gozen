@@ -20,12 +20,15 @@ signal playback_paused ## Emitted when playback is paused.
 signal playback_ready ## Emitted when the node if fully setup and ready for playback.
 
 
+const PLAYBACK_SPEED_MIN: float = 0.5
+const PLAYBACK_SPEED_MAX: float = 2
 
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file. Do not use [code]res://[/code] paths, only provide [b]full[/b] paths. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 @export var hardware_decoding: bool = false ## Enable GPU decoding when available, this isn't useful for most cases due to some codecs being slower with GPU decoding.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
+@export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.1) var playback_speed: float = 1.0: set = set_playback_speed
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
 var video: Video = null ## Video class object of GDE GoZen which interadcts with video files through FFmpeg.
@@ -152,7 +155,7 @@ func update_video(a_video: Video) -> void:
 		audio_player.stream = video.get_audio()
 
 	is_playing = false
-	_frame_time = 1.0 / _frame_rate
+	set_playback_speed(playback_speed)
 	current_frame = 0
 	if video.seek_frame(current_frame):
 		printerr("Couldn't seek frame!")
@@ -312,6 +315,15 @@ func _set_frame_image() -> void:
 				_uv_resolution.y,
 				false))
 
+
+func set_playback_speed(a_value: float) -> void:
+	playback_speed = clampf(a_value, 0.5, 2)
+	_frame_time = (1.0 / _frame_rate) / playback_speed
+
+	if enable_audio and audio_player.stream != null:
+		audio_player.pitch_scale = playback_speed
+		if is_playing:
+			audio_player.play(current_frame * (1.0 / _frame_rate))
 
 
 #------------------------------------------------ MISC
