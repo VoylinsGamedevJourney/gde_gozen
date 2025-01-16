@@ -9,15 +9,15 @@ extends Control
 ## The solution for exported projects is to create a folder inside of your exported projects in which you keep the video files, inside of your code you can check if the project is run from the editor or not with: [code]OS.has_feature(“editor”)[/code]. To get the path of your running project to find the folder where your video's are stored you can use [code]OS.get_executable_path()[/code]. So it requires a bit of code to get things properly working but everything should work without issues this way.
 
 
-signal _current_frame_changed(frame_nr: int) ## Getting the current frame might be usefull if you want certain events to happen at a certain frame number. In the test project we use it for making the timeline move along with the video
+signal frame_changed(frame_nr: int) ## Emitted when the current frame has changed, for showing and skipped frames.
+signal next_frame_called(frame_nr: int) ## Emitted when a new frame is showing.
 
-signal _on_video_loaded ## Get's called when the video is ready to display
-signal _video_ended ## Get's called when last frame has been shown.
+signal video_loaded ## Emitted when the video is ready for playback.
+signal video_ended ## Emitted when the last frame has been shown.
 
-signal _on_play_pressed ## Called when the play command has been used with an open video.
-signal _on_pause_pressed ## Called when the pause command has been used with an open video.
-signal _on_video_playback_ready ## Get's called when the video playback node is completely loaded, video is open and ready for playback.
-signal _on_next_frame_called(frame_nr: int) ## _current_frame_changed gets called when the number changes, but frame skipping may occur to provide smooth playback, with this signal you can check when an actual new frame is being shown.
+signal playback_started ## Emitted when playback started/resumed.
+signal playback_paused ## Emitted when playback is paused.
+signal playback_ready ## Emitted when the node if fully setup and ready for playback.
 
 
 @export_file var path: String = "": set = set_video_path ## You can set the video path straigth from the editor, you can also set it through code to do it more dynamically. Use the README to find out more about the limitations. Only provide [b]FULL[/b] paths, not [code]res://[/code] paths as FFmpeg can't deal with those. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
@@ -84,7 +84,7 @@ func _ready() -> void:
 	if path != "":
 		set_video_path(path)
 
-	_on_video_playback_ready.emit()
+	playback_ready.emit()
 
 
 #------------------------------------------------ VIDEO DATA HANDLING
@@ -184,7 +184,7 @@ func update_video(a_video: Video) -> void:
 
 	_set_frame_image()
 
-	_on_video_loaded.emit()
+	video_loaded.emit()
 
 
 func seek_frame(a_frame_nr: int) -> void:
@@ -208,7 +208,7 @@ func next_frame(a_skip: bool = false) -> void:
 	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
 	if video.next_frame(a_skip) and !a_skip:
 		_set_frame_image()
-		_on_next_frame_called.emit(current_frame)
+		next_frame_called.emit(current_frame)
 	elif !a_skip:
 		print("Something went wrong getting next frame!")
 
@@ -230,7 +230,6 @@ func _process(a_delta: float) -> void:
 	if is_playing:
 		_time_elapsed += a_delta
 
-
 		if _time_elapsed < _frame_time:
 			return
 
@@ -246,7 +245,7 @@ func _process(a_delta: float) -> void:
 			if enable_audio:
 				audio_player.set_stream_paused(true)
 
-			_video_ended.emit()
+			video_ended.emit()
 		else:
 			while _skips != 1:
 				next_frame(true)
@@ -265,7 +264,7 @@ func play() -> void:
 		audio_player.play((current_frame + 1) / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
 
-	_on_play_pressed.emit()
+	playback_started.emit()
 
 
 func pause() -> void:
@@ -277,7 +276,7 @@ func pause() -> void:
 	if enable_audio:
 		audio_player.set_stream_paused(true)
 
-	_on_pause_pressed.emit()
+	playback_paused.emit()
 
 
 #------------------------------------------------ GETTERS
@@ -304,7 +303,7 @@ func is_open() -> bool:
 #------------------------------------------------ SETTERS
 func _set_current_frame(a_value: int) -> void:
 	current_frame = a_value
-	_current_frame_changed.emit(current_frame)
+	frame_changed.emit(current_frame)
 
 
 func _set_frame_image() -> void:
