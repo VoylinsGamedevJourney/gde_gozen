@@ -92,8 +92,7 @@ if [ $# -lt 1 ]; then
 	echo "1: Compile for Linux; (Default)"
 	echo "2: Compile for Windows;"
 	echo "3: Compile for MacOS; (not working/maybe working)"
-	echo "4: Compile for Web; (not working)"
-	echo "5: Compile for Android; (not working)"
+	echo "4: Compile for Android; (not working)"
 	echo "0: Clean FFmpeg;"
 
 	read -p "Enter your choice: " choice
@@ -172,10 +171,7 @@ case $choice in
 		cp bin/bin/*.dll ../bin/windows
 		cp /usr/x86_64-w64-mingw32/bin/libx26*.dll ../bin/windows
 		;;
-	4)
-		echo "Compiling for Web not supported yet!"
-		;;
-	5)
+	4) # Android
 		echo "Compiling for Android not supported yet!"
 		;;
 	*) # Linux

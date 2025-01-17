@@ -23,14 +23,12 @@ def choose_platform():
     print('1. Linux; (default)')
     print('2. Windows;')
     print('3. MacOS; (possibly working)')
-    print('4. Web; (Not working)')
-    print('5. Android. (Not working)')
+    print('4. Android. (Not working)')
 
     match input('> '):
         case '2': return 'windows'
         case '3': return 'macos'
-        case '4': return 'web dlink_enabled=yes'
-        case '5': return 'android'
+        case '4': return 'android'
         case _: return 'linux'
 
 
@@ -56,8 +54,7 @@ def compile_ffmpeg(a_platform):
     if a_platform == 'linux': l_platform = 1
     elif a_platform == 'windows': l_platform = 2
     elif a_platform == 'macos': l_platform = 3
-    elif a_platform == 'web': l_platform = 4
-    elif a_platform == 'android': l_platform = 5
+    elif a_platform == 'android': l_platform = 4
 
     print('\nDo you want to (re)compile ffmpeg?:')
     print('1. Yes; (default)')

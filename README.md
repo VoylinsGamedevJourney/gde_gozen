@@ -12,7 +12,7 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Godot version: 4.3+
 - OS support: Linux & Windows
 
-Work is being done to support MacOS, Web, and Android. But due to time and/or hardware limitations, it may take some time to get proper support for these platforms.
+Work is being done to support MacOS and Android. But due to time and/or hardware limitations, it may take some time to get proper support for these platforms. There won't be a web export for some time due to limitations with FFmpeg.
 
 ## Download compiled version
 The addon is available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). Source code will always be available for free so you can technically compile everything yourself, but if you also want to support the work which I've put into this GDExtension and the future work which I'll put into this I'd really appreciate it if you would get the compiled version from my ko-fi page.

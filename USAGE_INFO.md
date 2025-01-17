@@ -5,7 +5,8 @@ This GDExtension exists in a couple different versions. You can just add the lib
 Because this is the core of my video editor there is some extra functionality included by default such as the rendering system. When you have questions, please read the documentation first before reaching out on our [Discord server](https://discord.com/invite/BdbUf7VKYC).
 
 > [!IMPORTANT]
-> There is only Linux and Windows support at this moment! MacOS, Android, and Web are coming.
+> There is only Linux and Windows support at this moment! MacOS and Android are coming.
+> Because of limitations with FFmpeg, web support isn't possible for now.
 > Godot 4.3+ is required, the GDExtension could work on older versions but this is not officially supported.
 
 ## The addon!
