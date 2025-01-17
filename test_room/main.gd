@@ -16,6 +16,7 @@ const VIDEO_EXTENSIONS: PackedStringArray = [
 @onready var editor_fps_value: Label = %EditorFPSValue
 @onready var max_frame_value: Label = %MaxFrameValue
 @onready var fps_value: Label = %FPSValue
+@onready var speed_spin_box: SpinBox = %SpeedSpinBox
 
 @onready var loading_screen: Panel = $LoadingPanel
 
@@ -46,6 +47,7 @@ func _ready() -> void:
 	]
 
 	loading_screen.visible = false
+	speed_spin_box.value = video_playback.playback_speed
 	
 
 func _input(a_event: InputEvent) -> void:
@@ -90,7 +92,7 @@ func _on_play_pause_button_pressed() -> void:
 	play_pause_button.release_focus()
 
 
-func _on_timeline_value_changed(_value:float) -> void:
+func _on_timeline_value_changed(_value: float) -> void:
 	if is_dragging:
 		video_playback.seek_frame(timeline.value as int)
 
@@ -101,8 +103,12 @@ func _on_timeline_drag_started() -> void:
 	video_playback.pause()
 
 
-func _on_timeline_drag_ended(_value:bool) -> void:
+func _on_timeline_drag_ended(_value: bool) -> void:
 	is_dragging = false
 	if was_playing:
 		video_playback.play()
+
+
+func _on_speed_spin_box_value_changed(a_value: float) -> void:
+	video_playback.playback_speed = a_value
 
