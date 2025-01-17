@@ -80,12 +80,8 @@ elif 'macos' in platform:
     )
 
     os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
-elif 'web' in platform:
-    print('Exporting for web isn\'t supported yet!')
 elif 'android' in platform:
     print('Exporting for Android isn\'t supported yet!')
-else:
-    print('Invalid platform!')
 
 
 # Godot compiling stuff
