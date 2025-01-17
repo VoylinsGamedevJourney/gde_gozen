@@ -27,10 +27,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Build FFmpeg
+        run: ./ffmpeg.sh 2 1
       - name: Build Windows debug
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes recompile_ffmpeg=yes
+        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
       - name: Build Windows release
-        run: scons -j4 target=template_release platform=windows arch=x86_64 recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=windows arch=x86_64
 
       - name: Uploading addon build
         if: ${{ github.event.inputs.artifact_addon == 'true' }}

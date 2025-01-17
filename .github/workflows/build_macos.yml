@@ -27,10 +27,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Build FFmpeg
+        run: ./ffmpeg.sh 3 1
       - name: Build MacOS debug
-        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes recompile_ffmpeg=yes
+        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes
       - name: Build MacOS release
-        run: scons -j4 target=template_release platform=macos arch=arm64 recompile_ffmpeg=no
+        run: scons -j4 target=template_release platform=macos arch=arm64
 
       #- name: Correct MacOS Binary paths
       #  run: |

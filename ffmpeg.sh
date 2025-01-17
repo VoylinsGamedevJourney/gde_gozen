@@ -91,7 +91,7 @@ if [ $# -lt 1 ]; then
 	echo "Please select an option:"
 	echo "1: Compile for Linux; (Default)"
 	echo "2: Compile for Windows;"
-	echo "3: Compile for MacOS; (not working/maybe working)"
+	echo "3: Compile for MacOS; (maybe working)"
 	echo "4: Compile for Android; (not working)"
 	echo "0: Clean FFmpeg;"
 
