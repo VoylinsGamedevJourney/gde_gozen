@@ -14,8 +14,8 @@ def update_submodules():
     print('3. Update.')
 
     match input('> '):
-        case '2': subprocess.run(f'{git_command} --init --recursive', cwd='./')
-        case '3': subprocess.run(f'{git_command} --recursive --remote', cwd='./')
+        case '2': subprocess.run(f'{git_command} --init --recursive', shell=True, cwd='./')
+        case '3': subprocess.run(f'{git_command} --recursive --remote', shell=True, cwd='./')
 
 
 def choose_platform():
@@ -70,14 +70,14 @@ def compile_ffmpeg(a_platform):
     match input('> '):
         case '2':
             subprocess.run(f'./ffmpeg.sh {l_platform} 2', shell=True, cwd='./')
-            subprocess.run('cp ./LICENSE.GPL3 ./test_room/addons/gde_gozen/', cwd='./')
+            subprocess.run('cp ./LICENSE.GPL3 ./test_room/addons/gde_gozen/', shell=True, cwd='./')
         case _: subprocess.run(f'./ffmpeg.sh {l_platform} 1', shell=True, cwd='./')
 
 
 def check_wsl_installation():
     # Check if WSL is installend when running from Windows.
     try:
-        l_result = subprocess.run('wsl --status', capture_output=True, text=True)
+        l_result = subprocess.run('wsl --status', capture_output=True, text=True, shell=True)
         return l_result.returncode == 0
     except FileNotFoundError:
         return False
@@ -99,8 +99,7 @@ def check_required_programs_wsl():
     
     for l_program, l_package in l_required_programs.items():
         l_result = subprocess.run(['wsl', 'which', l_program], 
-                              capture_output=True, 
-                              text=True)
+                              capture_output=True, text=True, shell=True)
         if l_result.returncode != 0:
             l_missing_programs.append(l_package)
     
@@ -126,12 +125,12 @@ def install_wsl_required_programs():
 
     try:
         # Updating package list
-        subprocess.run('wsl sudo apt-get update', check=True)
+        subprocess.run('wsl sudo apt-get update', shell=True, check=True)
 
         # Installing required packages
         subprocess.run(['wsl', 'sudo', 'apt-get', 'install', '-y',
-                        'build-essential', 'pkg-config', 'python 3',
-                        'scons', 'mingw-w64', 'git'])
+                        'build-essential', 'pkg-config', 'python3',
+                        'scons', 'mingw-w64', 'git'], shell=True)
         print('\nSuccessfully isntalled the required WSL programs!')
     except subprocess.CalledProcessError:
         print('\nError installing programs!')
@@ -155,7 +154,7 @@ def windows_detected():
         print('\nSome required programs are missing in WSL:')
 
         for l_program in l_missing_programs:
-            print(f'\t- {l_programs}')
+            print(f'\t- {l_program}')
 
         # Attempt on installing them
         install_wsl_required_programs()
@@ -163,11 +162,11 @@ def windows_detected():
     try:
         # Navigate to the correct directory in WSL
         l_wsl_path = subprocess.run(['wsl', 'wslpath', os.getcwd()], 
-                                capture_output=True, text=True).stdout.strip()
+                capture_output=True, text=True, shell=True).stdout.strip()
         
         # Run the build script
         subprocess.run(['wsl', 'python3', 'build.py'], 
-                      cwd=l_wsl_path, check=True)
+                      cwd=l_wsl_path, check=True, shell=True)
         
         print("\nBuild completed successfully!")
     except subprocess.CalledProcessError as e:
