@@ -20,15 +20,17 @@ signal playback_paused ## Emitted when playback is paused.
 signal playback_ready ## Emitted when the node if fully setup and ready for playback.
 
 
-const PLAYBACK_SPEED_MIN: float = 0.5
-const PLAYBACK_SPEED_MAX: float = 2
+const PLAYBACK_SPEED_MIN: float = 0.25
+const PLAYBACK_SPEED_MAX: float = 4
 
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file. Do not use [code]res://[/code] paths, only provide [b]full[/b] paths. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
 @export var hardware_decoding: bool = false ## Enable GPU decoding when available, this isn't useful for most cases due to some codecs being slower with GPU decoding.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
-@export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.1) var playback_speed: float = 1.0: set = set_playback_speed
+@export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
+var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video playback speed, 0.5 = half the speed and 2 = double the speed.
+@export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
 var video: Video = null ## Video class object of GDE GoZen which interadcts with video files through FFmpeg.
@@ -53,6 +55,7 @@ var _uv_resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
 var _thread: Thread = Thread.new()
+var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 
 
 #------------------------------------------------ TREE FUNCTIONS
@@ -69,6 +72,10 @@ func _enter_tree() -> void:
 	add_child(video_texture)
 	add_child(audio_player)
 
+	AudioServer.add_bus()
+	audio_player.bus = AudioServer.get_bus_name(AudioServer.bus_count - 1)
+	AudioServer.add_bus_effect(AudioServer.bus_count - 1, _audio_pitch_effect)
+
 	if debug:
 		_print_system_debug()
 
@@ -76,6 +83,8 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 	if video != null:
 		close()
+	
+	AudioServer.remove_bus(AudioServer.get_bus_index(audio_player.bus))
 
 
 func _ready() -> void:
@@ -319,8 +328,23 @@ func set_playback_speed(a_value: float) -> void:
 
 	if enable_audio and audio_player.stream != null:
 		audio_player.pitch_scale = playback_speed
+		_set_pitch_adjust()
+
 		if is_playing:
 			audio_player.play(current_frame * (1.0 / _frame_rate))
+
+
+func set_pitch_adjust(a_value: bool) -> void:
+	pitch_adjust = a_value
+	_set_pitch_adjust()
+
+
+func _set_pitch_adjust() -> void:
+	if pitch_adjust:
+		_audio_pitch_effect.pitch_scale = clamp(1.0 / playback_speed, 0.5, 2.0)
+	elif _audio_pitch_effect.pitch_scale != 1.0:
+		_audio_pitch_effect.pitch_scale = 1.0
+
 
 
 #------------------------------------------------ MISC
