@@ -92,7 +92,8 @@ def check_required_programs_wsl():
         'python3': 'python3',
         'scons': 'scons',
         'mingw-w64': 'mingw-w64',
-        'git': 'git'
+        'git': 'git',
+        'yasm': 'yasm'
     }
     
     l_missing_programs = []
@@ -188,7 +189,7 @@ def main():
     update_submodules()
 
     l_platform = choose_platform()
-    l_arch = choose_architecture(l_platform)
+    l_arch = 'arm64' if l_platform == 'android' else choose_architecture(l_platform)
     l_target = choose_target()
     l_threads = int(input('Number of threads/cores for compiling> '))
 

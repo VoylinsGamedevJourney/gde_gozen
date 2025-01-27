@@ -33,7 +33,7 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
-var video: Video = null ## Video class object of GDE GoZen which interadcts with video files through FFmpeg.
+var video: Video = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 
 var video_texture: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.

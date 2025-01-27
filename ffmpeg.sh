@@ -86,6 +86,32 @@ function configure_for_macos() {
 }
 
 
+function configure_for_android() {
+	# Configuration for the lGPL version
+	if [ -z "$ANDROID_NDK" ]; then
+        echo "Please set ANDROID_NDK environment variable to your NDK path"
+        exit 1
+    fi
+
+	API=21
+    TOOLCHAIN="$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64"
+
+	./configure --prefix=./bin --enable-shared \
+		--arch=arm --cpu=armv7-a --target-os=android \
+		--enable-pic --enable-cross-compile \
+        --cross-prefix=arm-linux-androideabi- \
+        --extra-cflags="-fPIC" \
+		--cross-prefix=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi- \
+	    --sysroot=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot \
+		--cc=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang
+		\
+		--disable-postproc --disable-avfilter --disable-sndio \
+		--disable-doc --disable-programs --disable-ffprobe \
+		--disable-htmlpages --disable-manpages --disable-podpages \
+		--disable-txtpages --disable-ffplay --disable-ffmpeg
+}
+
+
 # Showing option menu if needed
 if [ $# -lt 1 ]; then
 	echo "Please select an option:"
@@ -168,11 +194,25 @@ case $choice in
 		make install
 
 		# Copying libraries to the correct path
-		cp bin/bin/*.dll ../bin/windows
-		cp /usr/x86_64-w64-mingw32/bin/libx26*.dll ../bin/windows
+		cp bin/bin/*.dll ../bin/macos
 		;;
 	4) # Android
-		echo "Compiling for Android not supported yet!"
+		echo "Compiling FFmpeg for Android ..."
+
+		# Creating the folder if not existing
+		if [ ! -d "./test_room/addons/gde_gozen/bin/android" ]; then
+			mkdir -p "./test_room/addons/gde_gozen/bin/android"
+		fi
+
+		# Configuring FFmpeg TODO: No GPL option yet
+		configure_for_android
+
+		# Building FFmpeg
+		make -j $(nproc)
+		make install
+
+		# Copying libraries to the correct path
+		cp bin/bin/*.dll ../bin/android
 		;;
 	*) # Linux
 		echo "Compiling FFmpeg for Linux ..."

@@ -68,15 +68,17 @@ elif 'macos' in platform:
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
         LIBPATH=[
+            'Content/Frameworks',
             'ffmpeg/bin/lib',
-            '/usr/local/lib'],  # Default macOS library path
+            '/usr/local/lib'],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
             '-stdlib=libc++',
             '-framework', 'CoreFoundation',
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
-            '-framework', 'AVFoundation']
+            '-framework', 'AVFoundation',
+            '-rpath', '@loader_path/Content/Frameworks']
     )
 
     os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
