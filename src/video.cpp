@@ -243,9 +243,9 @@ int Video::open(String a_path, bool a_load_audio) {
 			av_hw_frame = av_frame_alloc();
 			sws_scale_frame(sws_ctx, av_hw_frame, av_frame);
 
-			y_data = Image::create_empty(av_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
-			u_data = Image::create_empty(av_frame->linesize[1] , resolution.y/2, false, Image::FORMAT_R8);
-			v_data = Image::create_empty(av_frame->linesize[2] , resolution.y/2, false, Image::FORMAT_R8);
+			y_data = Image::create_empty(av_hw_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
+			u_data = Image::create_empty(av_hw_frame->linesize[1] , resolution.y/2, false, Image::FORMAT_R8);
+			v_data = Image::create_empty(av_hw_frame->linesize[2] , resolution.y/2, false, Image::FORMAT_R8);
 			padding = av_hw_frame->linesize[0] - resolution.x;
 
 			av_frame_unref(av_hw_frame);
@@ -254,8 +254,8 @@ int Video::open(String a_path, bool a_load_audio) {
 		if (av_hwframe_transfer_data(av_hw_frame, av_frame, 0) < 0)
 			_printerr_debug("Error transferring the frame to system memory!");
 
-		y_data = Image::create_empty(av_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
-		u_data = Image::create_empty(av_frame->linesize[1]/2 , resolution.y/2, false, Image::FORMAT_RG8);
+		y_data = Image::create_empty(av_hw_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(av_hw_frame->linesize[1]/2 , resolution.y/2, false, Image::FORMAT_RG8);
 		padding = av_hw_frame->linesize[0] - resolution.x;
 		av_frame_unref(av_hw_frame);
 	} 
