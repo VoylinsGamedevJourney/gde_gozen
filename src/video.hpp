@@ -72,10 +72,9 @@ private:
 
 	AudioStreamWAV *audio = nullptr;
 
-	PackedByteArray byte_array;
-	PackedByteArray y_data;
-	PackedByteArray u_data;
-	PackedByteArray v_data;
+	Ref<Image> y_data;
+	Ref<Image> u_data;
+	Ref<Image> v_data;
 
 
 	// Private functions
@@ -138,9 +137,9 @@ public:
 
 	inline bool is_full_color_range() { return full_color_range; }
 
-	inline PackedByteArray get_y_data() { return y_data; }
-	inline PackedByteArray get_u_data() { return u_data; }
-	inline PackedByteArray get_v_data() { return v_data; }
+	inline Ref<Image> get_y_data() { return y_data; }
+	inline Ref<Image> get_u_data() { return u_data; }
+	inline Ref<Image> get_v_data() { return v_data; }
 
 
 protected:
