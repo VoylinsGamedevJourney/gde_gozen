@@ -48,7 +48,7 @@ var _skips: int = 0
 var _rotation: int = 0
 var _padding: int = 0
 var _frame_rate: float = 0.
-var _frame_duration: int = 0
+var _frame_count: int = 0
 
 var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
@@ -136,7 +136,7 @@ func update_video(a_video: Video) -> void:
 	_rotation = video.get_rotation()
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
-	_frame_duration = video.get_frame_duration()
+	_frame_count = video.get_frame_count()
 	_uv_resolution = Vector2i(int((_resolution.x + _padding) / 2.), int(_resolution.y / 2.))
 	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
@@ -183,7 +183,7 @@ func seek_frame(a_frame_nr: int) -> void:
 	if !is_open() and a_frame_nr == current_frame:
 		return
 
-	current_frame = clamp(a_frame_nr, 0, _frame_duration)
+	current_frame = clamp(a_frame_nr, 0, _frame_count)
 	if video.seek_frame(a_frame_nr):
 		printerr("Couldn't seek frame!")
 	else:
@@ -233,7 +233,7 @@ func _process(a_delta: float) -> void:
 			current_frame += 1
 			_skips += 1
 
-		if current_frame >= _frame_duration:
+		if current_frame >= _frame_count:
 			is_playing = !is_playing
 
 			if enable_audio:
@@ -274,9 +274,9 @@ func pause() -> void:
 
 
 #------------------------------------------------ GETTERS
-func get_video_frame_duration() -> int:
-	## Getting the frame duration returns the total amount of frames found of the video file.
-	return _frame_duration
+func get_video_frame_count() -> int:
+	## Getting the total amount of frames found in the video file.
+	return _frame_count
 
 
 func get_video_framerate() -> float:
@@ -381,7 +381,7 @@ func _print_video_debug() -> void:
 	print("Pixel format: ", video.get_pixel_format())
 	print("Color profile: ", video.get_color_profile())
 	print("Framerate: ", _frame_rate)
-	print("Duration (in frames): ", _frame_duration)
+	print("Duration (in frames): ", _frame_count)
 	print("Padding: ", _padding)
 	print("Rotation: ", _rotation)
 	print("Full color range: ", video.is_full_color_range())

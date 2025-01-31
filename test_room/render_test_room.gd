@@ -57,7 +57,7 @@ func _on_video_loaded() -> void:
 		return
 
 	print("Sending frames!")
-	for l_frame_nr: int in video_playback.get_video_frame_duration() + 1:
+	for l_frame_nr: int in video_playback.get_video_frame_count() + 1:
 		if l_frame_nr == 0:
 			video_playback.seek_frame(0)
 		else:
