@@ -1,5 +1,6 @@
 #!/bin/bash
-# This only works on Linux systems! (maybe WSL)
+# Windows and Linux can be build on Linux or Windows with WSL.
+# For MacOS you need to use MacOS itself.
 
 
 function configure_for_linux() {
@@ -173,15 +174,18 @@ case $choice in
 		make install
 
 		# Copying libraries to the correct path
-		cp bin/bin/*.dll ../bin/windows
-		cp /usr/x86_64-w64-mingw32/bin/libx26*.dll ../bin/windows
+		cp bin/bin/*.dll ../test_room/addons/gde_gozen/bin/windows
+		cp /usr/x86_64-w64-mingw32/bin/libx26*.dll ../test_room/addons/gde_gozen/bin/windows
 		;;
 	3) # MacOS
 		echo "Compiling FFmpeg for MacOS ..."
 
 		# Creating the folder if not existing
-		if [ ! -d "./test_room/addons/gde_gozen/bin/macos" ]; then
-			mkdir -p "./test_room/addons/gde_gozen/bin/macos"
+		if [ ! -d "./test_room/addons/gde_gozen/bin/macos/debug/lib" ]; then
+			mkdir -p "./test_room/addons/gde_gozen/bin/macos/debug/lib"
+		fi
+		if [ ! -d "./test_room/addons/gde_gozen/bin/macos/release/lib" ]; then
+			mkdir -p "./test_room/addons/gde_gozen/bin/macos/release/lib"
 		fi
 
 		# Configuring FFmpeg TODO: No GPL option yet
@@ -192,7 +196,8 @@ case $choice in
 		make install
 
 		# Copying libraries to the correct path
-		cp bin/bin/*.dll ../bin/macos
+		cp bin/lib/*.dylib ../test_room/addons/gde_gozen/bin/macos/debug/lib
+		cp bin/lib/*.dylib ../test_room/addons/gde_gozen/bin/macos/release/lib
 		;;
 	4) # Android
 		echo "Compiling FFmpeg for Android ..."
@@ -235,10 +240,11 @@ case $choice in
 		make install
 
 		# Copying libraries to the correct path
-		cp bin/lib/*.so* ../bin/linux
-		cp /usr/lib/libx26*.so ../bin/linux
+		cp bin/lib/*.so* ../test_room/addons/gde_gozen/bin/linux
+		cp /usr/lib/libx26*.so ../test_room/addons/gde_gozen/bin/linux
 		;;
 esac
+cd ..
 
 echo "FFmpeg.sh finished!"
 echo ""
