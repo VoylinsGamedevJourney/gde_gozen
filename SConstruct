@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import platform as os_platform
-import time
+import macos_rpath_fix
 
 
 LIBS_COMMON = [
@@ -20,7 +20,8 @@ env.Append(CPPPATH=['src'])
 
 jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
-
+target = ARGUMENTS.get('target', 'template_debug').split('_')[-1]
+libpath = f'{LOCATION}/{platform}/{target}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
 
 
 if 'linux' in platform:
@@ -63,13 +64,21 @@ elif 'windows' in platform:
     os.system(f'cp ffmpeg/bin/bin/*.dll {LOCATION}/{platform}')
 
 elif 'macos' in platform:
-    os.makedirs(f'{LOCATION}/{platform}/Content/Frameworks', exist_ok=True)
+    # MacOS can only be build on a MacOS machine!
+    macos_path = f'{LOCATION}/{platform}/{target}/lib'
+    os.makedirs(macos_path, exist_ok=True)
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
         LIBPATH=[
-            'Content/Frameworks',
             'ffmpeg/bin/lib',
+            'ffmpeg/bin/include/libavcodec',
+            'ffmpeg/bin/include/libavformat',
+            'ffmpeg/bin/include/libavdevice',
+            'ffmpeg/bin/include/libavutil',
+            'ffmpeg/bin/include/libswresample',
+            'ffmpeg/bin/include/libswscale',
+            macos_path,
             '/usr/local/lib'],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -78,17 +87,17 @@ elif 'macos' in platform:
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', '@loader_path/Content/Frameworks']
+            '-rpath', 'libPath']
     )
 
     os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
+    libpath = f'{LOCATION}/{platform}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
+    macos_rpath_fix.main()
 elif 'android' in platform:
     print('Exporting for Android isn\'t supported yet!')
 
 
 # Godot compiling stuff
 src = Glob('src/*.cpp')
-libpath = f'{LOCATION}/{platform}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
-
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)

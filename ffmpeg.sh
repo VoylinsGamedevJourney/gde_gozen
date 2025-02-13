@@ -74,10 +74,8 @@ function configure_for_windows_gpl() {
 function configure_for_macos() {
 	# Configuration for the lGPL version
 	./configure --prefix=./bin --enable-shared \
-		--arch=arm64 --target-os=darwin --enable-cross-compile \
-		--extra-ldflags="-mmacosx-version-min=10.13" \
-		--quiet \
-		--extra-cflags="-fPIC -mmacosx-version-min=10.13" \
+		--arch=arm64 --extra-ldflags="-mmacosx-version-min=10.13" \
+		--quiet --extra-cflags="-fPIC -mmacosx-version-min=10.13" \
 		\
 		--disable-postproc --disable-avfilter --disable-sndio \
 		--disable-doc --disable-programs --disable-ffprobe \

@@ -4,9 +4,8 @@ import platform as os_platform
 import subprocess
 
 
-
 def update_submodules():
-    git_command = 'git submodule update' 
+    git_command = 'git submodule update'
 
     print('\nInit/Update submodules:')
     print('1. No; (default)')
@@ -51,10 +50,14 @@ def choose_target():
 def compile_ffmpeg(a_platform):
     l_platform = 0
 
-    if a_platform == 'linux': l_platform = 1
-    elif a_platform == 'windows': l_platform = 2
-    elif a_platform == 'macos': l_platform = 3
-    elif a_platform == 'android': l_platform = 4
+    if a_platform == 'linux':
+        l_platform = 1
+    elif a_platform == 'windows':
+        l_platform = 2
+    elif a_platform == 'macos':
+        l_platform = 3
+    elif a_platform == 'android':
+        l_platform = 4
 
     print('\nDo you want to (re)compile ffmpeg?:')
     print('1. Yes; (default)')
@@ -62,7 +65,7 @@ def compile_ffmpeg(a_platform):
 
     match input('> '):
         case '2': return
-    
+
     print('\nCompile FFmpeg with the GPL v3 license?: (Only needed for rendering)')
     print('1. No; (default)')
     print('2. Yes.')
@@ -95,15 +98,14 @@ def check_required_programs_wsl():
         'git': 'git',
         'yasm': 'yasm'
     }
-    
+
     l_missing_programs = []
-    
+
     for l_program, l_package in l_required_programs.items():
-        l_result = subprocess.run(['wsl', 'which', l_program], 
-                              capture_output=True, text=True, shell=True)
+        l_result = subprocess.run(['wsl', 'which', l_program], capture_output=True, text=True, shell=True)
         if l_result.returncode != 0:
             l_missing_programs.append(l_package)
-    
+
     return len(l_missing_programs) == 0, l_missing_programs
 
 
@@ -162,13 +164,11 @@ def windows_detected():
 
     try:
         # Navigate to the correct directory in WSL
-        l_wsl_path = subprocess.run(['wsl', 'wslpath', os.getcwd()], 
-                capture_output=True, text=True, shell=True).stdout.strip()
-        
+        l_wsl_path = subprocess.run(['wsl', 'wslpath', os.getcwd()], capture_output=True, text=True, shell=True).stdout.strip()
+
         # Run the build script
-        subprocess.run(['wsl', 'python3', 'build.py'], 
-                      cwd=l_wsl_path, check=True, shell=True)
-        
+        subprocess.run(['wsl', 'python3', 'build.py'], cwd=l_wsl_path, check=True, shell=True)
+
         print("\nBuild completed successfully!")
     except subprocess.CalledProcessError as e:
         print(f"\nError during build process: {e}")
@@ -182,7 +182,7 @@ def main():
     print('v===================v')
     print('| GDE GoZen builder |')
     print('^===================^')
-    
+
     if os_platform.system() == 'Windows':
         windows_detected()
 
