@@ -34,12 +34,6 @@ jobs:
       - name: Build MacOS release
         run: scons -j4 target=template_release platform=macos arch=arm64
 
-      #- name: Correct MacOS Binary paths
-      #  run: |
-      #    python macos_rpath_fix.py
-      #    otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
-      #    otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
-
       - name: Uploading addon build
         if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
