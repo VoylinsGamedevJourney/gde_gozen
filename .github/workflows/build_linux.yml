@@ -10,12 +10,12 @@ on:
       artifact_addon:
         description: 'Get artifacts'
         required: true
-        default: false
+        default: true
         type: boolean
       artifact_test_room:
         description: 'Get test_room'
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:
@@ -32,9 +32,9 @@ jobs:
           submodules: recursive
 
       - name: Compiling FFmpeg x86
-        run: python -c 'import build; build.compile_ffmpeg_linux(x86_64)'
+        run: python -c 'import build; build.compile_ffmpeg_linux("x86_64")'
       - name: Compiling FFmpeg arm
-        run: python -c 'import build; build.compile_ffmpeg_linux(arm64)'
+        run: python -c 'import build; build.compile_ffmpeg_linux("arm64")'
 
       - name: Build Linux debug x86_64
         run: scons -j4 target=template_debug platform=linux arch=x86_64 dev_build=yes

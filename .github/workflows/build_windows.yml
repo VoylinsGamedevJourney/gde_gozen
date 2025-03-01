@@ -32,7 +32,7 @@ jobs:
           submodules: recursive
 
       - name: Compiling FFmpeg x86
-        run: python -c 'import build; build.compile_ffmpeg_windows(x86_64)'
+        run: python -c 'import build; build.compile_ffmpeg_windows("x86_64")'
 
       - name: Build Windows debug x86_64
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
