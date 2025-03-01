@@ -10,12 +10,12 @@ on:
       artifact_addon:
         description: 'Get artifacts'
         required: true
-        default: false
+        default: true
         type: boolean
       artifact_test_room:
         description: 'Get test_room'
         required: true
-        default: false
+        default: true
         type: boolean
 
 env:
