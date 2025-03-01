@@ -3,6 +3,10 @@ run-name: Building GDE GoZen - MacOS
 on: 
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Addon version'
+        required: true
+        default: "4.0"
       artifact_addon:
         description: 'Get artifacts'
         required: true
@@ -27,32 +31,40 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build FFmpeg
-        run: ./ffmpeg.sh 3 1
-      - name: Build MacOS debug
+      - name: Compiling FFmpeg arm64
+        run: python -c 'import build; build.compile_ffmpeg_macos(arm64)'
+      - name: Compiling FFmpeg x86_64
+        run: python -c 'import build; build.compile_ffmpeg_macos(x86_64)'
+
+      - name: Build MacOS debug arm64
         run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes
-      - name: Build MacOS release
+      - name: Build MacOS release arm64
         run: scons -j4 target=template_release platform=macos arch=arm64
 
-      #- name: Correct MacOS Binary paths
-      #  run: |
-      #    python macos_rpath_fix.py
-      #    otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
-      #    otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
+      - name: Build MacOS debug x86_64
+        run: scons -j4 target=template_debug platform=macos arch=x86_64 dev_build=yes
+      - name: Build MacOS release x86_64
+        run: scons -j4 target=template_release platform=macos arch=x86_64
 
-      - name: Uploading addon build
+      - name: Correct MacOS Binary paths
+        run: |
+          python -c 'import build; build.macos_fix(arm64); build.macos_fix(x86_64)'
+          otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
+          otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
+
+      - name: Upload addon
         if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Addon_GDE_GoZen_MacOS
+          name: gde_gozen_macos_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 5
 
-      - name: Uploading test room build
+      - name: Upload test_room
         if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Test_room_GDE_GoZen_MacOS
+          name: gde_gozen_test_room_macos_v${{ inputs.version }}
           path: test_room/
           retention-days: 5
 

@@ -1,0 +1,90 @@
+name: Android
+run-name: Building GDE GoZen - Android
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Addon version'
+        required: true
+        default: "4.0"
+      artifact_addon:
+        description: 'Get artifacts'
+        required: true
+        default: false
+        type: boolean
+      artifact_test_room:
+        description: 'Get test_room'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  NDK_VERSION: '25.2.9519653'
+  CMAKE_VERSION: '3.22.1'
+  JAVA_VERSION: '17'
+
+# TODO: Build a arm64-v8a (arm64) and armeabi-v7a (arm32)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Installing dependencies
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg gradle libtool nasm
+
+      # Android stuff
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android NDK
+        run: |
+          mkdir -p ${ANDROID_SDK_ROOT}/ndk
+          cd ${ANDROID_SDK_ROOT}/ndk
+
+          # Download + install NDK
+          wget -q https://dl.google.com/android/repository/android-ndk-r${{ env.NDK_VERSION }}-linux.zip
+          unzip -q android-ndk-r${{ env.NDK_VERSION }}-linux.zip
+          rm android-ndk-r${{ env.NDK_VERSION }}-linux.zip
+          
+          # Add NDK environment variable
+          echo "ANDROID_NDK=${ANDROID_SDK_ROOT}/ndk/android-ndk-r${{ env.NDK_VERSION }}" >> $GITHUB_ENV
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build FFmpeg
+        run: ./ffmpeg.sh 4 1
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_NDK }}
+
+      - name: Build Android debug + release
+        run: |
+          scons -j4 target=template_debug platform=android arch=arm64 dev_build=yes
+          scons -j4 target=template_release platform=android arch=arm64
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_NDK }}
+
+      - name: Uploading addon build
+        if: ${{ github.event.inputs.artifact_addon == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Addon_GDE_GoZen_Android
+          path: test_room/addons/
+          retention-days: 5
+
+      - name: Uploading test room build
+        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test_room_GDE_GoZen_Android
+          path: test_room/
+          retention-days: 5
+

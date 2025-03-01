@@ -3,6 +3,10 @@ run-name: Building GDE GoZen - Linux
 on: 
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Addon version'
+        required: true
+        default: "4.0"
       artifact_addon:
         description: 'Get artifacts'
         required: true
@@ -21,32 +25,40 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg aarch64-linux-gnu-binutils aarch64-linux-gnu-gcc
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Build FFmpeg
-        run: ./ffmpeg.sh 1 1
-      - name: Build Linux debug
+      - name: Compiling FFmpeg x86
+        run: python -c 'import build; build.compile_ffmpeg_linux(x86_64)'
+      - name: Compiling FFmpeg arm
+        run: python -c 'import build; build.compile_ffmpeg_linux(arm64)'
+
+      - name: Build Linux debug x86_64
         run: scons -j4 target=template_debug platform=linux arch=x86_64 dev_build=yes
-      - name: Build Linux release
+      - name: Build Linux release x86_64
         run: scons -j4 target=template_release platform=linux arch=x86_64
 
-      - name: Uploading addon build
+      - name: Build Linux debug arm64
+        run: scons -j4 target=template_debug platform=linux arch=arm64 dev_build=yes
+      - name: Build Linux release arm64
+        run: scons -j4 target=template_release platform=linux arch=arm64
+
+      - name: Upload addon
         if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Addon_GDE_GoZen_Linux
+          name: gde_gozen_linux_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 5
 
-      - name: Uploading test room build
+      - name: Upload test_room
         if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Test_room_GDE_GoZen_Linux
+          name: gde_gozen_test_room_linux_v${{ inputs.version }}
           path: test_room/
           retention-days: 5
 
