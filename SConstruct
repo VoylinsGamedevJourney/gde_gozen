@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import platform as os_platform
-import macos_rpath_fix
 
 
 LIBS_COMMON = [
@@ -14,19 +13,22 @@ LIBS_COMMON = [
 SLEEP_TIME = 2
 LOCATION = "test_room/addons/gde_gozen/bin"
 
+march_flags = {
+    'x86_64': 'x86-64',
+    'arm64': 'native'  # Using 'native' for ARM64 is often safer than specifying specific architecture
+}
 
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
 
 jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
+arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').split('_')[-1]
-libpath = f'{LOCATION}/{platform}/{target}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
+libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
 
 
 if 'linux' in platform:
-    os.makedirs(f'{LOCATION}/{platform}', exist_ok=True)
-
     env.Append(
         LINKFLAGS=['-static-libstdc++'],
         CPPFLAGS=[
@@ -41,12 +43,9 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
-
-    os.system(f'cp ffmpeg/bin/lib/*.so* {LOCATION}/{platform}')
+    env.Append(CCFLAGS=[f'-march={march_flags[arch]}'])
 
 elif 'windows' in platform:
-    os.makedirs(f'{LOCATION}/{platform}', exist_ok=True)
-
     if os_platform.system().lower() == 'windows':
         env.Append(LIBS=[
             'avcodec.lib',
@@ -61,12 +60,10 @@ elif 'windows' in platform:
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
         LIBPATH=['ffmpeg/bin/bin'])
-    os.system(f'cp ffmpeg/bin/bin/*.dll {LOCATION}/{platform}')
 
 elif 'macos' in platform:
     # MacOS can only be build on a MacOS machine!
     macos_path = f'{LOCATION}/{platform}/{target}/lib'
-    os.makedirs(macos_path, exist_ok=True)
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
@@ -90,9 +87,8 @@ elif 'macos' in platform:
             '-rpath', 'libPath']
     )
 
-    os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
-    libpath = f'{LOCATION}/{platform}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
-    macos_rpath_fix.main()
+    # os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
+    libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
 elif 'android' in platform:
     print('Exporting for Android isn\'t supported yet!')
 
