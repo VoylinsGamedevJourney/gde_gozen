@@ -22,9 +22,9 @@ jobs:
           submodules: recursive
 
       - name: Compiling FFmpeg x86
-        run: python -c 'import build; build.compile_ffmpeg_linux("x86_64")'
+        run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_linux("x86_64")'
       - name: Compiling FFmpeg arm
-        run: python -c 'import build; build.compile_ffmpeg_linux("arm64")'
+        run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_linux("arm64")'
 
       - name: Build Linux debug x86_64
         run: scons -j4 target=template_debug platform=linux arch=x86_64 dev_build=yes
@@ -56,7 +56,7 @@ jobs:
           submodules: recursive
 
       - name: Compiling FFmpeg x86
-        run: python -c 'import build; build.compile_ffmpeg_windows("x86_64")'
+        run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_windows("x86_64")'
 
       - name: Build Windows debug x86_64
         run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
@@ -98,10 +98,7 @@ jobs:
         run: scons -j4 target=template_release platform=macos arch=x86_64
 
       - name: Correct MacOS Binary paths
-        run: |
-          python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64"); build.macos_fix("x86_64")'
-          otool -L bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib
-          otool -L bin/macos/release/libgozen.macos.template_release.arm64.dylib
+        run: python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64"); build.macos_fix("x86_64")'
 
       - name: Uploading binaries
         uses: actions/upload-artifact@v4

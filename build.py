@@ -208,18 +208,20 @@ def macos_fix(a_arch):
 
     l_debug_binary = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/libgozen.macos.template_debug.dev.{a_arch}.dylib'
     l_release_binary = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/libgozen.macos.template_release.{a_arch}.dylib'
-    l_debug_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/bin'
-    l_release_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/bin'
+    l_debug_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/lib'
+    l_release_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/lib'
 
     print("Updating @loader_path for MacOS builds")
 
     if os.path.exists(l_debug_binary):
         for l_file in os.listdir(l_debug_bin_folder):
             os.system(f'install_name_tool -change ./bin/lib/{l_file} @loader_path/lib/{l_file} {l_debug_binary}')
+        subprocess.run(['otool', '-L', l_debug_binary], cwd='./')
 
     if os.path.exists(l_release_binary):
         for l_file in os.listdir(l_release_bin_folder):
             os.system(f'install_name_tool -change ./bin/lib/{l_file} @loader_path/lib/{l_file} {l_release_binary}')
+        subprocess.run(['otool', '-L', l_release_binary], cwd='./')
 
 
 def main():
