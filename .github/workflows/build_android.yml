@@ -3,6 +3,10 @@ run-name: Building GDE GoZen - Android
 on: 
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Addon version'
+        required: true
+        default: "4.0"
       artifact_addon:
         description: 'Get artifacts'
         required: true
