@@ -46,7 +46,7 @@ private:
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
 	
 	int64_t duration = 0;
-	int64_t frame_duration = 0;
+	int64_t frame_count = 0;
 
 	int64_t start_time_video = 0;
 	int64_t frame_timestamp = 0;
@@ -72,10 +72,9 @@ private:
 
 	AudioStreamWAV *audio = nullptr;
 
-	PackedByteArray byte_array;
-	PackedByteArray y_data;
-	PackedByteArray u_data;
-	PackedByteArray v_data;
+	Ref<Image> y_data;
+	Ref<Image> u_data;
+	Ref<Image> v_data;
 
 
 	// Private functions
@@ -110,7 +109,7 @@ public:
 	inline String get_path() { return path.c_str(); }
 
 	inline float get_framerate() { return framerate; }
-	inline int get_frame_duration() { return frame_duration; };
+	inline int get_frame_count() { return frame_count; };
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
@@ -138,9 +137,9 @@ public:
 
 	inline bool is_full_color_range() { return full_color_range; }
 
-	inline PackedByteArray get_y_data() { return y_data; }
-	inline PackedByteArray get_u_data() { return u_data; }
-	inline PackedByteArray get_v_data() { return v_data; }
+	inline Ref<Image> get_y_data() { return y_data; }
+	inline Ref<Image> get_u_data() { return u_data; }
+	inline Ref<Image> get_v_data() { return v_data; }
 
 
 protected:
@@ -172,7 +171,7 @@ protected:
 		ClassDB::bind_method(D_METHOD("get_padding"), &Video::get_padding);
 		ClassDB::bind_method(D_METHOD("get_rotation"), &Video::get_rotation);
 
-		ClassDB::bind_method(D_METHOD("get_frame_duration"), &Video::get_frame_duration);
+		ClassDB::bind_method(D_METHOD("get_frame_count"), &Video::get_frame_count);
 
 		ClassDB::bind_method(D_METHOD("enable_debug"), &Video::enable_debug);
 		ClassDB::bind_method(D_METHOD("disable_debug"), &Video::disable_debug);
