@@ -2,203 +2,295 @@ import os
 import sys
 import platform as os_platform
 import subprocess
+import glob
+import shutil
 
 
-
-def update_submodules():
-    git_command = 'git submodule update' 
-
-    print('\nInit/Update submodules:')
-    print('1. No; (default)')
-    print('2. Init;')
-    print('3. Update.')
-
-    match input('> '):
-        case '2': subprocess.run(f'{git_command} --init --recursive', shell=True, cwd='./')
-        case '3': subprocess.run(f'{git_command} --recursive --remote', shell=True, cwd='./')
+# Windows and Linux can be build on Linux or Windows with WSL.
+# For MacOS you need to use MacOS itself else building fails.
 
 
-def choose_platform():
-    print('\nSelect platform:')
-    print('1. Linux; (default)')
-    print('2. Windows;')
-    print('3. MacOS; (possibly working)')
-    print('4. Android. (Not working)')
+threads = os.cpu_count() or 4
 
-    match input('> '):
-        case '2': return 'windows'
-        case '3': return 'macos'
-        case '4': return 'android'
-        case _: return 'linux'
+path_build_windows = 'build_on_windows.py'
+
+title_submodules = 'Init/Update submodules'
+title_platform = 'Select platform'
+title_arch = 'Choose architecture'
+title_recompile_ffmpeg = 'Do you want to (re)compile ffmpeg?'
+title_target = 'Select target'
+
+option_yes = 'yes'
+option_no = 'no'
+option_init = 'initialize'
+option_update = 'update'
+option_debug = 'debug'
+option_release = 'release'
+
+arch_x86_64 = 'x86_64'
+arch_arm64 = 'arm64'
+
+os_linux = 'linux'
+os_windows = 'windows'
+os_macos = 'macos'
+os_android = 'android'
+
+target_dev = 'debug'
+target_release = 'release'
 
 
-def choose_architecture(a_platform):
-    # TODO: Make it possible to actually choose
-    # This option will also need to be passed onto the ffmpeg build script
-    return 'arm64' if a_platform == 'macos' else 'x86_64'
+def _print_options(a_title, a_options):
+    # Helper function to print options and get the input.
+    i = 1
+    print(f'{a_title}:')
+
+    for l_option in a_options:
+        if i == 1:
+            print(f'{i}. {l_option}; (default)')
+        else:
+            print(f'{i}. {l_option};')
+        i += 1
+
+    return input('> ')
 
 
-def choose_target():
-    print('\nSelect target:')
-    print('1. Debug; (default)')
-    print('2. Release.')
-
-    match input('> '):
-        case '2': return 'release'
-        case _: return 'debug dev_build=yes'
-
-
-def compile_ffmpeg(a_platform):
-    l_platform = 0
-
-    if a_platform == 'linux': l_platform = 1
-    elif a_platform == 'windows': l_platform = 2
-    elif a_platform == 'macos': l_platform = 3
-    elif a_platform == 'android': l_platform = 4
-
-    print('\nDo you want to (re)compile ffmpeg?:')
-    print('1. Yes; (default)')
-    print('2. No.')
-
-    match input('> '):
-        case '2': return
-    
-    print('\nCompile FFmpeg with the GPL v3 license?: (Only needed for rendering)')
-    print('1. No; (default)')
-    print('2. Yes.')
-
-    match input('> '):
+def compile_ffmpeg(a_platform, a_arch):
+    match _print_options(title_recompile_ffmpeg, [option_yes, option_no]):
         case '2':
-            subprocess.run(f'./ffmpeg.sh {l_platform} 2', shell=True, cwd='./')
-            subprocess.run('cp ./LICENSE.GPL3 ./test_room/addons/gde_gozen/', shell=True, cwd='./')
-        case _: subprocess.run(f'./ffmpeg.sh {l_platform} 1', shell=True, cwd='./')
+            return
+
+    if os.path.exists('./ffmpeg/ffbuild/config.mak'):
+        print('Cleaning FFmpeg...')
+        subprocess.run(['make', 'distclean'], cwd='./ffmpeg/')
+        subprocess.run(['rm', '-rf', 'bin'], cwd='./ffmpeg/')
+
+    if a_platform == os_linux:
+        compile_ffmpeg_linux(a_arch)
+    elif a_platform == os_windows:
+        compile_ffmpeg_windows(a_arch)
+    elif a_platform == os_macos:
+        compile_ffmpeg_macos(a_arch)
+    elif a_platform == os_android:
+        compile_ffmpeg_android(a_arch)
 
 
-def check_wsl_installation():
-    # Check if WSL is installend when running from Windows.
-    try:
-        l_result = subprocess.run('wsl --status', capture_output=True, text=True, shell=True)
-        return l_result.returncode == 0
-    except FileNotFoundError:
-        return False
+def compile_ffmpeg_linux(a_arch):
+    print('Configuring FFmpeg for Linux ...')
+    l_path = f'./test_room/addons/gde_gozen/bin/linux_{a_arch}'
+    os.environ['PKG_CONFIG_PATH'] = '/usr/lib/pkgconfig'
+
+    os.makedirs(l_path, exist_ok=True)
+
+    subprocess.run([
+        './configure', '--prefix=./bin', '--enable-shared', f'--arch={a_arch}',
+        '--target-os=linux', '--quiet', '--enable-pic',
+        '--extra-cflags="-fPIC"', '--extra-ldflags="-fPIC"',
+        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
+        '--disable-doc', '--disable-programs', '--disable-ffprobe',
+        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
+        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+    ], cwd='./ffmpeg/')
+
+    print('Compiling FFmpeg for Linux ...')
+    subprocess.run(['make', f'-j{threads}'], cwd='./ffmpeg/')
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+
+    print('Copying lib files ...')
+    for l_file in glob.glob('ffmpeg/bin/lib/*.so*'):
+        shutil.copy2(l_file, l_path)
+    for l_file in glob.glob('/usr/lib/libx26*.so'):
+        shutil.copy2(l_file, l_path)
+
+    print('Compiling FFmpeg for Linux finished!')
 
 
-def check_required_programs_wsl():
-    # Check if required programs are installed for WSL
-    l_required_programs = {
-        'gcc': 'build-essential',
-        'make': 'build-essential',
-        'pkg-config': 'pkg-config',
-        'python3': 'python3',
-        'scons': 'scons',
-        'mingw-w64': 'mingw-w64',
-        'git': 'git'
-    }
-    
-    l_missing_programs = []
-    
-    for l_program, l_package in l_required_programs.items():
-        l_result = subprocess.run(['wsl', 'which', l_program], 
-                              capture_output=True, text=True, shell=True)
-        if l_result.returncode != 0:
-            l_missing_programs.append(l_package)
-    
-    return len(l_missing_programs) == 0, l_missing_programs
+def compile_ffmpeg_windows(a_arch):
+    print('Configuring FFmpeg for Windows ...')
+    l_path = f'./test_room/addons/gde_gozen/bin/windows_{a_arch}'
+    os.environ['PKG_CONFIG_LIBDIR'] = f'/usr/{a_arch}-w64-mingw32/lib/pkgconfig'
+    os.environ['PKG_CONFIG_PATH'] = f'/usr/{a_arch}-w64-mingw32/lib/pkgconfig'
+
+    os.makedirs(l_path, exist_ok=True)
+
+    subprocess.run([
+        './configure', '--prefix=./bin', '--enable-shared',
+        f'--arch={a_arch}', '--target-os=mingw32', '--enable-cross-compile',
+        f'--cross-prefix={a_arch}-w64-mingw32-', '--quiet',
+        '--extra-libs=-lpthread', '--extra-ldflags="-fpic"',
+        '--extra-cflags="-fPIC"',
+        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
+        '--disable-doc', '--disable-programs', '--disable-ffprobe',
+        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
+        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+    ], cwd='./ffmpeg/')
+
+    print('Compiling FFmpeg for Windows ...')
+    subprocess.run(['make', f'-j{threads}'], cwd='./ffmpeg/')
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+
+    print('Copying lib files ...')
+    for l_file in glob.glob('ffmpeg/bin/bin/*.dll'):
+        shutil.copy2(l_file, l_path)
+    for l_file in glob.glob(f'/usr/{a_arch}-w64-mingw32/bin/libx26*.dll'):
+        shutil.copy2(l_file, l_path)
+
+    print('Compiling FFmpeg for Windows finished!')
 
 
-def print_install_wsl_instructions():
-    # Providing instructions
-    print('\n WSL (Windows Subsystem for Linux) is not installed!')
-    print('\nSteps to install WSL:')
-    print('\t1. Open PowerShell as an Administrator;')
-    print('\t2. Run the command: wsl --install')
-    print('\t3. Restart your computer;')
-    print('\t4. Complete the Ubuntu setup when it launches automatically after restart;')
-    print('\nAfter installation, run this script again.')
-    input('\nPress Enter to exit...')
-    sys.exit(1)
+def compile_ffmpeg_macos(a_arch):
+    print('Configuring FFmpeg for MacOS ...')
+    l_path_debug = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/lib'
+    l_path_release = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/lib'
+
+    os.makedirs(l_path_debug, exist_ok=True)
+    os.makedirs(l_path_release, exist_ok=True)
+
+    subprocess.run([
+        './configure', '--prefix=./bin', '--enable-shared',
+        f'--arch={a_arch}', '--extra-ldflags="-mmacosx-version-min=10.13"',
+        '--quiet', '--extra-cflags="-fPIC -mmacosx-version-min=10.13"',
+        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
+        '--disable-doc', '--disable-programs', '--disable-ffprobe',
+        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
+        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+    ], cwd='./ffmpeg/')
+
+    print('Compiling FFmpeg for MacOS ...')
+    subprocess.run(['make', f'-j{threads}'], cwd='./ffmpeg/')
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+
+    print('Copying lib files ...')
+    for l_file in glob.glob('bin/lib/*.dylib'):
+        shutil.copy2(l_file, l_path_debug)
+        shutil.copy2(l_file, l_path_release)
+
+    print('Compiling FFmpeg for MacOS finished!')
 
 
-def install_wsl_required_programs():
-    # Installing necessary WSL programs
-    print('\nInstalling required programs in WSL')
+def compile_ffmpeg_android(a_arch):
+    print('Configuring FFmpeg for Android ...')
+    l_path = f'./test_room/addons/gde_gozen/bin/android_{a_arch}'
+    l_ndk = os.getenv('ANDROID_NDK')
 
-    try:
-        # Updating package list
-        subprocess.run('wsl sudo apt-get update', shell=True, check=True)
-
-        # Installing required packages
-        subprocess.run(['wsl', 'sudo', 'apt-get', 'install', '-y',
-                        'build-essential', 'pkg-config', 'python3',
-                        'scons', 'mingw-w64', 'git'], shell=True)
-        print('\nSuccessfully isntalled the required WSL programs!')
-    except subprocess.CalledProcessError:
-        print('\nError installing programs!')
-        print('Please run the following commands in WSL manually:')
-        print('\tsudo apt-get update')
-        print('\tsudo apt-get install build-essential pkg-config python3 scons mingw-w64 git')
-        input('Press Enter to exit...')
+    if not l_ndk:
+        print('ANDROID_NDK environment variable is not set to your NDK path!')
         sys.exit(1)
 
+    os.makedirs(l_path, exist_ok=True)
 
-def windows_detected():
-    print('\nWindows system detected ...')
-    print('Need WSL to build GDE GoZen')
+    subprocess.run([
+        './configure', '--prefix=./bin', '--enable-shared', '--arch=arm',
+        '--cpu=armv7-a', '--target-os=android', '--enable-pic',
+        '--enable-cross-compile', '--extra-cflags="-fPIC"',
+        f'--cross-prefix={l_ndk}/toolchains/llvm/prebuilt/linux-{a_arch}/bin/arm-linux-androideabi-',
+        f'--sysroot={l_ndk}/toolchains/llvm/prebuilt/linux-{a_arch}/sysroot',
+        f'--cc={l_ndk}/toolchains/llvm/prebuilt/linux-{a_arch}/bin/armv7a-linux-androideabi21-clang',
+        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
+        '--disable-doc', '--disable-programs', '--disable-ffprobe',
+        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
+        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+    ], cwd='./ffmpeg/')
 
-    if not check_wsl_installation():
-        print_install_wsl_instructions()
+    print('Compiling FFmpeg for Android ...')
+    subprocess.run(['make', f'-j{threads}'], cwd='./ffmpeg/')
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
 
-    l_programs_installed, l_missing_programs = check_required_programs_wsl()
+    print('Copying lib files ...')
+    # TODO:
 
-    if not l_programs_installed:
-        print('\nSome required programs are missing in WSL:')
+    print('Compiling FFmpeg for Android finished!')
 
-        for l_program in l_missing_programs:
-            print(f'\t- {l_program}')
 
-        # Attempt on installing them
-        install_wsl_required_programs()
+def macos_fix(a_arch):
+    # This is a fix for the MacOS builds to get the libraries to properly connect to
+    # the gdextension library. Without it, the FFmpeg libraries can't be found.
+    print('Running fix for MacOS builds ...')
 
-    try:
-        # Navigate to the correct directory in WSL
-        l_wsl_path = subprocess.run(['wsl', 'wslpath', os.getcwd()], 
-                capture_output=True, text=True, shell=True).stdout.strip()
-        
-        # Run the build script
-        subprocess.run(['wsl', 'python3', 'build.py'], 
-                      cwd=l_wsl_path, check=True, shell=True)
-        
-        print("\nBuild completed successfully!")
-    except subprocess.CalledProcessError as e:
-        print(f"\nError during build process: {e}")
-        input("\nPress Enter to exit...")
-        sys.exit(1)
+    l_debug_binary = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/libgozen.macos.template_debug.dev.{a_arch}.dylib'
+    l_release_binary = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/libgozen.macos.template_release.{a_arch}.dylib'
+    l_debug_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/debug/lib'
+    l_release_bin_folder = f'./test_room/addons/gde_gozen/bin/macos_{a_arch}/release/lib'
 
-    sys.exit(0)
+    print("Updating @loader_path for MacOS builds")
+
+    if os.path.exists(l_debug_binary):
+        for l_file in os.listdir(l_debug_bin_folder):
+            os.system(f'install_name_tool -change ./bin/lib/{l_file} @loader_path/lib/{l_file} {l_debug_binary}')
+        subprocess.run(['otool', '-L', l_debug_binary], cwd='./')
+
+    if os.path.exists(l_release_binary):
+        for l_file in os.listdir(l_release_bin_folder):
+            os.system(f'install_name_tool -change ./bin/lib/{l_file} @loader_path/lib/{l_file} {l_release_binary}')
+        subprocess.run(['otool', '-L', l_release_binary], cwd='./')
 
 
 def main():
     print('v===================v')
     print('| GDE GoZen builder |')
     print('^===================^')
-    
+
+    if sys.version_info < (3, 10):
+        print("Python 3.10+ is required to run this script!")
+        sys.exit(2)
+
     if os_platform.system() == 'Windows':
-        windows_detected()
+        # Oh no, Windows detected. ^^"
+        subprocess.run([sys.executable, path_build_windows], cwd='./', check=True)
+        sys.exit(3)
 
-    update_submodules()
+    match _print_options(title_submodules, [option_no, option_init, option_update]):
+        case '2':
+            subprocess.run(['git', 'submodule', 'update',
+                            '--init', '--recursive'], cwd='./')
+        case '3':
+            subprocess.run(['git', 'submodule', 'update',
+                            '--recursive', '--remote'], cwd='./')
 
-    l_platform = choose_platform()
-    l_arch = choose_architecture(l_platform)
-    l_target = choose_target()
-    l_threads = int(input('Number of threads/cores for compiling> '))
+    l_platform = os_linux
+    match _print_options(title_platform, [os_linux, os_windows, os_macos, os_android]):
+        case '2':
+            l_platform = os_windows
+        case '3':
+            l_platform = os_macos
+        case '4':
+            l_platform = os_android
 
-    compile_ffmpeg(l_platform)
-    subprocess.run(f'scons -j{l_threads} target=template_{l_target} '
-                   f'platform={l_platform} arch={l_arch}',
-                   shell=True, cwd='./')
+    # arm64 isn't supported yet by mingw for Windows, so x86_64 only.
+    l_arch = arch_x86_64 if l_platform != os_macos else arch_arm64
+    match l_platform:
+        case 'linux':
+            if _print_options(title_arch, [arch_x86_64, arch_arm64]) == '2':
+                l_arch = arch_arm64
+        case 'macos':
+            if _print_options(title_arch, [arch_arm64, arch_x86_64]) == '2':
+                l_arch = arch_x86_64
+        case 'android':
+            l_arch = arch_arm64
 
-    print("\nDone building GDE GoZen!\n")
+    # When selecting the target, we set dev_build to yes to get more debug info
+    # which is helpful when debugging to get something useful of an error msg.
+    l_target = target_dev
+    l_dev_build = ''
+    match _print_options(title_target, [target_dev, target_release]):
+        case '2':
+            l_target = target_release
+        case _:
+            l_dev_build = 'dev_build=yes'
+
+    compile_ffmpeg(l_platform, l_arch)
+    subprocess.run(['scons', f'-j{threads}', f'target=template_{l_target}', f'platform={l_platform}', f'arch={l_arch}', l_dev_build],
+                   cwd='./')
+
+    if l_platform == os_macos:
+        macos_fix(l_arch)
+
+    print('\n')
+    print('v=========================v')
+    print('| Done building GDE GoZen |')
+    print('^=========================^')
+    print('\n')
 
 
 if __name__ == '__main__':
     main()
+
