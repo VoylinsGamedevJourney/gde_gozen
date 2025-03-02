@@ -71,9 +71,9 @@ func open_video(a_file: String) -> void:
 
 func after_video_open() -> void:
 	if video_playback.is_open():
-		timeline.max_value = video_playback.get_video_frame_duration() - 1
+		timeline.max_value = video_playback.get_video_frame_count() - 1
 		play_pause_button.texture_normal = icons[0]
-		max_frame_value.text = str(video_playback.get_video_frame_duration())
+		max_frame_value.text = str(video_playback.get_video_frame_count())
 		fps_value.text = str(video_playback.get_video_framerate()).left(5)
 		loading_screen.visible = false
 
