@@ -27,6 +27,14 @@ Feeling more adventurous and want to compile by yourself? For all compiling info
 
 For information of how to use this GDExtension, you can go to the [Usage info readme](https://github.com/VoylinsGamedevJourney/gde_gozen/blob/master/USAGE_INFO.md). The addon build also comes with a README which contains information on how to use the GDExtension.
 
+## Supporting GDE GoZen
+
+Supporting GDE GoZen and GoZen can be done through 2 channels:
+- https://opencollective.com/gozen is for donations which exclusively go to GoZen development;
+- https://ko-fi.com/voylin are for donations to support me, my projects, the YT channels, and GoZen;
+
+Feel free to decide which one you want to go for. ;)
+
 ## Licensing
 
 Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. If you want access to all video codecs and features, you'll have to use the GPL 3.0 license for your project, this is especially important when wanting to use the rendering capabilities of this GDExtension. Licensing is complicated and I'm not a lawyer. When building the GDExtension you'll be asked if you want the GPL build or not. For commercial projects of which the code is not open source, don't use GPL. If your project is open source and under the GPL license, you can use the GPL build.
