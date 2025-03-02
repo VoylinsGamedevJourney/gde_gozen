@@ -37,7 +37,10 @@ Feel free to decide which one you want to go for. ;)
 
 ## Licensing
 
-Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. If you want access to all video codecs and features, you'll have to use the GPL 3.0 license for your project, this is especially important when wanting to use the rendering capabilities of this GDExtension. Licensing is complicated and I'm not a lawyer. When building the GDExtension you'll be asked if you want the GPL build or not. For commercial projects of which the code is not open source, don't use GPL. If your project is open source and under the GPL license, you can use the GPL build.
+Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. Licensing is complicated and I'm not a lawyer. As long as you don't make adjustments to the way that FFmpeg gets compiled, there should be no issue for your projects/games.
 
 > This software uses libraries from the FFmpeg project under the LGPLv2.1
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)
+[GoZen Open Collective page](https://opencollective.com/gozen)
 
