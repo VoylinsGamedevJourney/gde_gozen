@@ -112,18 +112,6 @@ AudioStreamWAV *FFmpeg::get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 		return l_audio;
 	}
 
-	// Set the seeker to the beginning
-	int start_time_audio = a_stream->start_time != AV_NOPTS_VALUE ? a_stream->start_time : 0;
-	avcodec_flush_buffers(l_codec_ctx_audio);
-
-	if ((response = av_seek_frame(a_format_ctx, -1, start_time_audio, AVSEEK_FLAG_BACKWARD)) < 0) {
-		UtilityFunctions::printerr("Can't seek to the beginning of audio stream!");
-		avcodec_flush_buffers(l_codec_ctx_audio);
-		avcodec_free_context(&l_codec_ctx_audio);
-		swr_free(&l_swr_ctx);
-		return l_audio;
-	}
-
 	AVFrame *l_frame = av_frame_alloc();
 	AVFrame *l_decoded_frame = av_frame_alloc();
 	AVPacket *l_packet = av_packet_alloc();
@@ -200,4 +188,3 @@ AudioStreamWAV *FFmpeg::get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_s
 
 	return l_audio;
 }
-
