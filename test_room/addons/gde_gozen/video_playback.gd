@@ -33,7 +33,7 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
-var video: Video = null ## Video class object of GDE GoZen which interadcts with video files through FFmpeg.
+var video: Video = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 
 var video_texture: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.
@@ -48,7 +48,7 @@ var _skips: int = 0
 var _rotation: int = 0
 var _padding: int = 0
 var _frame_rate: float = 0.
-var _frame_duration: int = 0
+var _frame_count: int = 0
 
 var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
@@ -56,6 +56,10 @@ var _shader_material: ShaderMaterial = null
 
 var _thread: Thread = Thread.new()
 var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
+
+var y_texture: ImageTexture;
+var u_texture: ImageTexture;
+var v_texture: ImageTexture;
 
 
 #------------------------------------------------ TREE FUNCTIONS
@@ -132,7 +136,7 @@ func update_video(a_video: Video) -> void:
 	_rotation = video.get_rotation()
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
-	_frame_duration = video.get_frame_duration()
+	_frame_count = video.get_frame_count()
 	_uv_resolution = Vector2i(int((_resolution.x + _padding) / 2.), int(_resolution.y / 2.))
 	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
@@ -179,7 +183,7 @@ func seek_frame(a_frame_nr: int) -> void:
 	if !is_open() and a_frame_nr == current_frame:
 		return
 
-	current_frame = clamp(a_frame_nr, 0, _frame_duration)
+	current_frame = clamp(a_frame_nr, 0, _frame_count)
 	if video.seek_frame(a_frame_nr):
 		printerr("Couldn't seek frame!")
 	else:
@@ -213,6 +217,9 @@ func _process(a_delta: float) -> void:
 		if !_thread.is_alive():
 			_thread.wait_to_finish()
 			update_video(video)
+			if enable_auto_play:
+				play()
+		return
 
 	if is_playing:
 		_time_elapsed += a_delta
@@ -226,7 +233,7 @@ func _process(a_delta: float) -> void:
 			current_frame += 1
 			_skips += 1
 
-		if current_frame >= _frame_duration:
+		if current_frame >= _frame_count:
 			is_playing = !is_playing
 
 			if enable_audio:
@@ -267,9 +274,9 @@ func pause() -> void:
 
 
 #------------------------------------------------ GETTERS
-func get_video_frame_duration() -> int:
-	## Getting the frame duration returns the total amount of frames found of the video file.
-	return _frame_duration
+func get_video_frame_count() -> int:
+	## Getting the total amount of frames found in the video file.
+	return _frame_count
 
 
 func get_video_framerate() -> float:
@@ -300,26 +307,22 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	_shader_material.set_shader_parameter("y_data", _get_img_tex(
-		video.get_y_data(),
-		_resolution.x + _padding,
-		_resolution.y))
+	#first frame create texture
+	if(!y_texture):
+		y_texture = ImageTexture.create_from_image(video.get_y_data())
+		u_texture = ImageTexture.create_from_image(video.get_u_data())
+		if video.get_pixel_format().begins_with("yuv"):
+			v_texture = ImageTexture.create_from_image(video.get_v_data())
+	else: #just need to update texture, should be faster
+		y_texture.update(video.get_y_data())
+		u_texture.update(video.get_u_data())
+		if video.get_pixel_format().begins_with("yuv"):
+			v_texture.update(video.get_v_data())
 
+	_shader_material.set_shader_parameter("y_data", y_texture)
+	_shader_material.set_shader_parameter("u_data", u_texture)
 	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.set_shader_parameter("u_data", _get_img_tex(
-				video.get_u_data(),
-				_uv_resolution.x,
-				_uv_resolution.y))
-		_shader_material.set_shader_parameter("v_data", _get_img_tex(
-				video.get_v_data(),
-				_uv_resolution.x,
-				_uv_resolution.y))
-	else:
-		_shader_material.set_shader_parameter("u_data", _get_img_tex(
-				video.get_u_data(),
-				_uv_resolution.x,
-				_uv_resolution.y,
-				false))
+		_shader_material.set_shader_parameter("v_data", v_texture)
 
 
 func set_playback_speed(a_value: float) -> void:
@@ -351,7 +354,8 @@ func _set_pitch_adjust() -> void:
 func _open_video() -> void:
 	var err: int = video.open(path, enable_audio)
 	if err:
-		printerr("Error opening video: ", err)
+		printerr("Error opening video!")
+		GoZenError.print_error(err)
 
 
 func _print_system_debug() -> void:
@@ -377,8 +381,8 @@ func _print_video_debug() -> void:
 	print("Pixel format: ", video.get_pixel_format())
 	print("Color profile: ", video.get_color_profile())
 	print("Framerate: ", _frame_rate)
-	print("Duration (in frames): ", _frame_duration)
+	print("Duration (in frames): ", _frame_count)
 	print("Padding: ", _padding)
 	print("Rotation: ", _rotation)
 	print("Full color range: ", video.is_full_color_range())
-
+	
