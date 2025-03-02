@@ -27,6 +27,3 @@ Since version 4.1 we have three different ways to compile the GDExtension. You c
 
 For compiling instructions visit the [COMPILING_INFO.md](https://github.com/VoylinsGamedevJourney/gde_gozen/blob/master/COMPILE_INFO.md).
 
-### Renderer
-
-The rendering system is working, but its still too much of a WIP to say that you won't have any issues. As [GoZen](https://github.com/VoylinsGamedevJourney/GoZen) is evolving into a real video editor, work on this part of the GDExtension will also improve. A lot of changes are still happening to the GDExtension and the Renderer class is still being heavily developed. If you really need Rendering to work, keep an eye on the `test_room` in which I have a very basic example, you will need enough coding experience as there is no "Rendering Node" which is a one click solution. If you want this to work, and you **know** how to code, feel free to reach out on the [Discord server](https://discord.com/invite/BdbUf7VKYC) if you run into any issues. (But please only if you know how to code and you actually gave it a try first, respect my time please)
