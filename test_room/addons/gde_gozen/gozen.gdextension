@@ -17,7 +17,6 @@ macos.release.arm64 = "res://addons/gde_gozen/bin/macos/libgozen.macos.template_
 [icon]
 
 Video = "res://addons/gde_gozen/icon.svg"
-Renderer = "res://addons/gde_gozen/icon.svg"
 Audio = "res://addons/gde_gozen/icon.svg"
 
 [dependencies]

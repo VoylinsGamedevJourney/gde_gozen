@@ -24,29 +24,6 @@ void GoZenError::print_error(ERROR a_err) {
 		case ERR_OPENING_AUDIO:
 			return _print("Couldn't open audio file!");
 
-		case ERR_NOT_OPEN_RENDERER:
-			return _print("Renderer is not open!");
-		case ERR_ALREADY_OPEN_RENDERER:
-			return _print("Renderer is already open!");
-		case ERR_NO_PATH_SET:
-			return _print("No path was set!");
-		case ERR_NO_CODEC_SET_VIDEO:
-			return _print("No video codec was set!");
-		case ERR_FAILED_SENDING_FRAME:
-			return _print("Something went wrong sending a frame to encoder!");
-		case ERR_ENCODING_FRAME:
-			return _print("Failed to encode frame!");
-		case ERR_FAILED_FLUSH:
-			return _print("Failed to flush data to encoder!");
-		case ERR_AUDIO_ALREADY_SEND:
-			return _print("Audio has already been send to encoder!");
-		case ERR_AUDIO_NOT_SEND:
-			return _print("Audio needs to be send first for rendering!");
-		case ERR_AUDIO_NOT_ENABLED:
-			return _print("Audio not enabled for this renderer!");
-		case ERR_FAILED_RESAMPLE:
-			return _print("Failed to resample audio!");
-
 		case ERR_CREATING_AV_FORMAT_FAILED:
 			return _print("Couldn't allocate av format context!");
 		case ERR_NO_STREAM_INFO_FOUND:
