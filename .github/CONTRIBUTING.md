@@ -8,7 +8,9 @@ Performance on the FFmpeg code can always be improved, same as for adding featur
 
 ### OS support
 
-OS support is a very difficult subject as I don't have enough funds personally to get Mac hardware, or to get a separate Windows system, ... That's why support is limited to Linux (which I mostly take care of) and Windows (which the community mostly takes care of due to my limited knowledge of Windows/Doors).
+OS support is a very difficult subject as I don't have enough funds personally to get Apple hardware, or to get a separate Windows system, ... A Windows VM is something I'm personally using, but that comes with issues for testing hardware decoding/encoding. That's why support is limited to Linux (which I mostly take care of) and Windows (which the community mostly takes care of due to my limited knowledge of Windows/Doors).
+
+Every now and then there is a MacOS developer which contributes a bit but support for MacOS can be unstable so until we find a developer which uses a Mac, or until I have the funds to get some hardware myself, I can't guarantee a smooth experience for Mac users.
 
 ## Reporting Issues
 
