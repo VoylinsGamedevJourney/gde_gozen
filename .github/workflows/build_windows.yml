@@ -6,7 +6,7 @@ on:
       version:
         description: 'Addon version'
         required: true
-        default: "4.0"
+        default: "5.0"
       artifact_addon:
         description: 'Get addon'
         required: true
