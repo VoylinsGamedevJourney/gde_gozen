@@ -31,6 +31,7 @@ const PLAYBACK_SPEED_MAX: float = 4
 @export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
 var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video playback speed, 0.5 = half the speed and 2 = double the speed.
 @export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
+@export var loop: bool = false ## Enable/disable looping on video_ended.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
 var video: Video = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
@@ -240,6 +241,9 @@ func _process(a_delta: float) -> void:
 				audio_player.set_stream_paused(true)
 
 			video_ended.emit()
+			if loop:
+				seek_frame(0)
+				play()
 		else:
 			while _skips != 1:
 				next_frame(true)
