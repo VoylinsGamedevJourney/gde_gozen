@@ -131,8 +131,8 @@ def compile_ffmpeg_windows(a_arch):
     print('Copying lib files ...')
     for l_file in glob.glob('ffmpeg/bin/bin/*.dll'):
         shutil.copy2(l_file, l_path)
-    for l_file in glob.glob(f'/usr/{a_arch}-w64-mingw32/bin/libx26*.dll'):
-        shutil.copy2(l_file, l_path)
+    os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {l_path}')
+    os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {l_path}')
 
     print('Compiling FFmpeg for Windows finished!')
 
