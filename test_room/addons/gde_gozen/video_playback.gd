@@ -210,6 +210,9 @@ func close() -> void:
 		if is_playing:
 			pause()
 		video = null
+		y_texture = null
+		u_texture = null
+		v_texture = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING
