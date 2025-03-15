@@ -101,10 +101,14 @@ func set_video_path(a_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
 	if video != null:
 		close()
-
-	audio_player.stream = null
-	video = Video.new()
+	
 	path = a_path
+	audio_player.stream = null
+
+	if path == "":
+		return
+
+	video = Video.new()
 
 	# Windows hardware decoding is NOT available so should always be false to prevent crashing.
 	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
