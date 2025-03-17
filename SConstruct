@@ -10,7 +10,6 @@ LIBS_COMMON = [
     'avutil',
     'swresample',
     'swscale']
-SLEEP_TIME = 2
 LOCATION = "test_room/addons/gde_gozen/bin"
 
 march_flags = {
@@ -20,12 +19,14 @@ march_flags = {
 
 env = SConscript('godot_cpp/SConstruct')
 env.Append(CPPPATH=['src'])
+env_suffix = env['suffix']
+env_shlibsuffix = env['SHLIBSUFFIX']
 
 jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
 arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').split('_')[-1]
-libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
+libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
 
 
 if 'linux' in platform:
@@ -88,7 +89,7 @@ elif 'macos' in platform:
     )
 
     # os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
-    libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env['suffix']}{env['SHLIBSUFFIX']}'
+    libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env_suffix}{env_shlibsuffix}'
 elif 'android' in platform:
     print('Exporting for Android isn\'t supported yet!')
 
