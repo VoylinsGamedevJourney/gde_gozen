@@ -109,7 +109,7 @@ public:
 	inline String get_path() { return path.c_str(); }
 
 	inline float get_framerate() { return framerate; }
-	inline int get_frame_count() { return frame_count; };
+	inline int get_frame_count() { return std::round(frame_count); };
 	inline Vector2i get_resolution() { return resolution; }
 	inline int get_width() { return resolution.x; }
 	inline int get_height() { return resolution.y; }
