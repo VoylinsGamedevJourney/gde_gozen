@@ -160,7 +160,7 @@ def compile_ffmpeg_macos(a_arch):
     subprocess.run(['make', 'install'], cwd='./ffmpeg/')
 
     print('Copying lib files ...')
-    for l_file in glob.glob('bin/lib/*.dylib'):
+    for l_file in glob.glob('./ffmpeg/bin/lib/*.dylib'):
         shutil.copy2(l_file, l_path_debug)
         shutil.copy2(l_file, l_path_release)
 
