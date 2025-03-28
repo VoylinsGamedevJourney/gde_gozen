@@ -253,7 +253,10 @@ windows.debug.x86_64 = {
 	"res://addons/gde_gozen/bin/windows_x86_64/avutil-58.dll" : "",
 
 	"res://addons/gde_gozen/bin/windows_x86_64/swresample-4.dll" : "",
-	"res://addons/gde_gozen/bin/windows_x86_64/swscale-7.dll" : ""
+	"res://addons/gde_gozen/bin/windows_x86_64/swscale-7.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows_x86_64/libwinpthread-1.dll" : "",
+	"res://addons/gde_gozen/bin/windows_x86_64/libstdc++-6.dll" : ""
 }
 windows.release.x86_64 = {
     "res://addons/gde_gozen/bin/windows_x86_64/avcodec-60.dll" : "",
@@ -262,7 +265,10 @@ windows.release.x86_64 = {
     "res://addons/gde_gozen/bin/windows_x86_64/avutil-58.dll" : "",
 
 	"res://addons/gde_gozen/bin/windows_x86_64/swresample-4.dll" : "",
-	"res://addons/gde_gozen/bin/windows_x86_64/swscale-7.dll" : ""
+	"res://addons/gde_gozen/bin/windows_x86_64/swscale-7.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows_x86_64/libwinpthread-1.dll" : "",
+	"res://addons/gde_gozen/bin/windows_x86_64/libstdc++-6.dll" : ""
 }
 windows.debug.x86_32 = {
     "res://addons/gde_gozen/bin/windows_x86_32/avcodec-60.dll" : "",
@@ -271,7 +277,10 @@ windows.debug.x86_32 = {
 	"res://addons/gde_gozen/bin/windows_x86_32/avutil-58.dll" : "",
 
 	"res://addons/gde_gozen/bin/windows_x86_32/swresample-4.dll" : "",
-	"res://addons/gde_gozen/bin/windows_x86_32/swscale-7.dll" : ""
+	"res://addons/gde_gozen/bin/windows_x86_32/swscale-7.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows_x86_32/libwinpthread-1.dll" : "",
+	"res://addons/gde_gozen/bin/windows_x86_32/libstdc++-6.dll" : ""
 }
 windows.release.x86_32 = {
     "res://addons/gde_gozen/bin/windows_x86_32/avcodec-60.dll" : "",
@@ -280,7 +289,10 @@ windows.release.x86_32 = {
     "res://addons/gde_gozen/bin/windows_x86_32/avutil-58.dll" : "",
 
 	"res://addons/gde_gozen/bin/windows_x86_32/swresample-4.dll" : "",
-	"res://addons/gde_gozen/bin/windows_x86_32/swscale-7.dll" : ""
+	"res://addons/gde_gozen/bin/windows_x86_32/swscale-7.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows_x86_32/libwinpthread-1.dll" : "",
+	"res://addons/gde_gozen/bin/windows_x86_32/libstdc++-6.dll" : ""
 }
 windows.debug.arm64 = {
     "res://addons/gde_gozen/bin/windows_arm64/avcodec-60.dll" : "",
@@ -289,7 +301,10 @@ windows.debug.arm64 = {
 	"res://addons/gde_gozen/bin/windows_arm64/avutil-58.dll" : "",
 
 	"res://addons/gde_gozen/bin/windows_arm64/swresample-4.dll" : "",
-	"res://addons/gde_gozen/bin/windows_arm64/swscale-7.dll" : ""
+	"res://addons/gde_gozen/bin/windows_x86_32/swscale-7.dll" : "",
+
+	"res://addons/gde_gozen/bin/windows_x86_32/libwinpthread-1.dll" : "",
+	"res://addons/gde_gozen/bin/windows_x86_32/libstdc++-6.dll" : ""
 }
 windows.release.arm64 = {
     "res://addons/gde_gozen/bin/windows_arm64/avcodec-60.dll" : "",
