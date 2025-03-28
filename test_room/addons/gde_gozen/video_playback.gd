@@ -93,24 +93,22 @@ func _exit_tree() -> void:
 
 
 func _ready() -> void:
-	## Function get's run like this because else the project crashes as export variables get set and their setters run before the node is completely ready.
-	if path != "":
-		set_video_path(path)
-
 	playback_ready.emit()
 
 
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(a_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
-	if !is_node_ready():
-		return
-	elif video != null:
+	if video != null:
 		close()
-
-	audio_player.stream = null
-	video = Video.new()
+	
 	path = a_path
+	audio_player.stream = null
+
+	if path == "":
+		return
+
+	video = Video.new()
 
 	# Windows hardware decoding is NOT available so should always be false to prevent crashing.
 	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
@@ -119,6 +117,9 @@ func set_video_path(a_path: String) -> void:
 		video.enable_debug()
 	else:
 		video.disable_debug()
+
+	if !is_node_ready():
+		await ready
 
 	if _thread.start(_open_video):
 		printerr("Couldn't create thread!")
