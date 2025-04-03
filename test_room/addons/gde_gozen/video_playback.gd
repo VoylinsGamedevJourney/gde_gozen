@@ -175,10 +175,21 @@ func update_video(a_video: Video) -> void:
 	is_playing = false
 	set_playback_speed(playback_speed)
 	current_frame = 0
-	if video.seek_frame(current_frame):
-		printerr("Couldn't seek frame!")
 
-	_set_frame_image()
+	if(!y_texture):
+		y_texture = ImageTexture.create_from_image(video.get_y_data())
+		u_texture = ImageTexture.create_from_image(video.get_u_data())
+		if video.get_pixel_format().begins_with("yuv"):
+			v_texture = ImageTexture.create_from_image(video.get_v_data())
+
+	_shader_material.set_shader_parameter("y_data", y_texture)
+	if video.get_pixel_format().begins_with("yuv"):
+		_shader_material.set_shader_parameter("u_data", u_texture)
+		_shader_material.set_shader_parameter("v_data", v_texture)
+	else:
+		_shader_material.set_shader_parameter("uv_data", u_texture)
+
+	seek_frame(current_frame)
 
 	video_loaded.emit()
 
@@ -213,7 +224,9 @@ func close() -> void:
 	if video != null:
 		if is_playing:
 			pause()
+
 		video = null
+
 		y_texture = null
 		u_texture = null
 		v_texture = null
@@ -229,6 +242,7 @@ func _process(a_delta: float) -> void:
 
 			if _threads.is_empty():
 				update_video(video)
+
 				if enable_auto_play:
 					play()
 		return
@@ -322,24 +336,10 @@ func _set_current_frame(a_value: int) -> void:
 
 
 func _set_frame_image() -> void:
-	#first frame create texture
-	if(!y_texture):
-		y_texture = ImageTexture.create_from_image(video.get_y_data())
-		u_texture = ImageTexture.create_from_image(video.get_u_data())
-		if video.get_pixel_format().begins_with("yuv"):
-			v_texture = ImageTexture.create_from_image(video.get_v_data())
-	else: #just need to update texture, should be faster
-		y_texture.update(video.get_y_data())
-		u_texture.update(video.get_u_data())
-		if video.get_pixel_format().begins_with("yuv"):
-			v_texture.update(video.get_v_data())
-
-	_shader_material.set_shader_parameter("y_data", y_texture)
+	y_texture.update(video.get_y_data())
+	u_texture.update(video.get_u_data())
 	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.set_shader_parameter("u_data", u_texture)
-		_shader_material.set_shader_parameter("v_data", v_texture)
-	else:
-		_shader_material.set_shader_parameter("uv_data", u_texture)
+		v_texture.update(video.get_v_data())
 
 
 func set_playback_speed(a_value: float) -> void:
