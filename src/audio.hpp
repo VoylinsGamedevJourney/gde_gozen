@@ -1,13 +1,17 @@
 #pragma once
 
+#include <cmath>
+
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/control.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/variant/packed_byte_array.hpp>
+#include <godot_cpp/core/math.hpp>
 
 #include "ffmpeg.hpp"
-#include "gozen_error.hpp"
+#include "ffmpeg_helpers.hpp"
 
 
 using namespace godot;
@@ -15,20 +19,29 @@ using namespace godot;
 class Audio : public Resource {
 	GDCLASS(Audio, Resource);
 
+private:
+	static PackedByteArray _get_audio(AVFormatContext *&format_ctx,
+									  AVStream *&stream, bool wav);
+
+	static inline void _log(String message) {
+		UtilityFunctions::print("Audio: ", message, ".");
+	}
+	static inline bool _log_err(String message) {
+		UtilityFunctions::printerr("Audio: ", message, "!");
+		return false;
+	}
+
 public:
-	static inline int error = 0;
+	static PackedByteArray get_audio_data(String file_path);
 
+	static PackedByteArray combine_data(PackedByteArray audio_one,
+										PackedByteArray audio_two);
 
-	static inline int get_error() { return error; }
-
-
-	static inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); }
-	static AudioStreamWAV *get_wav(String a_path);
-
+	static PackedByteArray change_db(PackedByteArray audio_data, float db);
+	static PackedByteArray change_to_mono(PackedByteArray audio_data,
+										  bool left);
 
 protected:
-	static inline void _bind_methods() {
-		ClassDB::bind_static_method("Audio", D_METHOD("get_error"), &Audio::get_error);
-		ClassDB::bind_static_method("Audio", D_METHOD("get_wav", "a_file_path"), &Audio::get_wav);
-	}
+	static void _bind_methods();
 };
+

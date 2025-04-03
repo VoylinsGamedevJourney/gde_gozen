@@ -13,7 +13,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 
 #include "ffmpeg.hpp"
-#include "gozen_error.hpp"
+#include "ffmpeg_helpers.hpp"
 
 
 using namespace godot;
@@ -23,16 +23,16 @@ class Video : public Resource {
 
 private:
 	// FFmpeg classes
-	AVFormatContext *av_format_ctx = nullptr;
-	AVCodecContext *av_codec_ctx_video = nullptr;
+	UniqueAVFormatCtxInput av_format_ctx;
+	UniqueAVCodecCtx av_codec_ctx = nullptr;
 	AVBufferRef *hw_device_ctx = nullptr;
-	AVStream *av_stream_video = nullptr;
+	AVStream *av_stream = nullptr;
 
-	AVFrame *av_frame = nullptr;
-	AVFrame *av_hw_frame = nullptr;
-	AVPacket *av_packet = nullptr;
+	UniqueAVPacket av_packet;
+	UniqueAVFrame av_frame;
+	UniqueAVFrame av_hw_frame;
 
-	struct SwsContext *sws_ctx = nullptr;
+	UniqueSwsCtx sws_ctx;
 
 	enum AVHWDeviceType hw_decoder;
 	enum AVColorPrimaries color_profile;
@@ -63,11 +63,11 @@ private:
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
 	bool full_color_range = true;
 
-	std::string path = "";
-	std::string pixel_format = "";
-	std::string prefered_hw_decoder = "";
-
 	// Godot classes
+	String path = "";
+	String pixel_format = "";
+	String prefered_hw_decoder = "";
+
 	Vector2i resolution = Vector2i(0, 0);
 
 	AudioStreamWAV *audio = nullptr;
@@ -86,8 +86,14 @@ private:
 
 	int _seek_frame(int a_frame_nr);
 
-	void _print_debug(std::string a_text);
-	void _printerr_debug(std::string a_text);
+	inline void _log(String message) {
+		if (debug)
+			UtilityFunctions::print("Video: ", message, ".");
+	}
+	inline bool _log_err(String message) {
+		UtilityFunctions::printerr("Video: ", message, "!");
+		return false;
+	}
 
 public:
 	Video() {}
@@ -96,7 +102,7 @@ public:
 	static Dictionary get_file_meta(String a_file_path);
 	static PackedStringArray get_available_hw_devices();
 
-	int open(String a_path = "", bool a_load_audio = true);
+	int open(const String& a_path);
 	void close();
 
 	inline bool is_open() { return loaded; }
@@ -106,7 +112,7 @@ public:
 
 	inline Ref<AudioStreamWAV> get_audio() { return audio; };
 
-	inline String get_path() { return path.c_str(); }
+	inline String get_path() { return path; }
 
 	inline float get_framerate() { return framerate; }
 	inline int get_frame_count() { return std::round(frame_count); };
@@ -126,13 +132,13 @@ public:
 		if (loaded)
 			UtilityFunctions::printerr("Setting prefered_hw_decoder after opening file has no effect!");
 		prefered_hw_decoder = a_value.utf8(); }
-	inline String get_prefered_hw_decoder() { return prefered_hw_decoder.c_str(); }
+	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
 	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }
 	inline bool get_debug_enabled() { return debug; }
 
-	inline String get_pixel_format() { return pixel_format.c_str(); }
+	inline String get_pixel_format() { return pixel_format; }
 	inline String get_color_profile() { return av_color_primaries_name(color_profile); }
 
 	inline bool is_full_color_range() { return full_color_range; }
@@ -143,47 +149,5 @@ public:
 
 
 protected:
-	static inline void _bind_methods() {
-		ClassDB::bind_static_method("Video", D_METHOD("get_file_meta", "a_file_path"), &Video::get_file_meta);
-		ClassDB::bind_static_method("Video", D_METHOD("get_available_hw_devices"), &Video::get_available_hw_devices);
-
-		ClassDB::bind_method(D_METHOD("open", "a_path", "a_load_audio"), &Video::open, DEFVAL(""), DEFVAL(true));
-
-		ClassDB::bind_method(D_METHOD("is_open"), &Video::is_open);
-
-		ClassDB::bind_method(D_METHOD("seek_frame", "a_frame_nr"), &Video::seek_frame);
-		ClassDB::bind_method(D_METHOD("next_frame", "a_skip"), &Video::next_frame);
-		ClassDB::bind_method(D_METHOD("get_audio"), &Video::get_audio);
-
-		ClassDB::bind_method(D_METHOD("set_hw_decoding", "a_value"), &Video::set_hw_decoding);
-		ClassDB::bind_method(D_METHOD("get_hw_decoding"), &Video::get_hw_decoding);
-
-		ClassDB::bind_method(D_METHOD("set_prefered_hw_decoder", "a_codec"), &Video::set_prefered_hw_decoder);
-		ClassDB::bind_method(D_METHOD("get_prefered_hw_decoder"), &Video::get_prefered_hw_decoder);
-
-		ClassDB::bind_method(D_METHOD("get_framerate"), &Video::get_framerate);
-
-		ClassDB::bind_method(D_METHOD("get_path"), &Video::get_path);
-
-		ClassDB::bind_method(D_METHOD("get_resolution"), &Video::get_resolution);
-		ClassDB::bind_method(D_METHOD("get_width"), &Video::get_width);
-		ClassDB::bind_method(D_METHOD("get_height"), &Video::get_height);
-		ClassDB::bind_method(D_METHOD("get_padding"), &Video::get_padding);
-		ClassDB::bind_method(D_METHOD("get_rotation"), &Video::get_rotation);
-
-		ClassDB::bind_method(D_METHOD("get_frame_count"), &Video::get_frame_count);
-
-		ClassDB::bind_method(D_METHOD("enable_debug"), &Video::enable_debug);
-		ClassDB::bind_method(D_METHOD("disable_debug"), &Video::disable_debug);
-		ClassDB::bind_method(D_METHOD("get_debug_enabled"), &Video::get_debug_enabled);
-
-		ClassDB::bind_method(D_METHOD("get_pixel_format"), &Video::get_pixel_format);
-		ClassDB::bind_method(D_METHOD("get_color_profile"), &Video::get_color_profile);
-
-		ClassDB::bind_method(D_METHOD("is_full_color_range"), &Video::is_full_color_range);
-
-		ClassDB::bind_method(D_METHOD("get_y_data"), &Video::get_y_data);
-		ClassDB::bind_method(D_METHOD("get_u_data"), &Video::get_u_data);
-		ClassDB::bind_method(D_METHOD("get_v_data"), &Video::get_v_data);
-	}
+	static void _bind_methods();
 };

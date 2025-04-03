@@ -55,7 +55,7 @@ var _resolution: Vector2i = Vector2i.ZERO
 var _uv_resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
-var _thread: Thread = Thread.new()
+var _threads: PackedInt64Array = []
 var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 
 var y_texture: ImageTexture;
@@ -108,7 +108,13 @@ func set_video_path(a_path: String) -> void:
 	elif video != null:
 		close()
 
-	audio_player.stream = null
+	var stream: AudioStreamWAV = AudioStreamWAV.new()
+
+	stream.mix_rate = 44100
+	stream.stereo = true
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+
+	audio_player.stream = stream
 	video = Video.new()
 	path = a_path
 
@@ -120,8 +126,9 @@ func set_video_path(a_path: String) -> void:
 	else:
 		video.disable_debug()
 
-	if _thread.start(_open_video):
-		printerr("Couldn't create thread!")
+	_threads.append(WorkerThreadPool.add_task(_open_video))
+	if enable_audio:
+		_threads.append(WorkerThreadPool.add_task(_open_audio))
 
 
 func update_video(a_video: Video) -> void:
@@ -164,9 +171,6 @@ func update_video(a_video: Video) -> void:
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 	_shader_material.set_shader_parameter("resolution", _resolution)
-	
-	if enable_audio:
-		audio_player.stream = video.get_audio()
 
 	is_playing = false
 	set_playback_speed(playback_speed)
@@ -217,12 +221,16 @@ func close() -> void:
 
 #------------------------------------------------ PLAYBACK HANDLING
 func _process(a_delta: float) -> void:
-	if _thread.is_started():
-		if !_thread.is_alive():
-			_thread.wait_to_finish()
-			update_video(video)
-			if enable_auto_play:
-				play()
+	if !_threads.is_empty():
+		for i: int in _threads:
+			if WorkerThreadPool.is_task_completed(i):
+				WorkerThreadPool.wait_for_task_completion(i)
+				_threads.remove_at(_threads.find(i))
+
+			if _threads.is_empty():
+				update_video(video)
+				if enable_auto_play:
+					play()
 		return
 
 	if is_playing:
@@ -359,10 +367,12 @@ func _set_pitch_adjust() -> void:
 
 #------------------------------------------------ MISC
 func _open_video() -> void:
-	var err: int = video.open(path, enable_audio)
-	if err:
+	if video.open(path):
 		printerr("Error opening video!")
-		GoZenError.print_error(err)
+
+
+func _open_audio() -> void:
+	audio_player.stream.data = Audio.get_audio_data(path)
 
 
 func _print_system_debug() -> void:
