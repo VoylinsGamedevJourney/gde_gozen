@@ -335,9 +335,11 @@ func _set_frame_image() -> void:
 			v_texture.update(video.get_v_data())
 
 	_shader_material.set_shader_parameter("y_data", y_texture)
-	_shader_material.set_shader_parameter("u_data", u_texture)
 	if video.get_pixel_format().begins_with("yuv"):
+		_shader_material.set_shader_parameter("u_data", u_texture)
 		_shader_material.set_shader_parameter("v_data", v_texture)
+	else:
+		_shader_material.set_shader_parameter("uv_data", u_texture)
 
 
 func set_playback_speed(a_value: float) -> void:
