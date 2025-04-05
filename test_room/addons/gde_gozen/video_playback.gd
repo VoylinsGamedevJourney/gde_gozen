@@ -2,7 +2,7 @@ class_name VideoPlayback
 extends Control
 ## Video playback and seeking inside of Godot.
 ##
-## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(a_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
+## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(new_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
 ## [br][br]
 ## There is a small limitation right now as FFmpeg requires a path to the video file so you can't make the video's part of the exported project and the [code]res://[/code] paths also don't work. This is just the nature of the beast and not something I can easily solve, but luckily there are solutions! First of all, the video path should be the full path, for testing this is easy as you can make the path whatever you want it to be, for exported projects ... Well, chances of the path being in the exact same location as on your pc are quite low.
 ## [br][br]
@@ -101,7 +101,7 @@ func _ready() -> void:
 
 
 #------------------------------------------------ VIDEO DATA HANDLING
-func set_video_path(a_path: String) -> void:
+func set_video_path(new_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
 	if !is_node_ready():
 		return
@@ -116,7 +116,7 @@ func set_video_path(a_path: String) -> void:
 
 	audio_player.stream = stream
 	video = Video.new()
-	path = a_path
+	path = new_path
 
 	# Windows hardware decoding is NOT available so should always be false to prevent crashing.
 	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
@@ -131,14 +131,14 @@ func set_video_path(a_path: String) -> void:
 		_threads.append(WorkerThreadPool.add_task(_open_audio))
 
 
-func update_video(a_video: Video) -> void:
+func update_video(new_video: Video) -> void:
 	## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
-	video = a_video
+	video = new_video
 	if !is_open():
 		printerr("Video isn't open!")
 		return
 
-	var l_image: Image
+	var image: Image
 
 	_padding = video.get_padding()
 	_rotation = video.get_rotation()
@@ -146,12 +146,12 @@ func update_video(a_video: Video) -> void:
 	_resolution = video.get_resolution()
 	_frame_count = video.get_frame_count()
 	_uv_resolution = Vector2i(int((_resolution.x + _padding) / 2.), int(_resolution.y / 2.))
-	l_image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
+	image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
 	if debug:
 		_print_video_debug()
 
-	video_texture.texture.set_image(l_image)
+	video_texture.texture.set_image(image)
 
 	if video.get_pixel_format().begins_with("yuv"):
 		if video.is_full_color_range():
@@ -194,13 +194,13 @@ func update_video(a_video: Video) -> void:
 	video_loaded.emit()
 
 
-func seek_frame(a_frame_nr: int) -> void:
+func seek_frame(new_frame_nr: int) -> void:
 	## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
-	if !is_open() and a_frame_nr == current_frame:
+	if !is_open() and new_frame_nr == current_frame:
 		return
 
-	current_frame = clamp(a_frame_nr, 0, _frame_count)
-	if video.seek_frame(a_frame_nr):
+	current_frame = clamp(new_frame_nr, 0, _frame_count)
+	if video.seek_frame(new_frame_nr):
 		printerr("Couldn't seek frame!")
 	else:
 		_set_frame_image()
@@ -211,12 +211,12 @@ func seek_frame(a_frame_nr: int) -> void:
 		audio_player.set_stream_paused(!is_playing)
 
 
-func next_frame(a_skip: bool = false) -> void:
+func next_frame(skip: bool = false) -> void:
 	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
-	if video.next_frame(a_skip) and !a_skip:
+	if video.next_frame(skip) and !skip:
 		_set_frame_image()
 		next_frame_called.emit(current_frame)
-	elif !a_skip:
+	elif !skip:
 		print("Something went wrong getting next frame!")
 
 	
@@ -233,7 +233,7 @@ func close() -> void:
 
 
 #------------------------------------------------ PLAYBACK HANDLING
-func _process(a_delta: float) -> void:
+func _process(delta: float) -> void:
 	if !_threads.is_empty():
 		for i: int in _threads:
 			if WorkerThreadPool.is_task_completed(i):
@@ -248,7 +248,7 @@ func _process(a_delta: float) -> void:
 		return
 
 	if is_playing:
-		_time_elapsed += a_delta
+		_time_elapsed += delta
 
 		if _time_elapsed < _frame_time:
 			return
@@ -323,15 +323,15 @@ func is_open() -> bool:
 	return video != null and video.is_open()
 
 
-func _get_img_tex(a_data: PackedByteArray, a_width: int, a_height: int, a_r8: bool = true) -> ImageTexture:
-	return ImageTexture.create_from_image(Image.create_from_data(
-			a_width, a_height, false,
-			Image.FORMAT_R8 if a_r8 else Image.FORMAT_RG8, a_data))
+func _get_img_tex(image_data: PackedByteArray, width: int, height: int, r8: bool = true) -> ImageTexture:
+	var format: Image.Format = Image.FORMAT_R8 if r8 else Image.FORMAT_RG8
+	var image: Image = Image.create_from_data(width, height, false, format, image_data)
 
+	return ImageTexture.create_from_image(image)
 
 #------------------------------------------------ SETTERS
-func _set_current_frame(a_value: int) -> void:
-	current_frame = a_value
+func _set_current_frame(new_current_frame: int) -> void:
+	current_frame = new_current_frame
 	frame_changed.emit(current_frame)
 
 
@@ -342,8 +342,8 @@ func _set_frame_image() -> void:
 		v_texture.update(video.get_v_data())
 
 
-func set_playback_speed(a_value: float) -> void:
-	playback_speed = clampf(a_value, 0.5, 2)
+func set_playback_speed(new_playback_value: float) -> void:
+	playback_speed = clampf(new_playback_value, 0.5, 2)
 	_frame_time = (1.0 / _frame_rate) / playback_speed
 
 	if enable_audio and audio_player.stream != null:
@@ -354,8 +354,8 @@ func set_playback_speed(a_value: float) -> void:
 			audio_player.play(current_frame * (1.0 / _frame_rate))
 
 
-func set_pitch_adjust(a_value: bool) -> void:
-	pitch_adjust = a_value
+func set_pitch_adjust(new_pitch_value: bool) -> void:
+	pitch_adjust = new_pitch_value
 	_set_pitch_adjust()
 
 
