@@ -32,6 +32,7 @@ libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
 if 'linux' in platform:
     env.Append(
         LINKFLAGS=['-static-libstdc++'],
+        CCFLAGS=[f'-march={march_flags[arch]}'],
         CPPFLAGS=[
             '-Iffmpeg/bin',
             '-Iffmpeg/bin/include'],
@@ -44,7 +45,6 @@ if 'linux' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
-    env.Append(CCFLAGS=[f'-march={march_flags[arch]}'])
 
 elif 'windows' in platform:
     if os_platform.system().lower() == 'windows':
@@ -90,8 +90,30 @@ elif 'macos' in platform:
 
     # os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
     libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env_suffix}{env_shlibsuffix}'
+
 elif 'android' in platform:
-    print('Exporting for Android isn\'t supported yet!')
+    if arch == 'arm64':
+        env.Append(CCFLAGS=['-march=armv8-a'])
+    elif arch == 'armv7a':
+        env.Append(CCFLAGS=['-march=armv7-a', '-mfloat-abi=softfp', '-mfpu=neon'])
+
+    env.Append(
+        LINKFLAGS=['-static-libstdc++'],
+        CPPFLAGS=[
+            '-Iffmpeg/bin',
+            '-Iffmpeg/bin/include'],
+        LIBPATH=[
+            'ffmpeg/bin/include/libavcodec',
+            'ffmpeg/bin/include/libavformat',
+            'ffmpeg/bin/include/libavdevice',
+            'ffmpeg/bin/include/libavutil',
+            'ffmpeg/bin/include/libswresample',
+            'ffmpeg/bin/include/libswscale',
+            'ffmpeg/bin/lib'],
+        LIBS=LIBS_COMMON)
+
+else:
+    print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 
 
 # Godot compiling stuff
