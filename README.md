@@ -35,6 +35,15 @@ Supporting GDE GoZen and GoZen can be done through 2 channels:
 
 Feel free to decide which one you want to go for. ;)
 
+## Projects using GDE GoZen
+### Games
+
+- [vergissmeinnicht](https://ciaokokao.itch.io/vergissmeinnicht);
+
+### Projects
+
+- [GoZen - video editor](https://github.com/VoylinsGamedevJourney/GoZen)
+
 ## Licensing
 
 Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. Licensing is complicated and I'm not a lawyer. As long as you don't make adjustments to the way that FFmpeg gets compiled, there should be no issue for your projects/games.
