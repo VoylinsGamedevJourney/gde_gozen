@@ -111,9 +111,10 @@ def compile_ffmpeg_linux(arch: str) -> None:
     subprocess.run(['make', 'install'], cwd='./ffmpeg/')
 
     print('Copying lib files ...')
-    for file in glob.glob('ffmpeg/bin/lib/*.so*'):
-        shutil.copy2(file, path)
-    for file in glob.glob('/usr/lib/libx26*.so'):
+    for file in glob.glob('ffmpeg/bin/lib/*.so.*'):
+        if file.count('.') == 2:
+            shutil.copy2(file, path)
+    for file in glob.glob('/usr/lib/libx26*.so.*'):
         shutil.copy2(file, path)
 
     print('Compiling FFmpeg for Linux finished!')
@@ -150,8 +151,8 @@ def compile_ffmpeg_windows(arch) -> None:
     print('Copying lib files ...')
     for file in glob.glob('ffmpeg/bin/bin/*.dll'):
         shutil.copy2(file, path)
-    os.system(f'cp /usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll {path}')
-    os.system(f'cp /usr/x86_64-w64-mingw32/bin/libstdc++-6.dll {path}')
+    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libwinpthread-1.dll {path}')
+    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libstdc++-6.dll {path}')
 
     print('Compiling FFmpeg for Windows finished!')
 

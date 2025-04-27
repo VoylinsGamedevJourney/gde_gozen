@@ -338,6 +338,7 @@ func _set_current_frame(new_current_frame: int) -> void:
 func _set_frame_image() -> void:
 	y_texture.update(video.get_y_data())
 	u_texture.update(video.get_u_data())
+
 	if video.get_pixel_format().begins_with("yuv"):
 		v_texture.update(video.get_v_data())
 
