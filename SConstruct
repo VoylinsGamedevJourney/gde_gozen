@@ -26,7 +26,11 @@ jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
 arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').split('_')[-1]
-libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
+
+libpath = f'{LOCATION}/{platform}'
+if platform != 'web':
+    libpath += f'_{arch}'
+libpath += '/libgozen{env_suffix}{env_shlibsuffix}'
 
 
 if 'linux' in platform:
@@ -64,7 +68,8 @@ elif 'windows' in platform:
 
 elif 'macos' in platform:
     # MacOS can only be build on a MacOS machine!
-    macos_path = f'{LOCATION}/{platform}/{target}/lib'
+    macos_base_path = f'{LOCATION}/{platform}_{arch}/{target}'
+    macos_lib_path = f'{macos_base_path}/lib'
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
@@ -76,7 +81,7 @@ elif 'macos' in platform:
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
-            macos_path,
+            macos_lib_path,
             '/usr/local/lib'],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -85,11 +90,10 @@ elif 'macos' in platform:
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', 'libPath']
+            '-rpath', '@loader_path/lib']
     )
 
-    # os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
-    libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env_suffix}{env_shlibsuffix}'
+    libpath = f'{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}'
 
 elif 'android' in platform:
     if arch == 'arm64':
@@ -111,7 +115,23 @@ elif 'android' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
+elif 'web' in platform:
+    web_bin_path = f'{LOCATION}/{platform}'
+    web_include_path = f'{web_bin_path}/include'
 
+    env.Append(
+        CPPPATH=[web_include_path],
+        LIBPATH=[web_bin_path],
+        LIBS=['ffmpeg_combined'],
+        CCFLAGS=['-pthread', '-sUSE_PTHREADS=1'],
+        LINKFLAGS=[
+            '-pthread',
+            '-sUSE_PTHREADS=1',
+            '-sSHARED_MEMORY=1',
+        ]
+    )
+
+    libpath = os.path.join(web_bin_path, f'libgozen{env_suffix}.wasm')
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 

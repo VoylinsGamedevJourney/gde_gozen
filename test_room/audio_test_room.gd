@@ -11,7 +11,7 @@ func _ready() -> void:
 	
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
-	player.stream = Audio.get_wav(a_files[0])
+	#player.stream = Audio.get_wav(a_files[0])
 	print("Audio loaded")
 	player.play()
 

@@ -6,7 +6,9 @@ extern "C" {
 	#include <libavcodec/codec_id.h>
 	#include <libavcodec/packet.h>
 	
+#ifndef WEB_ENABLED
 	#include <libavdevice/avdevice.h>
+#endif
 	
 	#include <libavformat/avformat.h>
 	

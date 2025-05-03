@@ -37,6 +37,9 @@ android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/release/libgoz
 android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/debug/libgozen.android.template_debug.dev.arm32.so"
 android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/release/libgozen.android.template_release.arm32.so"
 
+web.debug.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_debug.dev.wasm32.wasm"
+web.release.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_release.wasm32.wasm"
+
 [icon]
 
 Video = "res://addons/gde_gozen/icon.svg"
