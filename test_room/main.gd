@@ -62,6 +62,10 @@ func _on_video_drop(a_files: PackedStringArray) -> void:
 		print("Not a valid video file!");
 
 
+func _on_video_url_line_edit_text_submitted(video_url: String) -> void:
+	open_video(video_url)
+
+
 func open_video(a_file: String) -> void:
 	loading_screen.visible = true
 
@@ -128,4 +132,3 @@ func _on_load_video_button_pressed() -> void:
 	add_child(dialog)
 	dialog.popup_centered()
 	
-

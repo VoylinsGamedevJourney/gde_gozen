@@ -49,8 +49,10 @@ int Video::open(const String& a_path) {
 
 	// Allocate video file context
 	AVFormatContext* temp_format_ctx = nullptr;
-	if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
+	response = avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL);
+	if (response) {
 		close();
+		FFmpeg::print_av_error("Video: ", response);
 		return _log_err("Couldn't open video");
 	}
 	av_format_ctx = make_unique_ffmpeg<AVFormatContext, AVFormatCtxInputDeleter>(

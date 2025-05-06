@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import platform as os_platform
@@ -43,7 +44,7 @@ TARGET_RELEASE: str = 'release'
 
 ANDROID_API_LEVEL: int = 24
 
-DISABLES = [
+DISABLED_MODULES = [
     '--disable-encoders',
     '--disable-muxers',
 
@@ -138,7 +139,7 @@ def compile_ffmpeg_linux(arch: str) -> None:
         '--extra-cflags=-fPIC',
         '--extra-ldflags=-fPIC'
     ]
-    command += DISABLES
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -179,7 +180,7 @@ def compile_ffmpeg_windows(arch) -> None:
         '--extra-ldflags=-fpic',
         '--extra-cflags=-fPIC'
     ]
-    command += DISABLES
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -215,7 +216,7 @@ def compile_ffmpeg_macos(arch) -> None:
         '--quiet',
         '--extra-cflags=-fPIC -mmacosx-version-min=10.13',
     ]
-    command += DISABLES
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -284,7 +285,7 @@ def compile_ffmpeg_android(arch) -> None:
         '--extra-cflags=-fPIC',
         f'--extra-ldflags={arch_flags}'
     ]
-    command += DISABLES
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -318,34 +319,69 @@ def compile_ffmpeg_web() -> None:
         '--disable-shared',
         '--prefix=./bin',
         '--enable-cross-compile',
-        '--extra-cflags=-pthread -sUSE_PTHREADS=1 -fPIC',
-        '--extra-ldflags=-pthread -sUSE_PTHREADS=1 -fPIC',
+        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC',
+        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC',
+
+        '--disable-everything',
         '--enable-pic',
+        '--enable-small',
 
-        '--disable-pthreads',
-        '--disable-w32threads',
-        '--disable-os2threads',
-
-        '--disable-muxers',
-        '--disable-encoders',
-        '--disable-devices',
-        '--disable-filters',
+        # try-out
+        '--enable-avcodec',
+        '--enable-avformat',
+        '--enable-avutil',
+        '--enable-swscale',
+        '--enable-swresample',
+        '--enable-demuxer=mov',
+        '--enable-decoder=h264',
+        '--enable-decoder=aac',
+        '--enable-parser=h264',
+        '--enable-parser=aac',
+        '--enable-bsf=h264_mp4toannexb',
+        '--enable-bsf=aac_adtstoasc',
+        '--enable-protocol=file',
 
         '--disable-asm',
-        '--disable-hwaccels',
-        '--disable-vulkan',
+        '--disable-inline-asm',
+        '--disable-debug',
+        '--disable-stripping',
+        '--disable-runtime-cpudetect',
+
+        '--disable-programs',
+        '--disable-doc',
+        '--disable-htmlpages',
+        '--disable-manpages',
+        '--disable-podpages',
+        '--disable-txtpages',
+        '--disable-avdevice',
+        '--disable-avfilter',
+        '--disable-postproc',
+
+        '--disable-iconv',
+        '--disable-bzlib',
         '--disable-alsa',
+        '--disable-appkit',
+        '--disable-avfoundation',
+        '--disable-coreimage',
         '--disable-libxcb',
         '--disable-libxcb-shm',
         '--disable-libxcb-shape',
         '--disable-libxcb-xfixes',
+        '--disable-mediacodec',
+        '--disable-mediafoundation',
+        '--disable-metal',
+        '--disable-openal',
+        '--disable-opengl',
+        '--disable-outdev=sdl',
+        '--disable-indev=sdl',
+        '--disable-securetransport',
+        '--disable-schannel',
+        '--disable-sndio',
         '--disable-xlib',
-        '--disable-sdl2',
-        '--disable-iconv',
-        '--disable-zlib',
-        '--disable-bzlib',
+        '--disable-audiotoolbox',
+        '--disable-vulkan',
+        '--disable-hwaccels',
     ]
-    command += DISABLES
 
     ffmpeg_bin_dir: str = 'ffmpeg/bin'
     ffmpeg_lib_dir: str = f'{ffmpeg_bin_dir}/lib'
@@ -362,92 +398,16 @@ def compile_ffmpeg_web() -> None:
     subprocess.run(['emmake', 'make', f'-j{THREADS}'], cwd='./ffmpeg/')
     subprocess.run(['emmake', 'make', 'install'], cwd='./ffmpeg/')
 
-    # print('Copying static lib files (.a) ...')
-    # for file in glob.glob(os.path.join(ffmpeg_lib_dir, '*.a')):
-    #     print(f'Copying {file} to {path}')
-    #     shutil.copy2(file, path)
-
-    print('Combining FFmpeg static lib files (.a) ...')
-    create_combined_library(ffmpeg_lib_dir, path)
+    print('Copying static lib files (.a) ...')
+    for file in glob.glob(os.path.join(ffmpeg_lib_dir, '*.a')):
+        print(f'Copying {file} to {path}')
+        shutil.copy2(file, path)
 
     if os.path.exists(target_include_dir):
         shutil.rmtree(target_include_dir)
     shutil.copytree(ffmpeg_include_dir, target_include_dir)
 
     print('Compiling FFmpeg for Web finished!')
-
-
-def create_combined_library(ffmpeg_lib_dir: str, output_dir: str) -> None:
-    abs_ffmpeg_lib_dir = os.path.abspath(ffmpeg_lib_dir)
-    abs_output_dir = os.path.abspath(output_dir)
-
-    print(f'Looking for libraries in resolved path: {abs_ffmpeg_lib_dir}')
-    print(f'Output directory resolved to: {abs_output_dir}')
-
-    lib_files = glob.glob(os.path.join(abs_ffmpeg_lib_dir, '*.a'))
-    temp_dir_obj = tempfile.mkdtemp(prefix='ffmpeg_combine_')
-    os.makedirs(abs_output_dir, exist_ok=True)
-
-    all_objects = []
-    has_errors = False
-    try:
-        for lib_file_abs in lib_files:
-            lib_name = os.path.basename(lib_file_abs)
-            print(f'Extracting objects from {lib_name} into {temp_dir_obj}...')
-            try:
-                result = subprocess.run(
-                    ['emar', 'x', lib_file_abs],
-                    cwd=temp_dir_obj,
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
-            except subprocess.CalledProcessError as e:
-                print(f'Error extracting {lib_name}:')
-                print(f'Return code: {e.returncode}')
-                has_errors = True
-            except FileNotFoundError:
-                print('Error: "emar" command not found. Is Emscripten environment activated and in PATH?')
-                raise
-
-        if has_errors:
-            print('Errors occurred during extraction. Combined library might be incomplete.')
-
-        print(f'Collecting object files from {temp_dir_obj}...')
-        for item in os.listdir(temp_dir_obj):
-            item_path = os.path.join(temp_dir_obj, item)
-            if os.path.isfile(item_path) and item.endswith('.o'):
-                all_objects.append(item_path)  # Append absolute path
-
-        combined_lib = os.path.join(abs_output_dir, 'libffmpeg_combined.a')
-        print(f'Creating combined library: {combined_lib} with {len(all_objects)} object files.')
-
-        if os.path.exists(combined_lib):
-            print(f'Removing existing combined library: {combined_lib}')
-            os.remove(combined_lib)
-
-        print('Running emar crs command...')
-        try:
-            cmd = ['emar', 'crs', combined_lib] + all_objects
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-            print(f'Combined library created successfully at {combined_lib}')
-
-        except subprocess.CalledProcessError as e:
-            cmd_short = f'{' '.join(e.cmd[:5])} ... ({len(e.cmd)} total args)'
-            print('Error creating combined library:')
-            print(f'Return code: {e.returncode}')
-            raise e
-        except FileNotFoundError:
-            print('Error: "emar" command not found. Is Emscripten environment activated and in PATH?')
-            raise
-
-    finally:
-        if 'temp_dir_obj' in locals() and os.path.exists(temp_dir_obj):
-            print(f'Cleaning up temporary directory: {temp_dir_obj}')
-            try:
-                shutil.rmtree(temp_dir_obj)
-            except OSError as e:
-                print(f'Warning: Could not remove temporary directory {temp_dir_obj}: {e}')
 
 
 def macos_fix(arch) -> None:
