@@ -6,6 +6,9 @@ import glob
 import shutil
 import tempfile
 
+# Uncaught (in promise) RuntimeError: WebAssembly.instantiate():
+# data segment 0 is out of bounds (offset 10862752, length 24278784,
+# memory size 33554432)
 
 # Windows and Linux can be build on Linux or Windows with WSL.
 # For MacOS you need to use MacOS itself else building fails.
@@ -14,6 +17,8 @@ import tempfile
 # `emsdk/emsdk install latest`
 # `emsdk/emsdk activate latest`
 # `source emsdk/emsdk_env.sh`
+# You may also need to custom build the Godot web export debug/release template with:
+# `scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
 
 
 THREADS: int = os.cpu_count() or 4
@@ -39,6 +44,9 @@ TARGET_RELEASE: str = 'release'
 ANDROID_API_LEVEL: int = 24
 
 DISABLES = [
+    '--disable-encoders',
+    '--disable-muxers',
+
     '--disable-postproc',
     '--disable-avfilter',
     '--disable-sndio',
@@ -313,53 +321,31 @@ def compile_ffmpeg_web() -> None:
         '--extra-cflags=-pthread -sUSE_PTHREADS=1 -fPIC',
         '--extra-ldflags=-pthread -sUSE_PTHREADS=1 -fPIC',
         '--enable-pic',
-        '--disable-asm',
-        '--disable-inline-asm',
-        # '--disable-stripping',
-        # '--disable-network',
-        '--disable-programs',
-        '--disable-doc',
-        '--disable-sdl2',
-        '--disable-iconv',
-        '--disable-zlib',
-        '--disable-bzlib',
-        '--disable-dwt',
-        '--disable-lsp',
-        '--disable-faan',
-        '--disable-vulkan',
-        '--disable-avdevice',
+
+        '--disable-pthreads',
         '--disable-w32threads',
         '--disable-os2threads',
+
+        '--disable-muxers',
+        '--disable-encoders',
+        '--disable-devices',
+        '--disable-filters',
+
+        '--disable-asm',
+        '--disable-hwaccels',
+        '--disable-vulkan',
         '--disable-alsa',
         '--disable-libxcb',
         '--disable-libxcb-shm',
         '--disable-libxcb-shape',
         '--disable-libxcb-xfixes',
         '--disable-xlib',
-        '--disable-cuda-llvm',
-        '--disable-cuvid',
-        '--disable-nvdec',
-        '--disable-nvenc',
-        '--disable-vaapi',
-        '--disable-vdpau',
-        '--disable-videotoolbox',
-        '--disable-audiotoolbox',
-        '--disable-appkit',
-        '--disable-coreimage',
-        '--disable-metal',
-        '--disable-securetransport',
-        '--disable-d3d11va',
-        '--disable-dxva2',
-        '--disable-mediafoundation',
-        '--disable-schannel',
-        '--disable-sndio',
-        '--disable-postproc',
-        '--disable-avfilter',
-        '--disable-htmlpages',
-        '--disable-manpages',
-        '--disable-podpages',
-        '--disable-txtpages',
+        '--disable-sdl2',
+        '--disable-iconv',
+        '--disable-zlib',
+        '--disable-bzlib',
     ]
+    command += DISABLES
 
     ffmpeg_bin_dir: str = 'ffmpeg/bin'
     ffmpeg_lib_dir: str = f'{ffmpeg_bin_dir}/lib'

@@ -116,20 +116,58 @@ elif 'android' in platform:
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
 elif 'web' in platform:
-    web_bin_path = f'{LOCATION}/{platform}'
-    web_include_path = f'{web_bin_path}/include'
+    #  web_bin_path = f'{LOCATION}/{platform}'
+    #  web_include_path = f'{web_bin_path}/include'
+
+    #  env.Append(
+    #      CPPPATH=[web_include_path],
+    #      LIBPATH=[web_bin_path],
+    #      LIBS=['ffmpeg_combined'],
+    #      CCFLAGS=[],
+    #      LINKFLAGS=[
+    #          '-sUSE_PTHREADS=0',
+    #          '-sSTACK_SIZE=5MB',
+    #          '-sINITIAL_MEMORY=64MB',
+    #      ]
+    #  )
+    #  print(env["CCFLAGS"])
+    #  print(env["LINKFLAGS"])
+
+    #  libpath = os.path.join(web_bin_path, f'libgozen{env_suffix}.wasm')
+    web_bin_path = os.path.join(LOCATION, platform)
+    web_include_path = os.path.join(web_bin_path, 'include')
 
     env.Append(
         CPPPATH=[web_include_path],
         LIBPATH=[web_bin_path],
-        LIBS=['ffmpeg_combined'],
-        CCFLAGS=['-pthread', '-sUSE_PTHREADS=1'],
-        LINKFLAGS=[
-            '-pthread',
-            '-sUSE_PTHREADS=1',
-            '-sSHARED_MEMORY=1',
-        ]
+        LIBS=['ffmpeg_combined'], # Use the combined library
+        CCFLAGS=[], # Start clean, add specifics below
+        LINKFLAGS=[] # Start clean, add specifics below
     )
+
+    # --- Set Threading Flags (NO pthreads) ---
+    env.AppendUnique(
+        CCFLAGS=['-sUSE_PTHREADS=1'],
+        LINKFLAGS=['-sUSE_PTHREADS=1', '-sSHARED_MEMORY=1']
+    )
+    # Clean up conflicts explicitly
+    # env['LINKFLAGS'] = [f for f in env['LINKFLAGS'] if f not in ['-pthread', '--shared-memory', '-sSHARED_MEMORY=1']]
+
+
+    # --- Adjust Memory and Stack ---
+    initial_memory_mb = 1024 # <--- INCREASE significantly (try 128MB first)
+    stack_size_mb = 512      # <--- Keep stack reasonable (5MB) 
+
+    print(f"Setting Emscripten Memory: Initial={initial_memory_mb}MB, Stack={stack_size_mb}MB")
+    env.AppendUnique(LINKFLAGS=[
+        f'-sINITIAL_MEMORY={initial_memory_mb}MB',
+        '-sALLOW_MEMORY_GROWTH=1', # Still allow growth if needed later
+        f'-sSTACK_SIZE={stack_size_mb}MB',
+        #'-sTOTAL_STACK=256MB',
+    ])
+
+    # You might still need SIDE_MODULE for GDExtension linking
+    env.AppendUnique(LINKFLAGS=['-sSIDE_MODULE=1'])
 
     libpath = os.path.join(web_bin_path, f'libgozen{env_suffix}.wasm')
 else:
@@ -137,6 +175,10 @@ else:
 
 
 # Godot compiling stuff
+
+#if 'web' in platform:
+#    src = Glob('src_web/*.cpp')
+#else:
 src = Glob('src/*.cpp')
 sharedlib = env.SharedLibrary(libpath, src)
 Default(sharedlib)
