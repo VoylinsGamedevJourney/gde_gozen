@@ -7,7 +7,7 @@ import os
 print("Updating @loader_path for MacOS builds.")
 
 
-debug_binary = 'bin/macos/debug/libgozen.macos.template_debug.dev.arm64.dylib'
+debug_binary = 'bin/macos/debug/libgozen.macos.template_debug.arm64.dylib'
 release_binary = 'bin/macos/release/libgozen.macos.template_release.arm64.dylib'
 
 

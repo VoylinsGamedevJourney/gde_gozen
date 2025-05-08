@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import sys
 import platform as os_platform
@@ -8,6 +9,13 @@ import shutil
 
 # Windows and Linux can be build on Linux or Windows with WSL.
 # For MacOS you need to use MacOS itself else building fails.
+
+# For Web you need Emscripten installed.
+# `emsdk/emsdk install 3.1.64`
+# `emsdk/emsdk activate 3.1.64`
+# `source emsdk/emsdk_env.sh`
+# You may also need to custom build the Godot web export debug/release template with:
+# `scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
 
 
 THREADS: int = os.cpu_count() or 4
@@ -20,16 +28,36 @@ OPTION_RELEASE: str = 'release'
 ARCH_X86_64: str = 'x86_64'
 ARCH_ARM64: str = 'arm64'
 ARCH_ARMV7A: str = 'armv7a'
+ARCH_WASM32: str = 'wasm32'
 
 OS_LINUX: str = 'linux'
 OS_WINDOWS: str = 'windows'
 OS_MACOS: str = 'macos'
 OS_ANDROID: str = 'android'
+OS_WEB: str = 'web'
 
 TARGET_DEV: str = 'debug'
 TARGET_RELEASE: str = 'release'
 
 ANDROID_API_LEVEL: int = 24
+
+DISABLED_MODULES = [
+    '--disable-muxers',
+    '--disable-encoders',
+    '--disable-postproc',
+    '--disable-avdevice',
+    '--disable-avfilter',
+    '--disable-sndio',
+    '--disable-doc',
+    '--disable-programs',
+    '--disable-ffprobe',
+    '--disable-htmlpages',
+    '--disable-manpages',
+    '--disable-podpages',
+    '--disable-txtpages',
+    '--disable-ffplay',
+    '--disable-ffmpeg'
+]
 
 
 def _print_options(title: str, options: list[str]) -> int:
@@ -83,6 +111,8 @@ def compile_ffmpeg(platform, arch) -> None:
         compile_ffmpeg_macos(arch)
     elif platform == OS_ANDROID:
         compile_ffmpeg_android(arch)
+    elif platform == OS_WEB:
+        compile_ffmpeg_web()
 
 
 def compile_ffmpeg_linux(arch: str) -> None:
@@ -93,14 +123,17 @@ def compile_ffmpeg_linux(arch: str) -> None:
     os.makedirs(path, exist_ok=True)
 
     command = [
-        './configure', '--prefix=./bin', '--enable-shared', f'--arch={arch}',
-        '--target-os=linux', '--quiet', '--enable-pic',
-        '--extra-cflags="-fPIC"', '--extra-ldflags="-fPIC"',
-        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
-        '--disable-doc', '--disable-programs', '--disable-ffprobe',
-        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
-        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+        './configure',
+        '--prefix=./bin',
+        '--enable-shared',
+        f'--arch={arch}',
+        '--target-os=linux',
+        '--quiet',
+        '--enable-pic',
+        '--extra-cflags=-fPIC',
+        '--extra-ldflags=-fPIC',
     ]
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -129,16 +162,19 @@ def compile_ffmpeg_windows(arch) -> None:
     os.makedirs(path, exist_ok=True)
 
     command = [
-        './configure', '--prefix=./bin', '--enable-shared',
-        f'--arch={arch}', '--target-os=mingw32', '--enable-cross-compile',
-        f'--cross-prefix={arch}-w64-mingw32-', '--quiet',
-        '--extra-libs=-lpthread', '--extra-ldflags="-fpic"',
-        '--extra-cflags="-fPIC"',
-        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
-        '--disable-doc', '--disable-programs', '--disable-ffprobe',
-        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
-        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+        './configure',
+        '--prefix=./bin',
+        '--enable-shared',
+        f'--arch={arch}',
+        '--target-os=mingw32',
+        '--enable-cross-compile',
+        f'--cross-prefix={arch}-w64-mingw32-',
+        '--quiet',
+        '--extra-libs=-lpthread',
+        '--extra-ldflags=-fpic',
+        '--extra-cflags=-fPIC',
     ]
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -166,14 +202,15 @@ def compile_ffmpeg_macos(arch) -> None:
     os.makedirs(path_release, exist_ok=True)
 
     command = [
-        './configure', '--prefix=./bin', '--enable-shared',
-        f'--arch={arch}', '--extra-ldflags="-mmacosx-version-min=10.13"',
-        '--quiet', '--extra-cflags="-fPIC -mmacosx-version-min=10.13"',
-        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
-        '--disable-doc', '--disable-programs', '--disable-ffprobe',
-        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
-        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+        './configure',
+        '--prefix=./bin',
+        '--enable-shared',
+        f'--arch={arch}',
+        '--extra-ldflags=-mmacosx-version-min=10.13',
+        '--quiet',
+        '--extra-cflags=-fPIC -mmacosx-version-min=10.13',
     ]
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -228,17 +265,21 @@ def compile_ffmpeg_android(arch) -> None:
     strip_tool: str = f'{toolchain_bin}/llvm-strip'
 
     command = [
-        './configure', '--prefix=./bin', '--enable-shared',
-        f'--arch={ffmpeg_arch}', '--target-os=android',
-        '--enable-pic', '--enable-cross-compile',
-        f'--cc={cc}', f'--cxx={cxx}',
-        f'--sysroot={toolchain_sysroot}', f'--strip={strip_tool}',
-        '--extra-cflags="-fPIC"', f'--extra-ldflags="{arch_flags}"',
-        '--disable-postproc', '--disable-avfilter', '--disable-sndio',
-        '--disable-doc', '--disable-programs', '--disable-ffprobe',
-        '--disable-htmlpages', '--disable-manpages', '--disable-podpages',
-        '--disable-txtpages', '--disable-ffplay', '--disable-ffmpeg'
+        './configure',
+        '--prefix=./bin',
+        '--enable-shared',
+        f'--arch={ffmpeg_arch}',
+        '--target-os=android',
+        '--enable-pic',
+        '--enable-cross-compile',
+        f'--cc={cc}',
+        f'--cxx={cxx}',
+        f'--sysroot={toolchain_sysroot}',
+        f'--strip={strip_tool}',
+        '--extra-cflags=-fPIC',
+        f'--extra-ldflags={arch_flags}',
     ]
+    command += DISABLED_MODULES
 
     result = subprocess.run(command, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -255,17 +296,82 @@ def compile_ffmpeg_android(arch) -> None:
     print('Compiling FFmpeg for Android finished!')
 
 
+def compile_ffmpeg_web() -> None:
+    print('Configuring FFmpeg for Web ...')
+    path: str = './test_room/addons/gde_gozen/bin/web'
+    target_include_dir: str = f'{path}/include'
+    ffmpeg_bin_dir: str = 'ffmpeg/bin'
+    ffmpeg_lib_dir: str = f'{ffmpeg_bin_dir}/lib'
+    ffmpeg_include_dir: str = f'{ffmpeg_bin_dir}/include'
+
+    os.makedirs(path, exist_ok=True)
+
+    command = [
+        'emconfigure',
+        './configure',
+        '--cc=emcc',
+        '--cxx=em++',
+        '--ar=emar',
+        '--ranlib=emranlib',
+        '--nm=emnm',
+        '--enable-static',
+        '--disable-shared',
+        '--prefix=./bin',
+        '--enable-cross-compile',
+        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC',
+        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC',
+        '--enable-pic',
+        '--enable-small',
+        '--disable-everything',
+
+        '--enable-avcodec',
+        '--enable-avformat',
+        '--enable-avutil',
+        '--enable-swscale',
+        '--enable-swresample',
+        '--enable-demuxer=mov',
+        '--enable-decoder=h264',
+        '--enable-decoder=aac',
+        '--enable-parser=h264',
+        '--enable-parser=aac',
+        '--enable-bsf=h264_mp4toannexb',
+        '--enable-bsf=aac_adtstoasc',
+        '--enable-protocol=file',
+    ]
+
+    print(f'Running command: {' '.join(command)}')
+    result = subprocess.run(command, cwd='./ffmpeg/')
+    if result.returncode != 0:
+        print('Error: FFmpeg configure failed for Emscripten!')
+        sys.exit(1)
+
+    print('Compiling FFmpeg for Web (using emmake)...')
+    subprocess.run(['emmake', 'make', f'-j{THREADS}'], cwd='./ffmpeg/')
+    subprocess.run(['emmake', 'make', 'install'], cwd='./ffmpeg/')
+
+    print('Copying static lib files (.a) ...')
+    for file in glob.glob(os.path.join(ffmpeg_lib_dir, '*.a')):
+        print(f'Copying {file} to {path}')
+        shutil.copy2(file, path)
+
+    if os.path.exists(target_include_dir):
+        shutil.rmtree(target_include_dir)
+    shutil.copytree(ffmpeg_include_dir, target_include_dir)
+
+    print('Compiling FFmpeg for Web finished!')
+
+
 def macos_fix(arch) -> None:
     # This is a fix for the MacOS builds to get the libraries to properly connect to
     # the gdextension library. Without it, the FFmpeg libraries can't be found.
     print('Running fix for MacOS builds ...')
 
-    debug_binary: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/debug/libgozen.macos.template_debug.dev.{arch}.dylib'
+    debug_binary: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/debug/libgozen.macos.template_debug.{arch}.dylib'
     release_binary: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/release/libgozen.macos.template_release.{arch}.dylib'
     debug_bin_folder: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/debug/lib'
     release_bin_folder: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/release/lib'
 
-    print("Updating @loader_path for MacOS builds")
+    print('Updating @loader_path for MacOS builds')
 
     if os.path.exists(debug_binary):
         for file in os.listdir(debug_bin_folder):
@@ -284,7 +390,7 @@ def main():
     print('^===================^')
 
     if sys.version_info < (3, 10):
-        print("Python 3.10+ is required to run this script!")
+        print('Python 3.10+ is required to run this script!')
         sys.exit(2)
 
     if os_platform.system() == 'Windows':
@@ -301,12 +407,14 @@ def main():
                             '--recursive', '--remote'], cwd='./')
 
     platform: str = OS_LINUX
-    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID]):
+    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
         case 2: platform = OS_WINDOWS
         case 3: platform = OS_MACOS
         case 4: platform = OS_ANDROID
+        case 5: platform = OS_WEB
 
     # arm64 isn't supported yet by mingw for Windows, so x86_64 only.
+    # Web doesn't need any architecture, just 'wasm32'
     title_arch: str = 'Choose architecture'
     arch: str = ARCH_X86_64 if platform != OS_MACOS else ARCH_ARM64
     match platform:
@@ -321,28 +429,26 @@ def main():
                 arch = ARCH_ARMV7A
             else:
                 arch = ARCH_ARM64
+        case 'web':
+            arch = ARCH_WASM32
 
-    # When selecting the target, we set dev_build to yes to get more debug info
-    # which is helpful when debugging to get something useful of an error msg.
     target: str = TARGET_DEV
-    dev_build: str = ''
     match _print_options('Select target', [TARGET_DEV, TARGET_RELEASE]):
         case 2:
             target = TARGET_RELEASE
-        case _:
-            dev_build = 'dev_build=yes'
 
     compile_ffmpeg(platform, arch)
 
-    # We need to check if ANDROID_HOME is set to the sdk folder.
-    android_home: str = ''
-    if os.getenv('ANDROID_HOME') is None:
-        if os_platform.system() == 'Linux':
-            print('Linux detected for setting ANDROID_HOME')
-            android_home = 'ANDROID_HOME=/opt/android-sdk'
+    cmd = ['scons', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
 
-    subprocess.run(['scons', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}', dev_build, f'{android_home}'],
-                   cwd='./')
+    if platform == OS_ANDROID:
+        # We need to check if ANDROID_HOME is set to the sdk folder.
+        if os.getenv('ANDROID_HOME') is None:
+            if os_platform.system() == 'Linux':
+                print('Linux detected for setting ANDROID_HOME')
+                cmd += 'ANDROID_HOME=/opt/android-sdk'
+
+    subprocess.run(cmd, cwd='./')
 
     if platform == OS_MACOS:
         macos_fix(arch)

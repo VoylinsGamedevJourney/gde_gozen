@@ -6,7 +6,6 @@ import platform as os_platform
 LIBS_COMMON = [
     'avcodec',
     'avformat',
-    'avdevice',
     'avutil',
     'swresample',
     'swscale']
@@ -26,10 +25,11 @@ jobs = ARGUMENTS.get('jobs', 4)
 platform = ARGUMENTS.get('platform', 'linux')
 arch = ARGUMENTS.get('arch', 'x86_64')
 target = ARGUMENTS.get('target', 'template_debug').split('_')[-1]
-libpath = f'{LOCATION}/{platform}_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
+libpath = f'{LOCATION}/{platform}'
 
 
 if 'linux' in platform:
+    libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
     env.Append(
         LINKFLAGS=['-static-libstdc++'],
         CCFLAGS=[f'-march={march_flags[arch]}'],
@@ -39,7 +39,6 @@ if 'linux' in platform:
         LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
@@ -47,11 +46,11 @@ if 'linux' in platform:
         LIBS=LIBS_COMMON)
 
 elif 'windows' in platform:
+    libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
     if os_platform.system().lower() == 'windows':
         env.Append(LIBS=[
             'avcodec.lib',
             'avformat.lib',
-            'avdevice.lib',
             'avutil.lib',
             'swresample.lib',
             'swscale.lib'])
@@ -64,7 +63,9 @@ elif 'windows' in platform:
 
 elif 'macos' in platform:
     # MacOS can only be build on a MacOS machine!
-    macos_path = f'{LOCATION}/{platform}/{target}/lib'
+    macos_base_path = f'{libpath}/{target}'
+    macos_lib_path = f'{macos_base_path}/lib'
+    libpath = f'{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}'
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
@@ -72,11 +73,10 @@ elif 'macos' in platform:
             'ffmpeg/bin/lib',
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
-            macos_path,
+            macos_lib_path,
             '/usr/local/lib'],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -85,13 +85,12 @@ elif 'macos' in platform:
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', 'libPath']
+            '-rpath', '@loadet_path/lib']
     )
 
-    # os.system(f'cp ffmpeg/bin/lib/*.dylib {LOCATION}/{platform}/Content/Frameworks')
-    libpath = f'{LOCATION}/{platform}_{arch}/{target}/libgozen{env_suffix}{env_shlibsuffix}'
-
 elif 'android' in platform:
+    libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
+
     if arch == 'arm64':
         env.Append(CCFLAGS=['-march=armv8-a'])
     elif arch == 'armv7a':
@@ -105,12 +104,36 @@ elif 'android' in platform:
         LIBPATH=[
             'ffmpeg/bin/include/libavcodec',
             'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavdevice',
             'ffmpeg/bin/include/libavutil',
             'ffmpeg/bin/include/libswresample',
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
+
+elif 'web' in platform:
+    web_bin_path = libpath
+    web_include_path = f'{web_bin_path}/include'
+    libpath += f'/libgozen{env_suffix}{env_shlibsuffix}'
+
+    env.Append(
+        CPPPATH=[web_include_path],
+        LIBPATH=[web_bin_path],
+        LIBS=[
+            'libavcodec',
+            'libavformat',
+            'libavutil',
+            'libswresample',
+            'libswscale',
+        ],
+        CCFLAGS=['-pthread', '-sUSE_PTHREADS=1'],
+        LINKFLAGS=[
+            '-pthread',
+            '-sUSE_PTHREADS=1',
+            '-sSHARED_MEMORY=1',
+            '-sINITIAL_MEMORY=1024MB',
+            '-sSTACK_SIZE=512MB',
+            '-sSIDE_MODULE=1'
+        ])
 
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")

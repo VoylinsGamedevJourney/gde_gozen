@@ -5,37 +5,40 @@ compatibility_minimum = "4.3"
 
 [libraries]
 
-linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_x86_64/libgozen.linux.template_debug.dev.x86_64.so"
+linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_x86_64/libgozen.linux.template_debug.x86_64.so"
 linux.release.x86_64 = "res://addons/gde_gozen/bin/linux_x86_64/libgozen.linux.template_release.x86_64.so"
-linux.debug.x86_32 = "res://addons/gde_gozen/bin/linux_x86_32/libgozen.linux.template_debug.dev.x86_32.so"
+linux.debug.x86_32 = "res://addons/gde_gozen/bin/linux_x86_32/libgozen.linux.template_debug.x86_32.so"
 linux.release.x86_32 = "res://addons/gde_gozen/bin/linux_x86_32/libgozen.linux.template_release.x86_32.so"
 
-linux.debug.arm64 = "res://addons/gde_gozen/bin/linux_arm64/libgozen.linux.template_debug.dev.arm64.so"
+linux.debug.arm64 = "res://addons/gde_gozen/bin/linux_arm64/libgozen.linux.template_debug.arm64.so"
 linux.release.arm64 = "res://addons/gde_gozen/bin/linux_arm64/libgozen.linux.template_release.arm64.so"
-linux.debug.arm32 = "res://addons/gde_gozen/bin/linux_arm32/libgozen.linux.template_debug.dev.arm32.so"
+linux.debug.arm32 = "res://addons/gde_gozen/bin/linux_arm32/libgozen.linux.template_debug.arm32.so"
 linux.release.arm32 = "res://addons/gde_gozen/bin/linux_arm32/libgozen.linux.template_release.arm32.so"
 
-windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows_x86_64/libgozen.windows.template_debug.dev.x86_64.dll"
+windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows_x86_64/libgozen.windows.template_debug.x86_64.dll"
 windows.release.x86_64 = "res://addons/gde_gozen/bin/windows_x86_64/libgozen.windows.template_release.x86_64.dll"
-windows.debug.x86_32 = "res://addons/gde_gozen/bin/windows_x86_32/libgozen.windows.template_debug.dev.x86_32.dll"
+windows.debug.x86_32 = "res://addons/gde_gozen/bin/windows_x86_32/libgozen.windows.template_debug.x86_32.dll"
 windows.release.x86_32 = "res://addons/gde_gozen/bin/windows_x86_32/libgozen.windows.template_release.x86_32.dll"
 
-windows.debug.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windows.template_debug.dev.arm64.dll"
+windows.debug.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windows.template_debug.arm64.dll"
 windows.release.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windows.template_release.arm64.dll"
-windows.debug.arm32 = "res://addons/gde_gozen/bin/windows_arm32/libgozen.windows.template_debug.dev.arm32.dll"
+windows.debug.arm32 = "res://addons/gde_gozen/bin/windows_arm32/libgozen.windows.template_debug.arm32.dll"
 windows.release.arm32 = "res://addons/gde_gozen/bin/windows_arm32/libgozen.windows.template_release.arm32.dll"
 
-macos.debug.arm64 = "res://addons/gde_gozen/bin/macos_arm64/debug/libgozen.macos.template_debug.dev.arm64.dylib"
+macos.debug.arm64 = "res://addons/gde_gozen/bin/macos_arm64/debug/libgozen.macos.template_debug.arm64.dylib"
 macos.release.arm64 = "res://addons/gde_gozen/bin/macos_arm64/release/libgozen.macos.template_release.arm64.dylib"
 
-macos.debug.x86_64 = "res://addons/gde_gozen/bin/macos_x86_64/debug/libgozen.macos.template_debug.dev.x86_64.dylib"
+macos.debug.x86_64 = "res://addons/gde_gozen/bin/macos_x86_64/debug/libgozen.macos.template_debug.x86_64.dylib"
 macos.release.x86_64 = "res://addons/gde_gozen/bin/macos_x86_64/release/libgozen.macos.template_release.x86_64.dylib"
 
-android.debug.arm64 = "res://addons/gde_gozen/bin/android_arm64/debug/libgozen.android.template_debug.dev.arm64.so"
+android.debug.arm64 = "res://addons/gde_gozen/bin/android_arm64/debug/libgozen.android.template_debug.arm64.so"
 android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/release/libgozen.android.template_release.arm64.so"
 
-android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/debug/libgozen.android.template_debug.dev.arm32.so"
+android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/debug/libgozen.android.template_debug.arm32.so"
 android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/release/libgozen.android.template_release.arm32.so"
+
+web.debug.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_debug.wasm32.wasm"
+web.release.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_release.wasm32.wasm"
 
 [icon]
 
@@ -47,7 +50,6 @@ Audio = "res://addons/gde_gozen/icon.svg"
 
 linux.debug.x86_64 = {
     "../addons/gde_gozen/bin/linux_x86_64/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_x86_64/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libswresample.so.4" : "",
@@ -56,7 +58,6 @@ linux.debug.x86_64 = {
 }
 linux.release.x86_64 = {
     "../addons/gde_gozen/bin/linux_x86_64/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_x86_64/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_x86_64/libswresample.so.4" : "",
@@ -64,7 +65,6 @@ linux.release.x86_64 = {
 }
 linux.debug.x86_32 = {
     "../addons/gde_gozen/bin/linux_x86_32/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_x86_32/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libswresample.so.4" : "",
@@ -72,7 +72,6 @@ linux.debug.x86_32 = {
 }
 linux.release.x86_32 = {
     "../addons/gde_gozen/bin/linux_x86_32/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_x86_32/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_x86_32/libswresample.so.4" : "",
@@ -80,7 +79,6 @@ linux.release.x86_32 = {
 }
 linux.debug.arm64 = {
     "../addons/gde_gozen/bin/linux_arm64/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_arm64/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm64/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm64/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_arm64/libswresample.so.4" : "",
@@ -88,7 +86,6 @@ linux.debug.arm64 = {
 }
 linux.release.arm64 = {
     "../addons/gde_gozen/bin/linux_arm64/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_arm64/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm64/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm64/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_arm64/libswresample.so.4" : "",
@@ -96,7 +93,6 @@ linux.release.arm64 = {
 }
 linux.debug.arm32 = {
     "../addons/gde_gozen/bin/linux_arm32/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_arm32/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm32/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm32/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_arm32/libswresample.so.4" : "",
@@ -104,7 +100,6 @@ linux.debug.arm32 = {
 }
 linux.release.arm32 = {
     "../addons/gde_gozen/bin/linux_arm32/libavcodec.so.60" : "",
-    "../addons/gde_gozen/bin/linux_arm32/libavdevice.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm32/libavformat.so.60" : "",
     "../addons/gde_gozen/bin/linux_arm32/libavutil.so.58" : "",
     "../addons/gde_gozen/bin/linux_arm32/libswresample.so.4" : "",
@@ -113,7 +108,6 @@ linux.release.arm32 = {
 
 windows.debug.x86_64 = {
     "../addons/gde_gozen/bin/windows_x86_64/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_x86_64/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_64/avformat-60.dll" : "",
 	"../addons/gde_gozen/bin/windows_x86_64/avutil-58.dll" : "",
 
@@ -125,7 +119,6 @@ windows.debug.x86_64 = {
 }
 windows.release.x86_64 = {
     "../addons/gde_gozen/bin/windows_x86_64/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_x86_64/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_64/avformat-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_64/avutil-58.dll" : "",
 
@@ -137,7 +130,6 @@ windows.release.x86_64 = {
 }
 windows.debug.x86_32 = {
     "../addons/gde_gozen/bin/windows_x86_32/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_x86_32/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_32/avformat-60.dll" : "",
 	"../addons/gde_gozen/bin/windows_x86_32/avutil-58.dll" : "",
 
@@ -149,7 +141,6 @@ windows.debug.x86_32 = {
 }
 windows.release.x86_32 = {
     "../addons/gde_gozen/bin/windows_x86_32/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_x86_32/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_32/avformat-60.dll" : "",
     "../addons/gde_gozen/bin/windows_x86_32/avutil-58.dll" : "",
 
@@ -161,7 +152,6 @@ windows.release.x86_32 = {
 }
 windows.debug.arm64 = {
     "../addons/gde_gozen/bin/windows_arm64/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_arm64/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm64/avformat-60.dll" : "",
 	"../addons/gde_gozen/bin/windows_arm64/avutil-58.dll" : "",
 
@@ -173,7 +163,6 @@ windows.debug.arm64 = {
 }
 windows.release.arm64 = {
     "../addons/gde_gozen/bin/windows_arm64/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_arm64/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm64/avformat-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm64/avutil-58.dll" : "",
 
@@ -182,7 +171,6 @@ windows.release.arm64 = {
 }
 windows.debug.arm32 = {
     "../addons/gde_gozen/bin/windows_arm32/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_arm32/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm32/avformat-60.dll" : "",
 	"../addons/gde_gozen/bin/windows_arm32/avutil-58.dll" : "",
 
@@ -191,7 +179,6 @@ windows.debug.arm32 = {
 }
 windows.release.arm32 = {
     "../addons/gde_gozen/bin/windows_arm32/avcodec-60.dll" : "",
-    "../addons/gde_gozen/bin/windows_arm32/avdevice-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm32/avformat-60.dll" : "",
     "../addons/gde_gozen/bin/windows_arm32/avutil-58.dll" : "",
 
@@ -203,10 +190,6 @@ macos.debug.arm64 = {
 	"../addons/gde_gozen/bin/macos_arm64/debug/libavcodec.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_arm64/debug/libavcodec.60.dylib" : "Contents/Frameworks",
 	"../addons/gde_gozen/bin/macos_arm64/debug/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
-
-    "../addons/gde_gozen/bin/macos_arm64/debug/libavdevice.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_arm64/debug/libavdevice.60.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_arm64/debug/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
 
     "../addons/gde_gozen/bin/macos_arm64/debug/libavformat.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_arm64/debug/libavformat.60.dylib" : "Contents/Frameworks",
@@ -229,10 +212,6 @@ macos.release.arm64 = {
     "../addons/gde_gozen/bin/macos_arm64/release/libavcodec.60.dylib" : "Contents/Frameworks",
 	"../addons/gde_gozen/bin/macos_arm64/release/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
 
-    "../addons/gde_gozen/bin/macos_arm64/release/libavdevice.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_arm64/release/libavdevice.60.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_arm64/release/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
-
     "../addons/gde_gozen/bin/macos_arm64/release/libavformat.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_arm64/release/libavformat.60.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_arm64/release/libavformat.60.16.100.dylib" : "Contents/Frameworks",
@@ -253,10 +232,6 @@ macos.debug.x86_64 = {
 	"../addons/gde_gozen/bin/macos_x86_64/debug/libavcodec.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_x86_64/debug/libavcodec.60.dylib" : "Contents/Frameworks",
 	"../addons/gde_gozen/bin/macos_x86_64/debug/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
-
-    "../addons/gde_gozen/bin/macos_x86_64/debug/libavdevice.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_x86_64/debug/libavdevice.60.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_x86_64/debug/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
 
     "../addons/gde_gozen/bin/macos_x86_64/debug/libavformat.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_x86_64/debug/libavformat.60.dylib" : "Contents/Frameworks",
@@ -279,10 +254,6 @@ macos.release.x86_64 = {
     "../addons/gde_gozen/bin/macos_x86_64/release/libavcodec.60.dylib" : "Contents/Frameworks",
 	"../addons/gde_gozen/bin/macos_x86_64/release/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
 
-    "../addons/gde_gozen/bin/macos_x86_64/release/libavdevice.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_x86_64/release/libavdevice.60.dylib" : "Contents/Frameworks",
-    "../addons/gde_gozen/bin/macos_x86_64/release/libavdevice.60.3.100.dylib" : "Contents/Frameworks",
-
     "../addons/gde_gozen/bin/macos_x86_64/release/libavformat.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_x86_64/release/libavformat.60.dylib" : "Contents/Frameworks",
     "../addons/gde_gozen/bin/macos_x86_64/release/libavformat.60.16.100.dylib" : "Contents/Frameworks",
@@ -304,4 +275,7 @@ android.debug.arm64 = {}
 android.release.arm64 = {}
 android.debug.arm32 = {}
 android.release.arm32 = {}
+
+web.debug.wasm32 = {}
+web.release.wasm32 = {}
 
