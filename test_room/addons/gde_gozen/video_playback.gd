@@ -101,9 +101,18 @@ func set_video_path(new_path: String) -> void:
 	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]_update_video()[/code] get's run and set's the first frame image.
 	if video != null:
 		close()
-	
-	path = new_path
-	audio_player.stream = null
+
+	var stream: AudioStreamWAV = AudioStreamWAV.new()
+	stream.mix_rate = 44100
+	stream.stereo = true
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+
+	audio_player.stream = stream
+
+	if path.contains("res://") or path.contains("user://"):
+		path = ProjectSettings.globalize_path(new_path)
+	else:
+		path = new_path
 
 	if path == "":
 		return
