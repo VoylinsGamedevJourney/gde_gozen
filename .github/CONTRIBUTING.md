@@ -1,24 +1,96 @@
-# Contributing to the GDE GoZen Project
+# Contributing to GDE GoZen 🤝
+Thank you for considering contributing to the GDE GoZen project, all help is greatly appreciated!
 
-Thank you for considering contributing to GDE GoZen! It's a bit of a complicated project, especially on the compiling side of things ... and figuring out the FFmpeg side of things, but here's how you can help:
+This document outlines the guidelines for contributing to the GDE GoZen project. Please take a moment to review the information below, before making your first contribution.
 
-## Items which could always be worked on
+## Ways to contribute
+There are many ways you can contribute to the GDE GoZen project:
+- Report bugs you find whilst using the GDE GoZen addon;
+- Suggest new features and/or enhancements;
+- Write code (implement features, fix bugs, improve performance);
+- Improve documentation;
+- Provide feedback on the UI and experience;
+- Help testing new releases to guarantee a stable experience;
+- Contribute financially (see below);
+- Spread the word of GDE GoZen!
 
-Performance on the FFmpeg code can always be improved, same as for adding features to more easily do hardware decoding/encoding. Example projects is something I haven't gotten my hands on yet but I'd like to make some examples - which would replace the test room - for people to test out the different parts of the Addon, such as the audio importer, the rendering system and the video playback itself (which is the main feature of GDE GoZen).
+## Getting help & Communication
+If you have questions, need clarification, or want to discuss ideas before contributing, please join our [Discord server](https://discord.gg/BdbUf7VKYC). It's the best place for real-time communication with the community and maintainers. Issues can also be created in the repo itself.
 
-### OS support
+## Reporting bugs 🐛
+Found a bug (which is still alive)? Please help us by reporting it!
 
-OS support is a very difficult subject as I don't have enough funds personally to get Apple hardware, or to get a separate Windows system, ... A Windows VM is something I'm personally using, but that comes with issues for testing hardware decoding/encoding. That's why support is limited to Linux (which I mostly take care of) and Windows (which the community mostly takes care of due to my limited knowledge of Windows/Doors).
+1. Go to the [Issues tab](https://github.com/VoylinsGamedevJourney/gde_gozen/issues);
+1. Click the "New Issue" button;
+1. Choose the **Bug Report** template;
+1. Provide a clear and detailed description of the issue, including:
+    * Steps to reproduce the bug;
+    * Expected behaviour;
+    * Actual behaviour;
+    * Version of GDE GoZen you are using;
+    * The prompt which got printed in the terminal (if possible);
+1. Including screenshots or a short video could help a lot (but not required);
 
-Every now and then there is a MacOS developer which contributes a bit but support for MacOS can be unstable so until we find a developer which uses a Mac, or until I have the funds to get some hardware myself, I can't guarantee a smooth experience for Mac users.
+## Suggesting features
+Have an (awesome) idea for a new feature or improvement? We'd love to hear and consider it!
 
-## Reporting Issues
+1. Go to the [Issues tab](https://github.com/VoylinsGamedevJourney/gde_gozen/issues);
+1. Click the "New Issue" button;
+1. Choose the **Feature Request** template;
+1.  Clearly explain your suggestion, including:
+    *   The problem you're trying to solve.
+    *   Your proposed solution.
+    *   How it would benefit users.
+    *   Any alternative ideas you considered.
 
-If you encounter any bugs, please create an issue in the GitHub repo. We have some templates set up to make this process easier. Be certain to give a debug log, info which might be necessary (branch, OS, FFmpeg version, which binaries - Linux, Linux full, Windows, ...).
+> [!IMPORTANT]  
+> For larger features, it's recommended to discuss them on the [Discord server](https://discord.gg/BdbUf7VKYC).
 
-## Pull Requests
+## Contributing code
+We welcome code contributions! Please follow these steps to make contributions go more smoothly:
 
-Before submitting a PR, please ensure following points:
-- The code follows to overal project's style;
-- Documentation is updated as well if necessary;
-- The project still compiles without issues;
+### Project overview
+GDE GoZen is an open-source GDExtension for the Godot game engine which provides video playback for multiple video file types. The primary languages used are GDScript and C++ (for the GDExtension). The project is licensed under the GPL-3.0 license, partly due to the use of FFmpeg with the GPL-compatible codecs. GDE GoZen will stay open-source under the GPL license, even if we end up moving away from FFmpeg since most libraries for handling video files fall under this license anyway.
+
+### Setting up your development enviroment
+1. **Prerequisites:**
+    * Get the latest stable version of [the Godot Engine](https://godotengine.org);
+    * Install git;
+    * Familiarity with GDScript and Godot workflow ([Godot Docs](https://docs.godotengine.org/en/stable/));
+    * Familiarity with C++ (and GDExtension);
+    * (Optional) knowledge of video/audio formats and FFmpeg can be helpful;
+1. **Fork the repo:**
+    * [Fork the GDE GoZen project from GitHub](https://github.com/VoylinsGamedevJourney/gde_gozen/fork) to create your own copy of GDE GoZen to work in;
+    * Clone your fork to your local machine
+1. **Build the GDE:**
+    * Run `build.py` with python3;
+    * Follow the steps to build for your system (choose debug);
+1. **Open project in Godot:**
+    * Opening the project can be done through launching Godot and opening the project which is inside the src folder.
+
+### Your first code contribution
+1. Make certain you have pulled all commits from upstream and that you are inside of the `master` branch;
+1. Create a new branch with a descriptive name related to the feature or bug fix you want to implement;
+1. Make your changes, write your code, fix bugs, ...;
+1. Test your changes, be certain that it doesn't break anything else and that it works as expected;
+1. Follow the coding style, there's no document yet outlining the style so base it upon the other scripts for now;
+1. Write a clear commit message about the change you made;
+1. Commit and push your changes, afterwards create a pull request;
+
+From there we will review the code and test it ourselves as well. If everything is okay, we merge the PR. If not, we will ask for some changes to happen. Once merged: Congratulations, you've contributed to GDE GoZen!
+
+## Documentation contributions
+Improving documentation (README, code comments, Godot docs, Wiki) is a valuable contribution! If you see something unclear or missing, feel free to open an issue or submit a pull request with your proposed changes.
+
+## Translations
+Translation contributions are not yet necessary due to the early alpha stage, but we plan to add support for internationalization in the future. Stay tuned!
+
+## Financial contributions
+If you want to support GDE GoZen and GoZen (the video editor) financially, you can do so via:
+- **Contribute financially via Open Collective:** Funds go directly towards GoZen-related expenses (e.g., software licenses, hardware). [Open Collective page](https://opencollective.com/gozen)
+- **Support me personally via Ko-fi:** This helps support my overall work, including (GDE) GoZen development, videos, and other projects.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/voylin)
+
+Thank you again for your interest and support!
+
