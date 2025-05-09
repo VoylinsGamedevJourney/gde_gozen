@@ -1,4 +1,22 @@
 #!/usr/bin/env python
+"""
+GDE GoZen Builder Script
+
+This script handles the compilation of FFmpeg and the GDE GoZen plugin
+for multiple platforms and architectures.
+
+Windows and Linux can be build on Linux or Windows with WSL.
+For MacOS you need to use MacOS itself else building fails.
+
+For Web you need Emscripten installed.
+`emsdk/emsdk install 3.1.64`
+`emsdk/emsdk activate 3.1.64`
+`source emsdk/emsdk_env.sh`
+You may also need to custom build the Godot web export debug/release template with:
+`scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes\
+extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
+"""
+
 import os
 import sys
 import platform as os_platform
@@ -7,23 +25,8 @@ import glob
 import shutil
 
 
-# Windows and Linux can be build on Linux or Windows with WSL.
-# For MacOS you need to use MacOS itself else building fails.
-
-# For Web you need Emscripten installed.
-# `emsdk/emsdk install 3.1.64`
-# `emsdk/emsdk activate 3.1.64`
-# `source emsdk/emsdk_env.sh`
-# You may also need to custom build the Godot web export debug/release template with:
-# `scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
-
-
 THREADS: int = os.cpu_count() or 4
-
 PATH_BUILD_WINDOWS: str = 'build_on_windows.py'
-
-OPTION_DEBUG: str = 'debug'
-OPTION_RELEASE: str = 'release'
 
 ARCH_X86_64: str = 'x86_64'
 ARCH_ARM64: str = 'arm64'
@@ -122,7 +125,7 @@ def compile_ffmpeg_linux(arch: str) -> None:
 
     os.makedirs(path, exist_ok=True)
 
-    command = [
+    cmd = [
         './configure',
         '--prefix=./bin',
         '--enable-shared',
@@ -130,12 +133,13 @@ def compile_ffmpeg_linux(arch: str) -> None:
         '--target-os=linux',
         '--quiet',
         '--enable-pic',
+        '--enable-pthreads',
         '--extra-cflags=-fPIC',
         '--extra-ldflags=-fPIC',
     ]
-    command += DISABLED_MODULES
+    cmd += DISABLED_MODULES
 
-    result = subprocess.run(command, cwd='./ffmpeg/')
+    result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg failed!')
 
@@ -161,22 +165,23 @@ def compile_ffmpeg_windows(arch) -> None:
 
     os.makedirs(path, exist_ok=True)
 
-    command = [
+    cmd = [
         './configure',
         '--prefix=./bin',
         '--enable-shared',
         f'--arch={arch}',
         '--target-os=mingw32',
         '--enable-cross-compile',
+        '--enable-pthreads',
         f'--cross-prefix={arch}-w64-mingw32-',
         '--quiet',
         '--extra-libs=-lpthread',
         '--extra-ldflags=-fpic',
         '--extra-cflags=-fPIC',
     ]
-    command += DISABLED_MODULES
+    cmd += DISABLED_MODULES
 
-    result = subprocess.run(command, cwd='./ffmpeg/')
+    result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg failed!')
 
@@ -201,18 +206,19 @@ def compile_ffmpeg_macos(arch) -> None:
     os.makedirs(path_debug, exist_ok=True)
     os.makedirs(path_release, exist_ok=True)
 
-    command = [
+    cmd = [
         './configure',
         '--prefix=./bin',
         '--enable-shared',
         f'--arch={arch}',
-        '--extra-ldflags=-mmacosx-version-min=10.13',
+        '--enable-pthreads',
         '--quiet',
+        '--extra-ldflags=-mmacosx-version-min=10.13',
         '--extra-cflags=-fPIC -mmacosx-version-min=10.13',
     ]
-    command += DISABLED_MODULES
+    cmd += DISABLED_MODULES
 
-    result = subprocess.run(command, cwd='./ffmpeg/')
+    result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg failed!')
 
@@ -264,7 +270,7 @@ def compile_ffmpeg_android(arch) -> None:
     cxx: str = f'{toolchain_bin}/{target_arch}{ANDROID_API_LEVEL}-clangxx'
     strip_tool: str = f'{toolchain_bin}/llvm-strip'
 
-    command = [
+    cmd = [
         './configure',
         '--prefix=./bin',
         '--enable-shared',
@@ -279,9 +285,9 @@ def compile_ffmpeg_android(arch) -> None:
         '--extra-cflags=-fPIC',
         f'--extra-ldflags={arch_flags}',
     ]
-    command += DISABLED_MODULES
+    cmd += DISABLED_MODULES
 
-    result = subprocess.run(command, cwd='./ffmpeg/')
+    result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg failed!')
 
@@ -306,7 +312,7 @@ def compile_ffmpeg_web() -> None:
 
     os.makedirs(path, exist_ok=True)
 
-    command = [
+    cmd = [
         'emconfigure',
         './configure',
         '--cc=emcc',
@@ -339,8 +345,8 @@ def compile_ffmpeg_web() -> None:
         '--enable-protocol=file',
     ]
 
-    print(f'Running command: {' '.join(command)}')
-    result = subprocess.run(command, cwd='./ffmpeg/')
+    print(f'Running cmd: {' '.join(cmd)}')
+    result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg configure failed for Emscripten!')
         sys.exit(1)
@@ -437,6 +443,10 @@ def main():
         case 2:
             target = TARGET_RELEASE
 
+    clean_scons = True
+    if _print_options('Clean Scons?', ['yes', 'no']) == 2:
+        clean_scons = False
+
     compile_ffmpeg(platform, arch)
 
     cmd = ['scons', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
@@ -447,6 +457,10 @@ def main():
             if os_platform.system() == 'Linux':
                 print('Linux detected for setting ANDROID_HOME')
                 cmd += 'ANDROID_HOME=/opt/android-sdk'
+
+    if clean_scons:
+        clean_cmd = ['scons', '--clean', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
+        subprocess.run(clean_cmd, cwd='./')
 
     subprocess.run(cmd, cwd='./')
 
