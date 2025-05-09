@@ -11,7 +11,14 @@ func _ready() -> void:
 	
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
-	player.stream = Audio.get_wav(a_files[0])
+	var stream: AudioStreamWAV = AudioStreamWAV.new()
+	stream.mix_rate = 44100
+	stream.stereo = true
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+
+	stream.data = Audio.get_audio_data(a_files[0])
+
+	player.stream = stream
 	print("Audio loaded")
 	player.play()
 
