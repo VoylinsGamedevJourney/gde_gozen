@@ -2,26 +2,32 @@
 This is the changelog of all releases which can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
 ## Version 6.1 - 2025/04/21
+- *Fix:* Video not loading when path had been set;
 - *Fix:* Videos with thumbnails not loading;
 - *Fix:* `update_video` throwing error of texture size being wrong;
+- *Fix:* Error when getting first frame;
 - *Add:* Feature request issue template;
+- *Add:* Globalize paths (res:// and user:// can now be used);
 - *Add:* Beginning for Web export;
+- *Add:* Clean scons option on build.py;
+- *Improved:* FFmpeg library size;
 - *Improved:* The whole repo got an update for the .md files;
 - *Improved:* Improved `update_video` to accept audio;
 - *Improved:* Smaller export size;
 - *Improved:* Scons file;
+- *Improved:* Workflow update;
 - *Removed:* `dev_build` from scons command;
 - *Removed:* Error codes file;
 - *Removed:* Compute shader;
 
 ## Version 6.0 - 2025/04/21
 ### Fixes
-- *Fix:* compile on macos by @felixbaral in #38
-- *Fix:* for missing libraries for Windows on export;
-- *Fix:* error for image dimension being bad;
-- *Fix:* for older Python versions;
-- *Fix:* framerate mistake;
-- *Fix:* for wrong color support;
+- *Fix:* Compile on macos by @felixbaral in #38
+- *Fix:* For missing libraries for Windows on export;
+- *Fix:* Error for image dimension being bad;
+- *Fix:* For older Python versions;
+- *Fix:* Framerate mistake;
+- *Fix:* For wrong color support;
 ### Additions
 - *Add:* Added MacOS support;
 - *Add:* Added basics for Android support (Can't find anybody to test if it works or not);
