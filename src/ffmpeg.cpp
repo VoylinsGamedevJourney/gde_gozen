@@ -9,7 +9,7 @@ void FFmpeg::print_av_error(const char *a_message, int a_error) {
 	UtilityFunctions::printerr((std::string(a_message) + " " + l_error_buffer).c_str());
 }
 
-void FFmpeg::enable_multithreading(AVCodecContext *&a_codec_ctx, const AVCodec *&a_codec) {
+void FFmpeg::enable_multithreading(AVCodecContext *a_codec_ctx, const AVCodec *a_codec) {
 	a_codec_ctx->thread_count = OS::get_singleton()->get_processor_count() - 1;
 	if (a_codec->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		a_codec_ctx->thread_type = FF_THREAD_FRAME;
@@ -57,7 +57,7 @@ enum AVPixelFormat FFmpeg::get_hw_format(const enum AVPixelFormat *a_pix_fmt, en
 }
 
 
-AudioStreamWAV *FFmpeg::get_audio(AVFormatContext *&a_format_ctx, AVStream *&a_stream) {
+AudioStreamWAV *FFmpeg::get_audio(AVFormatContext *a_format_ctx, AVStream *a_stream) {
 	AudioStreamWAV *l_audio = memnew(AudioStreamWAV);
 
 	const AVCodec *l_codec_audio = avcodec_find_decoder(a_stream->codecpar->codec_id);

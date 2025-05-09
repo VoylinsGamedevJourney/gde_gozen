@@ -13,7 +13,7 @@ config_version=5
 config/name="GoZen GDExtension test_room"
 run/main_scene="res://main.tscn"
 run/print_header=false
-config/features=PackedStringArray("4.3", "GL Compatibility")
+config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [debug]
@@ -46,4 +46,5 @@ play_pause={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.105469, 0.105469, 0.105469, 1)

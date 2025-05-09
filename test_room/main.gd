@@ -35,23 +35,22 @@ func _ready() -> void:
 		open_video(OS.get_cmdline_args()[1])
 
 
-	@warning_ignore("standalone_expression") [
-		get_window().files_dropped.connect(_on_video_drop),
-
-		video_playback.video_loaded.connect(after_video_open),
-		video_playback.frame_changed.connect(
-			func(a_value: int) -> void: 
-				timeline.value = a_value
-				current_frame_value.text = str(a_value)
+	@warning_ignore_start("return_value_discarded")
+	get_window().files_dropped.connect(_on_video_drop)
+	video_playback.video_loaded.connect(after_video_open)
+	video_playback.frame_changed.connect(
+			func(value: int) -> void: 
+				timeline.value = value
+				current_frame_value.text = str(value)
 				editor_fps_value.text = str(Engine.get_frames_per_second()))
-	]
+	@warning_ignore_restore("return_value_discarded")
 
 	loading_screen.visible = false
 	speed_spin_box.value = video_playback.playback_speed
 	
 
-func _input(a_event: InputEvent) -> void:
-	if a_event.is_action_released("play_pause"):
+func _input(event: InputEvent) -> void:
+	if event.is_action_released("play_pause"):
 		_on_play_pause_button_pressed()
 
 
@@ -111,4 +110,22 @@ func _on_timeline_drag_ended(_value: bool) -> void:
 
 func _on_speed_spin_box_value_changed(a_value: float) -> void:
 	video_playback.playback_speed = a_value
+
+
+func _on_load_video_button_pressed() -> void:
+	var dialog: FileDialog = FileDialog.new()
+
+	dialog.title = "Open video"
+	dialog.force_native = true
+	dialog.use_native_dialog = true
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	@warning_ignore("return_value_discarded")
+	dialog.file_selected.connect(
+			func(file_path: String) -> void:
+				_on_video_drop([file_path]))
+
+	add_child(dialog)
+	dialog.popup_centered()
+	
 
