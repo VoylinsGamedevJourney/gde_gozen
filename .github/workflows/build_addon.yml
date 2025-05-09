@@ -1,12 +1,13 @@
 name: Full build
-run-name: Building addon/test_room
 on: 
   workflow_dispatch:
     inputs:
       version:
         description: 'Addon version'
         required: true
-        default: "5.0"
+        default: "6.0"
+
+run-name: Building addon/test_room - ${{ inputs.version }}
 
 jobs:
   build-linux:
@@ -27,12 +28,12 @@ jobs:
         run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_linux("arm64")'
 
       - name: Build Linux debug x86_64
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64
       - name: Build Linux release x86_64
         run: scons -j4 target=template_release platform=linux arch=x86_64
 
       - name: Build Linux debug arm64
-        run: scons -j4 target=template_debug platform=linux arch=arm64 dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=arm64
       - name: Build Linux release arm64
         run: scons -j4 target=template_release platform=linux arch=arm64
 
@@ -59,7 +60,7 @@ jobs:
         run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_windows("x86_64")'
 
       - name: Build Windows debug x86_64
-        run: scons -j4 target=template_debug platform=windows arch=x86_64 dev_build=yes
+        run: scons -j4 target=template_debug platform=windows arch=x86_64
       - name: Build Windows release x86_64
         run: scons -j4 target=template_release platform=windows arch=x86_64
 
@@ -88,12 +89,12 @@ jobs:
         run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_macos("x86_64")'
 
       - name: Build MacOS debug arm64
-        run: scons -j4 target=template_debug platform=macos arch=arm64 dev_build=yes
+        run: scons -j4 target=template_debug platform=macos arch=arm64
       - name: Build MacOS release arm64
         run: scons -j4 target=template_release platform=macos arch=arm64
 
       - name: Build MacOS debug x86_64
-        run: scons -j4 target=template_debug platform=macos arch=x86_64 dev_build=yes
+        run: scons -j4 target=template_debug platform=macos arch=x86_64
       - name: Build MacOS release x86_64
         run: scons -j4 target=template_release platform=macos arch=x86_64
 

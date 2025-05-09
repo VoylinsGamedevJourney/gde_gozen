@@ -1,22 +1,14 @@
 name: Android
-run-name: Building GDE GoZen - Android
+
 on: 
   workflow_dispatch:
     inputs:
       version:
         description: 'Addon version'
         required: true
-        default: "5.0"
-      artifact_addon:
-        description: 'Get artifacts'
-        required: true
-        default: true
-        type: boolean
-      artifact_test_room:
-        description: 'Get test_room'
-        required: true
-        default: true
-        type: boolean
+        default: "6.0"
+
+run-name: Building GDE GoZen - Android - ${{ inputs.version }}
 
 env:
   ANDROID_SDK_ROOT: '/opt/android-sdk'
@@ -96,9 +88,9 @@ jobs:
 
       - name: Build Android debug + release
         run: |
-          scons -j4 target=template_debug platform=android arch=arm64 dev_build=yes
+          scons -j4 target=template_debug platform=android arch=arm64
           scons -j4 target=template_release platform=android arch=arm64
-      #    scons -j4 target=template_debug platform=android arch=armv7a dev_build=yes
+      #    scons -j4 target=template_debug platform=android arch=armv7a
       #    scons -j4 target=template_release platform=android arch=armv7a
         env:
           ANDROID_NDK: ${{ env.ANDROID_NDK }}
@@ -106,7 +98,6 @@ jobs:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
       - name: Uploading addon build
-        if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: Addon_GDE_GoZen_Android
@@ -114,7 +105,6 @@ jobs:
           retention-days: 5
 
       - name: Uploading test room build
-        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: Test_room_GDE_GoZen_Android

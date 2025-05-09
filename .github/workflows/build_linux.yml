@@ -1,22 +1,14 @@
 name: Linux
-run-name: Building GDE GoZen - Linux
+
 on: 
   workflow_dispatch:
     inputs:
       version:
         description: 'Addon version'
         required: true
-        default: "5.0"
-      artifact_addon:
-        description: 'Get artifacts'
-        required: true
-        default: true
-        type: boolean
-      artifact_test_room:
-        description: 'Get test_room'
-        required: true
-        default: true
-        type: boolean
+        default: "6.0"
+
+run-name: Building GDE GoZen - Linux - ${{ inputs.version }}
 
 jobs:
   build:
@@ -37,17 +29,16 @@ jobs:
         run: python -c 'import build; build.compile_ffmpeg_linux("arm64")'
 
       - name: Build Linux debug x86_64
-        run: scons -j4 target=template_debug platform=linux arch=x86_64 dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=x86_64
       - name: Build Linux release x86_64
         run: scons -j4 target=template_release platform=linux arch=x86_64
 
       - name: Build Linux debug arm64
-        run: scons -j4 target=template_debug platform=linux arch=arm64 dev_build=yes
+        run: scons -j4 target=template_debug platform=linux arch=arm64
       - name: Build Linux release arm64
         run: scons -j4 target=template_release platform=linux arch=arm64
 
       - name: Upload addon
-        if: ${{ github.event.inputs.artifact_addon == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_linux_v${{ inputs.version }}
@@ -55,7 +46,6 @@ jobs:
           retention-days: 5
 
       - name: Upload test_room
-        if: ${{ github.event.inputs.artifact_test_room == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_test_room_linux_v${{ inputs.version }}
