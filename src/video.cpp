@@ -179,17 +179,27 @@ int Video::open(const String& a_path) {
 		return _log_err("Invalid video");
 	}
 
-	if ((response = _seek_frame(0)) < 0) {
-		FFmpeg::print_av_error("Seeking to beginning error: ", response);
-		close();
-		return _log_err("Error seeking");
-	}
+	int attempts = 0;
+	while (true) {
+		response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(),
+									 av_stream->index, av_frame.get(), av_packet.get());
 
-	if ((response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(),
-								   av_stream->index, av_frame.get(), av_packet.get()))) {
-		FFmpeg::print_av_error("Something went wrong getting first frame!", response);
-		close();
-		return _log_err("Error seeking");
+		if (response == 0)
+			break;
+		else if (response == AVERROR(EAGAIN) || response == AVERROR(EWOULDBLOCK)) {
+			if (attempts > 10) {
+				FFmpeg::print_av_error("Reached max attempts trying to get first frame!", response);
+				break;
+			}
+
+			attempts++;
+		} else if (response == AVERROR_EOF) {
+			FFmpeg::print_av_error("Reached EOF trying to get first frame!", response);
+			break;
+		} else {
+			FFmpeg::print_av_error("Something went wrong getting first frame!", response);
+			break;
+		}
 	}
 	
 	// Checking for interlacing and what type of interlacing
