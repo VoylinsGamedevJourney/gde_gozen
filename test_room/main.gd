@@ -34,16 +34,9 @@ func _ready() -> void:
 	if OS.get_cmdline_args().size() > 1:
 		open_video(OS.get_cmdline_args()[1])
 
-
-	@warning_ignore_start("return_value_discarded")
-	get_window().files_dropped.connect(_on_video_drop)
-	video_playback.video_loaded.connect(after_video_open)
-	video_playback.frame_changed.connect(
-			func(value: int) -> void: 
-				timeline.value = value
-				current_frame_value.text = str(value)
-				editor_fps_value.text = str(Engine.get_frames_per_second()))
-	@warning_ignore_restore("return_value_discarded")
+	_connect(get_window().files_dropped, _on_video_drop)
+	_connect(video_playback.video_loaded, after_video_open)
+	_connect(video_playback.frame_changed, _frame_changed)
 
 	loading_screen.visible = false
 	speed_spin_box.value = video_playback.playback_speed
@@ -55,16 +48,24 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_video_drop(a_files: PackedStringArray) -> void:
-	if a_files[0].get_extension().to_lower() in VIDEO_EXTENSIONS:
-		timeline.value = 0
-		open_video(a_files[0])
-	else:
-		print("Not a valid video file!");
+	if a_files[0].get_extension().to_lower() not in VIDEO_EXTENSIONS:
+		return print("Not a valid video file!");
+	open_video(a_files[0])
+
+
+func _on_url_line_edit_text_submitted(path: String) -> void:
+	open_video(path)
+
+
+func _frame_changed(value: int) -> void:
+	timeline.value = value
+	current_frame_value.text = str(value)
+	editor_fps_value.text = str(Engine.get_frames_per_second())
 
 
 func open_video(a_file: String) -> void:
+	timeline.value = 0
 	loading_screen.visible = true
-
 	video_playback.set_video_path(a_file)
 
 
@@ -78,17 +79,15 @@ func after_video_open() -> void:
 
 
 func _on_play_pause_button_pressed() -> void:
-	if !video_playback.is_open():
-		return
+	if video_playback.is_open():
+		if video_playback.is_playing:
+			video_playback.pause()
+			play_pause_button.texture_normal = icons[0]
+		else:
+			video_playback.play()
+			play_pause_button.texture_normal = icons[1]
 
-	if video_playback.is_playing:
-		video_playback.pause()
-		play_pause_button.texture_normal = icons[0]
-	else:
-		video_playback.play()
-		play_pause_button.texture_normal = icons[1]
-
-	play_pause_button.release_focus()
+		play_pause_button.release_focus()
 
 
 func _on_timeline_value_changed(_value: float) -> void:
@@ -119,13 +118,14 @@ func _on_load_video_button_pressed() -> void:
 	dialog.force_native = true
 	dialog.use_native_dialog = true
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	@warning_ignore("return_value_discarded")
-	dialog.file_selected.connect(
-			func(file_path: String) -> void:
-				_on_video_drop([file_path]))
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
+	_connect(dialog.file_selected, _on_video_drop)
 
 	add_child(dialog)
 	dialog.popup_centered()
-	
+
+
+func _connect(from_signal: Signal, target_func: Callable) -> void:
+	if from_signal.connect(target_func):
+		printerr("Couldn't connect function '", target_func.get_method(), "' to '", from_signal.get_name(), "'!")
 

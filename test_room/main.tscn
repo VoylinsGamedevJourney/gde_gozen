@@ -110,6 +110,10 @@ layout_mode = 2
 layout_mode = 2
 text = "Load video ..."
 
+[node name="URLLineEdit" type="LineEdit" parent="Debug/DebugPanel/DebugVBox"]
+layout_mode = 2
+placeholder_text = "Enter URL/path"
+
 [node name="DebugGrid" type="GridContainer" parent="Debug/DebugPanel/DebugVBox"]
 layout_mode = 2
 columns = 2
@@ -208,4 +212,5 @@ label_settings = SubResource("LabelSettings_30qi2")
 [connection signal="value_changed" from="VBox/BottomPanel/VBox/Timeline" to="." method="_on_timeline_value_changed"]
 [connection signal="pressed" from="VBox/BottomPanel/VBox/ButtonsHBox/PlayPauseButton" to="." method="_on_play_pause_button_pressed"]
 [connection signal="pressed" from="Debug/DebugPanel/DebugVBox/LoadVideoButton" to="." method="_on_load_video_button_pressed"]
+[connection signal="text_submitted" from="Debug/DebugPanel/DebugVBox/URLLineEdit" to="." method="_on_url_line_edit_text_submitted"]
 [connection signal="value_changed" from="Debug/DebugPanel/DebugVBox/DebugGrid/SpeedSpinBox" to="." method="_on_speed_spin_box_value_changed"]
