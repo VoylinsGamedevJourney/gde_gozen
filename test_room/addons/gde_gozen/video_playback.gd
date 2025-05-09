@@ -102,7 +102,7 @@ func _ready() -> void:
 
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(new_path: String) -> void:
-	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]update_video()[/code] get's run and set's the first frame image.
+	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]_update_video()[/code] get's run and set's the first frame image.
 	if !is_node_ready():
 		return
 	elif video != null:
@@ -130,8 +130,16 @@ func set_video_path(new_path: String) -> void:
 	if enable_audio:
 		_threads.append(WorkerThreadPool.add_task(_open_audio))
 
+	
+func update_video(video_instance: Video, audio_stream: AudioStreamWAV = null) -> void:
+	if video != null:
+		close()
 
-func update_video(new_video: Video) -> void:
+	audio_player.stream = audio_stream
+	_update_video(video_instance)
+
+
+func _update_video(new_video: Video) -> void:
 	## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
 	video = new_video
 	if !is_open():
@@ -241,7 +249,7 @@ func _process(delta: float) -> void:
 				_threads.remove_at(_threads.find(i))
 
 			if _threads.is_empty():
-				update_video(video)
+				_update_video(video)
 
 				if enable_auto_play:
 					play()
