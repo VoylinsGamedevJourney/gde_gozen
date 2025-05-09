@@ -1,7 +1,7 @@
 # Changelog
 This is the changelog of all releases which can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
-## Version 6.1 - 2025/04/21
+## Version 6.1 - 2025/05/10
 - *Fix:* Video not loading when path had been set;
 - *Fix:* Videos with thumbnails not loading;
 - *Fix:* `update_video` throwing error of texture size being wrong;
