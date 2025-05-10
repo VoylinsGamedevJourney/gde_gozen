@@ -322,6 +322,11 @@ def compile_ffmpeg_web() -> None:
         '--disable-shared',
         '--prefix=./bin',
         '--enable-cross-compile',
+        '--target-os=none',
+        '--arch=wasm32',
+        '--cpu=generic',
+        '--disable-x86asm',
+        '--disable-inline-asm',
         '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC',
         '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC',
         '--enable-pic',
@@ -333,15 +338,24 @@ def compile_ffmpeg_web() -> None:
         '--enable-avutil',
         '--enable-swscale',
         '--enable-swresample',
+
         '--enable-demuxer=mov',
+        '--enable-demuxer=matroska',
+
+        '--enable-decoder=vp9',
         '--enable-decoder=h264',
+        '--enable-decoder=opus',
         '--enable-decoder=aac',
+
         '--enable-parser=h264',
         '--enable-parser=aac',
+
         '--enable-bsf=h264_mp4toannexb',
         '--enable-bsf=aac_adtstoasc',
-        '--enable-protocol=file',
+
+        '--enable-protocol=file,http,https',
     ]
+    cmd += DISABLED_MODULES
 
     print(f'Running cmd: {' '.join(cmd)}')
     result = subprocess.run(cmd, cwd='./ffmpeg/')

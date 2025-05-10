@@ -1,6 +1,12 @@
 # Changelog
 This is the changelog of all releases which can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
+
+## Version x.x - 2025/xx/xx
+- *Fix:* Audio test room;
+- *Improved:* Added line edit for URL/path in test room;
+- *Improved:* Cleanup of main.gd;
+
 ## Version 6.1 - 2025/05/10
 - *Fix:* Video not loading when path had been set;
 - *Fix:* Videos with thumbnails not loading;

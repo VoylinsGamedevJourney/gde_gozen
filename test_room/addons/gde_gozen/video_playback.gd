@@ -393,15 +393,16 @@ func _open_audio() -> void:
 func _print_system_debug() -> void:
 	print_rich("[b]System info")
 	print("OS name: ", OS.get_name())
-	print("Distro name: ", OS.get_distribution_name())
-	print("OS version: ", OS.get_version())
-	print_rich("Memory info:\n\t", OS.get_memory_info())
-	print("CPU name: ", OS.get_processor_name())
-	print("Core\threads count: ", OS.get_processor_count())
-	if OS.get_name() != "Windows":
-		print("GPU name: ", RenderingServer.get_video_adapter_name())
-		print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
-		print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
+	if OS.get_name() != "Web":
+		print("Distro name: ", OS.get_distribution_name())
+		print("OS version: ", OS.get_version())
+		print_rich("Memory info:\n\t", OS.get_memory_info())
+		print("CPU name: ", OS.get_processor_name())
+		print("Core/threads count: ", OS.get_processor_count())
+		if OS.get_name() != "Windows":
+			print("GPU name: ", RenderingServer.get_video_adapter_name())
+			print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
+			print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
 
 
 func _print_video_debug() -> void:

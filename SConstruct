@@ -132,8 +132,9 @@ elif 'web' in platform:
             '-sSHARED_MEMORY=1',
             '-sINITIAL_MEMORY=1024MB',
             '-sSTACK_SIZE=512MB',
-            '-sSIDE_MODULE=1'
-        ])
+            '-sSIDE_MODULE=1',
+        ]
+    )
 
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
