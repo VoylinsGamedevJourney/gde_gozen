@@ -2,8 +2,10 @@
 This is the changelog of all releases which can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
 
-## Version x.x - 2025/xx/xx
+## Version 6.1.1 - 2025/05/10
 - *Fix:* Audio test room;
+- *Fix:* Exporting not copying libraries correctly;
+- *Fix:* Web export not building;
 - *Improved:* Added line edit for URL/path in test room;
 - *Improved:* Cleanup of main.gd;
 
