@@ -7,44 +7,24 @@ compatibility_minimum = "4.3"
 
 linux.debug.x86_64 = "res://addons/gde_gozen/bin/linux_x86_64/libgozen.linux.template_debug.x86_64.so"
 linux.release.x86_64 = "res://addons/gde_gozen/bin/linux_x86_64/libgozen.linux.template_release.x86_64.so"
-linux.debug.x86_32 = "res://addons/gde_gozen/bin/linux_x86_32/libgozen.linux.template_debug.x86_32.so"
-linux.release.x86_32 = "res://addons/gde_gozen/bin/linux_x86_32/libgozen.linux.template_release.x86_32.so"
-
 linux.debug.arm64 = "res://addons/gde_gozen/bin/linux_arm64/libgozen.linux.template_debug.arm64.so"
 linux.release.arm64 = "res://addons/gde_gozen/bin/linux_arm64/libgozen.linux.template_release.arm64.so"
-linux.debug.arm32 = "res://addons/gde_gozen/bin/linux_arm32/libgozen.linux.template_debug.arm32.so"
-linux.release.arm32 = "res://addons/gde_gozen/bin/linux_arm32/libgozen.linux.template_release.arm32.so"
 
 windows.debug.x86_64 = "res://addons/gde_gozen/bin/windows_x86_64/libgozen.windows.template_debug.x86_64.dll"
 windows.release.x86_64 = "res://addons/gde_gozen/bin/windows_x86_64/libgozen.windows.template_release.x86_64.dll"
-windows.debug.x86_32 = "res://addons/gde_gozen/bin/windows_x86_32/libgozen.windows.template_debug.x86_32.dll"
-windows.release.x86_32 = "res://addons/gde_gozen/bin/windows_x86_32/libgozen.windows.template_release.x86_32.dll"
-
 windows.debug.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windows.template_debug.arm64.dll"
 windows.release.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windows.template_release.arm64.dll"
-windows.debug.arm32 = "res://addons/gde_gozen/bin/windows_arm32/libgozen.windows.template_debug.arm32.dll"
-windows.release.arm32 = "res://addons/gde_gozen/bin/windows_arm32/libgozen.windows.template_release.arm32.dll"
 
 macos.debug.arm64 = "res://addons/gde_gozen/bin/macos_arm64/debug/libgozen.macos.template_debug.arm64.dylib"
 macos.release.arm64 = "res://addons/gde_gozen/bin/macos_arm64/release/libgozen.macos.template_release.arm64.dylib"
 
-macos.debug.x86_64 = "res://addons/gde_gozen/bin/macos_x86_64/debug/libgozen.macos.template_debug.x86_64.dylib"
-macos.release.x86_64 = "res://addons/gde_gozen/bin/macos_x86_64/release/libgozen.macos.template_release.x86_64.dylib"
-
 android.debug.arm64 = "res://addons/gde_gozen/bin/android_arm64/debug/libgozen.android.template_debug.arm64.so"
 android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/release/libgozen.android.template_release.arm64.so"
-
 android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/debug/libgozen.android.template_debug.arm32.so"
 android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/release/libgozen.android.template_release.arm32.so"
 
 web.debug.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_debug.wasm32.wasm"
 web.release.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_release.wasm32.wasm"
-
-[icon]
-
-Video = "res://addons/gde_gozen/icon.svg"
-Renderer = "res://addons/gde_gozen/icon.svg"
-Audio = "res://addons/gde_gozen/icon.svg"
 
 [dependencies]
 
@@ -62,20 +42,6 @@ linux.release.x86_64 = {
     "bin/linux_x86_64/libswresample.so.4" : "",
     "bin/linux_x86_64/libswscale.so.7" : "",
 }
-linux.debug.x86_32 = {
-    "bin/linux_x86_32/libavcodec.so.60" : "",
-    "bin/linux_x86_32/libavformat.so.60" : "",
-    "bin/linux_x86_32/libavutil.so.58" : "",
-    "bin/linux_x86_32/libswresample.so.4" : "",
-    "bin/linux_x86_32/libswscale.so.7" : "",
-}
-linux.release.x86_32 = {
-    "bin/linux_x86_32/libavcodec.so.60" : "",
-    "bin/linux_x86_32/libavformat.so.60" : "",
-    "bin/linux_x86_32/libavutil.so.58" : "",
-    "bin/linux_x86_32/libswresample.so.4" : "",
-    "bin/linux_x86_32/libswscale.so.7" : "",
-}
 linux.debug.arm64 = {
     "bin/linux_arm64/libavcodec.so.60" : "",
     "bin/linux_arm64/libavformat.so.60" : "",
@@ -89,20 +55,6 @@ linux.release.arm64 = {
     "bin/linux_arm64/libavutil.so.58" : "",
     "bin/linux_arm64/libswresample.so.4" : "",
     "bin/linux_arm64/libswscale.so.7" : "",
-}
-linux.debug.arm32 = {
-    "bin/linux_arm32/libavcodec.so.60" : "",
-    "bin/linux_arm32/libavformat.so.60" : "",
-    "bin/linux_arm32/libavutil.so.58" : "",
-    "bin/linux_arm32/libswresample.so.4" : "",
-    "bin/linux_arm32/libswscale.so.7" : "",
-}
-linux.release.arm32 = {
-    "bin/linux_arm32/libavcodec.so.60" : "",
-    "bin/linux_arm32/libavformat.so.60" : "",
-    "bin/linux_arm32/libavutil.so.58" : "",
-    "bin/linux_arm32/libswresample.so.4" : "",
-    "bin/linux_arm32/libswscale.so.7" : "",
 }
 
 windows.debug.x86_64 = {
@@ -127,28 +79,6 @@ windows.release.x86_64 = {
 	"bin/windows_x86_64/libwinpthread-1.dll" : "",
 	"bin/windows_x86_64/libstdc++-6.dll" : ""
 }
-windows.debug.x86_32 = {
-    "bin/windows_x86_32/avcodec-60.dll" : "",
-    "bin/windows_x86_32/avformat-60.dll" : "",
-	"bin/windows_x86_32/avutil-58.dll" : "",
-
-	"bin/windows_x86_32/swresample-4.dll" : "",
-	"bin/windows_x86_32/swscale-7.dll" : "",
-
-	"bin/windows_x86_32/libwinpthread-1.dll" : "",
-	"bin/windows_x86_32/libstdc++-6.dll" : ""
-}
-windows.release.x86_32 = {
-    "bin/windows_x86_32/avcodec-60.dll" : "",
-    "bin/windows_x86_32/avformat-60.dll" : "",
-    "bin/windows_x86_32/avutil-58.dll" : "",
-
-	"bin/windows_x86_32/swresample-4.dll" : "",
-	"bin/windows_x86_32/swscale-7.dll" : "",
-
-	"bin/windows_x86_32/libwinpthread-1.dll" : "",
-	"bin/windows_x86_32/libstdc++-6.dll" : ""
-}
 windows.debug.arm64 = {
     "bin/windows_arm64/avcodec-60.dll" : "",
     "bin/windows_arm64/avformat-60.dll" : "",
@@ -167,22 +97,6 @@ windows.release.arm64 = {
 
 	"bin/windows_arm64/swresample-4.dll" : "",
 	"bin/windows_arm64/swscale-7.dll" : ""
-}
-windows.debug.arm32 = {
-    "bin/windows_arm32/avcodec-60.dll" : "",
-    "bin/windows_arm32/avformat-60.dll" : "",
-	"bin/windows_arm32/avutil-58.dll" : "",
-
-	"bin/windows_arm32/swresample-4.dll" : "",
-	"bin/windows_arm32/swscale-7.dll" : ""
-}
-windows.release.arm32 = {
-    "bin/windows_arm32/avcodec-60.dll" : "",
-    "bin/windows_arm32/avformat-60.dll" : "",
-    "bin/windows_arm32/avutil-58.dll" : "",
-
-	"bin/windows_arm32/swresample-4.dll" : "",
-	"bin/windows_arm32/swscale-7.dll" : ""
 }
 
 macos.debug.arm64 = {
@@ -226,48 +140,6 @@ macos.release.arm64 = {
     "bin/macos_arm64/release/libswscale.dylib" : "Contents/Frameworks",
     "bin/macos_arm64/release/libswscale.7.dylib" : "Contents/Frameworks",
     "bin/macos_arm64/release/libswscale.7.5.100.dylib" : "Contents/Frameworks"
-}
-macos.debug.x86_64 = {
-	"bin/macos_x86_64/debug/libavcodec.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libavcodec.60.dylib" : "Contents/Frameworks",
-	"bin/macos_x86_64/debug/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/debug/libavformat.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libavformat.60.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libavformat.60.16.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/debug/libavutil.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libavutil.58.dylib" : "Contents/Frameworks",
-	"bin/macos_x86_64/debug/libavutil.58.29.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/debug/libswresample.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libswresample.4.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libswresample.4.12.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/debug/libswscale.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libswscale.7.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/debug/libswscale.7.5.100.dylib" : "Contents/Frameworks"
-}
-macos.release.x86_64 = {
-	"bin/macos_x86_64/release/libavcodec.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libavcodec.60.dylib" : "Contents/Frameworks",
-	"bin/macos_x86_64/release/libavcodec.60.31.102.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/release/libavformat.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libavformat.60.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libavformat.60.16.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/release/libavutil.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libavutil.58.dylib" : "Contents/Frameworks",
-	"bin/macos_x86_64/release/libavutil.58.29.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/release/libswresample.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libswresample.4.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libswresample.4.12.100.dylib" : "Contents/Frameworks",
-
-    "bin/macos_x86_64/release/libswscale.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libswscale.7.dylib" : "Contents/Frameworks",
-    "bin/macos_x86_64/release/libswscale.7.5.100.dylib" : "Contents/Frameworks"
 }
 
 android.debug.arm64 = {}

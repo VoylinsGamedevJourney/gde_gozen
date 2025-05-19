@@ -66,6 +66,7 @@ elif 'macos' in platform:
     macos_base_path = f'{libpath}/{target}'
     macos_lib_path = f'{macos_base_path}/lib'
     libpath = f'{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}'
+    os.makedirs(macos_lib_path, exist_ok=True)
 
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
@@ -85,7 +86,7 @@ elif 'macos' in platform:
             '-framework', 'CoreVideo',
             '-framework', 'CoreMedia',
             '-framework', 'AVFoundation',
-            '-rpath', '@loadet_path/lib']
+            '-rpath', '@loader_path/lib']
     )
 
 elif 'android' in platform:

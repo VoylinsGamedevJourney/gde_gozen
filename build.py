@@ -199,8 +199,8 @@ def compile_ffmpeg_windows(arch) -> None:
 
 def compile_ffmpeg_macos(arch) -> None:
     print('Configuring FFmpeg for MacOS ...')
-    path_debug: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/debug/lib'
-    path_release: str = f'./test_room/addons/gde_gozen/bin/macos_{arch}/release/lib'
+    path_debug: str = './test_room/addons/gde_gozen/bin/macos/debug/lib'
+    path_release: str = './test_room/addons/gde_gozen/bin/macos/release/lib'
 
     os.makedirs(path_debug, exist_ok=True)
     os.makedirs(path_release, exist_ok=True)
@@ -327,8 +327,8 @@ def compile_ffmpeg_web() -> None:
         '--cpu=generic',
         '--disable-x86asm',
         '--disable-inline-asm',
-        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC',
-        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC',
+        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC -sASYNCIFY=1',
+        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC -sASYNCIFY=1 --proxy-to-worker',
         '--enable-pic',
         '--enable-small',
         '--disable-everything',
@@ -338,9 +338,10 @@ def compile_ffmpeg_web() -> None:
         '--enable-avutil',
         '--enable-swscale',
         '--enable-swresample',
+        '--enable-network',
 
-        '--enable-demuxer=mov',
-        '--enable-demuxer=matroska',
+        '--enable-demuxer=mov,mp4,m4a,3gp,3g2,mj2',
+        '--enable-demuxer=matroska,webm',
 
         '--enable-decoder=vp9',
         '--enable-decoder=h264',
@@ -434,14 +435,13 @@ def main():
     # arm64 isn't supported yet by mingw for Windows, so x86_64 only.
     # Web doesn't need any architecture, just 'wasm32'
     title_arch: str = 'Choose architecture'
-    arch: str = ARCH_X86_64 if platform != OS_MACOS else ARCH_ARM64
+    arch: str = ARCH_X86_64
     match platform:
         case 'linux':
             if _print_options(title_arch, [ARCH_X86_64, ARCH_ARM64]) == 2:
                 arch = ARCH_ARM64
         case 'macos':
-            if _print_options(title_arch, [ARCH_ARM64, ARCH_X86_64]) == 2:
-                arch = ARCH_X86_64
+            arch = ARCH_ARM64
         case 'android':
             if _print_options(title_arch, [ARCH_ARM64, ARCH_ARMV7A]) == 2:
                 arch = ARCH_ARMV7A
