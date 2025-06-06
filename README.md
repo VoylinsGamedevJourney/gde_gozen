@@ -39,13 +39,7 @@ Getting the compiled builds from Itch.io or Ko-fi gives you access to new compil
 
 ## Supporting GDE GoZen
 
-Supporting can be done through contributions to the project and through donations. For more information on how to contribute to the project, feel free to take a look at [the CONTRIBUTING manual](./.github/CONTRIBUTING.md).
-
-Financial supporting GDE GoZen and GoZen can be done through 2 channels:
-- [The GoZen Open Collective page](https://opencollective.com/gozen) is for donations which exclusively go to GoZen development;
-- [My ko-fi page](https://ko-fi.com/voylin) are for donations to support me, my projects, the YT channels, and GoZen;
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)
+Supporting can be done through contributions to the project and through donations. For more information on how to contribute to the project, feel free to take a look at [the CONTRIBUTING manual](./.github/CONTRIBUTING.md). Financial supporting GDE GoZen and GoZen can be done through [my Ko-fi page](https://ko-fi.com/voylin)
 
 ## Projects using GDE GoZen
 ### Games
@@ -58,3 +52,5 @@ Financial supporting GDE GoZen and GoZen can be done through 2 channels:
 Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. Licensing is complicated and I'm not a lawyer. As long as you don't make adjustments to the way that FFmpeg gets compiled, there should be no issue for your projects/games.
 
 > This software uses libraries from the FFmpeg project under the LGPLv2.1
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)

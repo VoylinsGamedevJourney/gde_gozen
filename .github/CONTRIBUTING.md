@@ -86,11 +86,9 @@ Improving documentation (README, code comments, Godot docs, Wiki) is a valuable 
 Translation contributions are not yet necessary due to the early alpha stage, but we plan to add support for internationalization in the future. Stay tuned!
 
 ## Financial contributions
-If you want to support GDE GoZen and GoZen (the video editor) financially, you can do so via:
-- **Contribute financially via Open Collective:** Funds go directly towards GoZen-related expenses (e.g., software licenses, hardware). [Open Collective page](https://opencollective.com/gozen)
-- **Support me personally via Ko-fi:** This helps support my overall work, including (GDE) GoZen development, videos, and other projects.
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/voylin)
+If you want to support GDE GoZen and GoZen (the video editor) financially, you can do so via [my Ko-fi page](https://ko-fi.com/voylin).
 
 Thank you again for your interest and support!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/voylin)
 

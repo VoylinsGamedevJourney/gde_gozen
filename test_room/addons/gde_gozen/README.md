@@ -18,4 +18,3 @@ You can go to the [GitHub repo](https://github.com/VoylinsGamedevJourney/gde_goz
 > This software uses libraries from the FFmpeg project under the LGPLv2.1
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)
-[GoZen Open Collective page](https://opencollective.com/gozen)
