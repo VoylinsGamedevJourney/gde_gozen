@@ -98,9 +98,6 @@ def get_ndk_host_tag() -> str:
 
 
 def compile_ffmpeg(platform, arch) -> None:
-    if _print_options('(Re)compile ffmpeg?', ['yes', 'no']) == 2:
-        return
-
     if os.path.exists('./ffmpeg/ffbuild/config.mak'):
         print('Cleaning FFmpeg...')
         subprocess.run(['make', 'distclean'], cwd='./ffmpeg/')
@@ -138,6 +135,13 @@ def compile_ffmpeg_linux(arch: str) -> None:
         '--extra-ldflags=-fPIC',
     ]
     cmd += DISABLED_MODULES
+
+    if arch == 'arm64':
+        cmd += [
+            '--enable-cross-compile',
+            '--cross-prefix=aarch64-linux-gnu-',
+            '--cc=aarch64-linux-gnu-gcc',
+        ]
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -358,7 +362,7 @@ def compile_ffmpeg_web() -> None:
     ]
     cmd += DISABLED_MODULES
 
-    print(f'Running cmd: {' '.join(cmd)}')
+    print(f'Running cmd: {" ".join(cmd)}')
     result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
         print('Error: FFmpeg configure failed for Emscripten!')
@@ -459,7 +463,8 @@ def main():
     if _print_options('Clean Scons?', ['yes', 'no']) == 2:
         clean_scons = False
 
-    compile_ffmpeg(platform, arch)
+    if _print_options('(Re)compile ffmpeg?', ['yes', 'no']) == 1:
+        compile_ffmpeg(platform, arch)
 
     cmd = ['scons', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
 

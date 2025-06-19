@@ -13,7 +13,7 @@ LOCATION = "test_room/addons/gde_gozen/bin"
 
 march_flags = {
     'x86_64': 'x86-64',
-    'arm64': 'native'  # Using 'native' for ARM64 is often safer than specifying specific architecture
+    'arm64': 'armv8-a'
 }
 
 env = SConscript('godot_cpp/SConstruct')
@@ -30,19 +30,20 @@ libpath = f'{LOCATION}/{platform}'
 
 if 'linux' in platform:
     libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
+
+    if arch == 'arm64':
+        march_flags[arch] = 'armv8-a'
+        env['CC'] = 'aarch64-linux-gnu-gcc'
+        env['CXX'] = 'aarch64-linux-gnu-g++'
+        env['LINK'] = 'aarch64-linux-gnu-g++'
+
     env.Append(
         LINKFLAGS=['-static-libstdc++'],
         CCFLAGS=[f'-march={march_flags[arch]}'],
         CPPFLAGS=[
             '-Iffmpeg/bin',
             '-Iffmpeg/bin/include'],
-        LIBPATH=[
-            'ffmpeg/bin/include/libavcodec',
-            'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavutil',
-            'ffmpeg/bin/include/libswresample',
-            'ffmpeg/bin/include/libswscale',
-            'ffmpeg/bin/lib'],
+        LIBPATH=['ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
 
 elif 'windows' in platform:
