@@ -34,7 +34,7 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export var loop: bool = false ## Enable/disable looping on video_ended.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
-var video: Video = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
+var video: GoZenVideo = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 
 var video_texture: TextureRect = TextureRect.new() ## The texture rect is the view of the video, you can adjust the scaling options as you like, it is set to always center and scale the image to fit within the main VideoPlayback node size.
 var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is the AudioStreamPlayer which handles the audio playback for the video, only mess with the settings if you know what you are doing and know what you'd like to achieve.
@@ -117,7 +117,7 @@ func set_video_path(new_path: String) -> void:
 	if path == "":
 		return
 
-	video = Video.new()
+	video = GoZenVideo.new()
 
 	# Windows hardware decoding is NOT available so should always be false to prevent crashing.
 	video.set_hw_decoding(hardware_decoding if OS.get_name() != "Windows" else false)
@@ -135,7 +135,7 @@ func set_video_path(new_path: String) -> void:
 		_threads.append(WorkerThreadPool.add_task(_open_audio))
 
 
-func update_video(video_instance: Video, audio_stream: AudioStreamWAV = null) -> void:
+func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
 	if video != null:
 		close()
 
@@ -143,7 +143,7 @@ func update_video(video_instance: Video, audio_stream: AudioStreamWAV = null) ->
 	_update_video(video_instance)
 
 
-func _update_video(new_video: Video) -> void:
+func _update_video(new_video: GoZenVideo) -> void:
 	## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
 	video = new_video
 	if !is_open():
@@ -387,7 +387,7 @@ func _open_video() -> void:
 
 
 func _open_audio() -> void:
-	audio_player.stream.data = Audio.get_audio_data(path)
+	audio_player.stream.data = GoZenAudio.get_audio_data(path)
 
 
 func _print_system_debug() -> void:
@@ -402,7 +402,7 @@ func _print_system_debug() -> void:
 		if OS.get_name() != "Windows":
 			print("GPU name: ", RenderingServer.get_video_adapter_name())
 			print_rich("GPU info:\n\t", OS.get_video_adapter_driver_info())
-			print_rich("Available hardware devices:\n\t", Video.get_available_hw_devices())
+			print_rich("Available hardware devices:\n\t", GoZenVideo.get_available_hw_devices())
 
 
 func _print_video_debug() -> void:

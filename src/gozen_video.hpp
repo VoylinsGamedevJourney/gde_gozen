@@ -18,8 +18,8 @@
 
 using namespace godot;
 
-class Video : public Resource {
-	GDCLASS(Video, Resource);
+class GoZenVideo : public Resource {
+	GDCLASS(GoZenVideo, Resource);
 
 private:
 	// FFmpeg classes
@@ -88,16 +88,16 @@ private:
 
 	inline void _log(String message) {
 		if (debug)
-			UtilityFunctions::print("Video: ", message, ".");
+			UtilityFunctions::print("GoZenVideo: ", message, ".");
 	}
 	inline bool _log_err(String message) {
-		UtilityFunctions::printerr("Video: ", message, "!");
+		UtilityFunctions::printerr("GoZenVideo: ", message, "!");
 		return false;
 	}
 
 public:
-	Video() {}
-	~Video() { close(); }
+	GoZenVideo() {}
+	~GoZenVideo() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
 	static PackedStringArray get_available_hw_devices();

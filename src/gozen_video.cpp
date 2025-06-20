@@ -1,8 +1,8 @@
-#include "video.hpp"
+#include "gozen_video.hpp"
 
 
 //----------------------------------------------- STATIC FUNCTIONS
-Dictionary Video::get_file_meta(String a_file_path) {
+Dictionary GoZenVideo::get_file_meta(String a_file_path) {
 	AVFormatContext *l_av_format_ctx = NULL;
 	const AVDictionaryEntry *l_av_dic = NULL;
 	Dictionary l_dic = {};
@@ -25,7 +25,7 @@ Dictionary Video::get_file_meta(String a_file_path) {
 	return l_dic;
 }
 
-PackedStringArray Video::get_available_hw_devices() {
+PackedStringArray GoZenVideo::get_available_hw_devices() {
 	PackedStringArray l_devices = PackedStringArray();
 	enum AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
 
@@ -35,13 +35,13 @@ PackedStringArray Video::get_available_hw_devices() {
 	return l_devices;
 }
 
-enum AVPixelFormat Video::_get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt) {
-	return FFmpeg::get_hw_format(a_pix_fmt, &static_cast<Video *>(a_av_ctx->opaque)->hw_pix_fmt);
+enum AVPixelFormat GoZenVideo::_get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt) {
+	return FFmpeg::get_hw_format(a_pix_fmt, &static_cast<GoZenVideo *>(a_av_ctx->opaque)->hw_pix_fmt);
 }
 
 
 //----------------------------------------------- NON-STATIC FUNCTIONS
-int Video::open(const String& a_path) {
+int GoZenVideo::open(const String& a_path) {
 	if (loaded)
 			return _log_err("Already open");
 
@@ -285,7 +285,7 @@ int Video::open(const String& a_path) {
 	return OK;
 }
 
-void Video::close() {
+void GoZenVideo::close() {
 	_log("Closing video file on path: " + path);
 	loaded = false;
 
@@ -301,7 +301,7 @@ void Video::close() {
 	hw_device_ctx = nullptr;
 }
 
-int Video::seek_frame(int a_frame_nr) {
+int GoZenVideo::seek_frame(int a_frame_nr) {
 	if (!loaded)
 		return _log_err("Video is not open");
 
@@ -344,7 +344,7 @@ int Video::seek_frame(int a_frame_nr) {
 	return OK;
 }
 
-bool Video::next_frame(bool a_skip) {
+bool GoZenVideo::next_frame(bool a_skip) {
 	if (!loaded)
 		return false;
 
@@ -359,7 +359,7 @@ bool Video::next_frame(bool a_skip) {
 	return true;
 }
 
-void Video::_copy_frame_data() {
+void GoZenVideo::_copy_frame_data() {
 	if (hw_decoding && av_frame->format == hw_pix_fmt) {
 		if (av_hwframe_transfer_data(av_hw_frame.get(), av_frame.get(), 0) < 0) {
 			UtilityFunctions::printerr("Error transferring the frame to system memory!");
@@ -398,7 +398,7 @@ void Video::_copy_frame_data() {
 	}
 }
 
-const AVCodec *Video::_get_hw_codec() {
+const AVCodec *GoZenVideo::_get_hw_codec() {
 	const AVCodec *l_codec;
 	AVHWDeviceType l_type = AV_HWDEVICE_TYPE_NONE;
 
@@ -445,7 +445,7 @@ const AVCodec *Video::_get_hw_codec() {
 }
  
 
-int Video::_seek_frame(int a_frame_nr) {
+int GoZenVideo::_seek_frame(int a_frame_nr) {
 	avcodec_flush_buffers(av_codec_ctx.get());
 
 	frame_timestamp = (int64_t)(a_frame_nr * average_frame_duration);
@@ -453,20 +453,20 @@ int Video::_seek_frame(int a_frame_nr) {
 }
 
 #define BIND_STATIC_METHOD(method_name) \
-    ClassDB::bind_static_method("Video", D_METHOD(#method_name), &Video::method_name)
+    ClassDB::bind_static_method("GoZenVideo", D_METHOD(#method_name), &GoZenVideo::method_name)
 
 #define BIND_STATIC_METHOD_1(method_name, param1) \
-    ClassDB::bind_static_method("Video",  \
-        D_METHOD(#method_name, param1), &Video::method_name)
+    ClassDB::bind_static_method("GoZenVideo",  \
+        D_METHOD(#method_name, param1), &GoZenVideo::method_name)
 
 #define BIND_METHOD(method_name) \
-    ClassDB::bind_method(D_METHOD(#method_name), &Video::method_name)
+    ClassDB::bind_method(D_METHOD(#method_name), &GoZenVideo::method_name)
 
 #define BIND_METHOD_1(method_name, param1) \
     ClassDB::bind_method( \
-        D_METHOD(#method_name, param1), &Video::method_name)
+        D_METHOD(#method_name, param1), &GoZenVideo::method_name)
 
-void Video::_bind_methods() {
+void GoZenVideo::_bind_methods() {
 	BIND_STATIC_METHOD_1(get_file_meta, "a_file_path");
 	BIND_STATIC_METHOD(get_available_hw_devices);
 

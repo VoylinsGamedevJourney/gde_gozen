@@ -6,8 +6,8 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
-#include "video.hpp"
-#include "audio.hpp"
+#include "gozen_video.hpp"
+#include "gozen_audio.hpp"
 
 using namespace godot;
 
