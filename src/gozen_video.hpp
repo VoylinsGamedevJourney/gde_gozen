@@ -25,18 +25,14 @@ private:
 	// FFmpeg classes
 	UniqueAVFormatCtxInput av_format_ctx;
 	UniqueAVCodecCtx av_codec_ctx = nullptr;
-	AVBufferRef *hw_device_ctx = nullptr;
 	AVStream *av_stream = nullptr;
 
 	UniqueAVPacket av_packet;
 	UniqueAVFrame av_frame;
-	UniqueAVFrame av_hw_frame;
-
+	UniqueAVFrame av_sws_frame;
 	UniqueSwsCtx sws_ctx;
 
-	enum AVHWDeviceType hw_decoder;
 	enum AVColorPrimaries color_profile;
-	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 	// Default variable types
 	int response = 0;
@@ -58,7 +54,6 @@ private:
 	float framerate = 0.;
 
 	bool loaded = false; // Is true after open()
-	bool hw_decoding = false; // Set by user
 	bool debug = false;
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
 	bool full_color_range = true;
@@ -66,7 +61,6 @@ private:
 	// Godot classes
 	String path = "";
 	String pixel_format = "";
-	String prefered_hw_decoder = "";
 
 	Vector2i resolution = Vector2i(0, 0);
 
@@ -78,9 +72,6 @@ private:
 
 
 	// Private functions
-	static enum AVPixelFormat _get_format(AVCodecContext *a_av_ctx, const enum AVPixelFormat *a_pix_fmt);
-	const AVCodec *_get_hw_codec();
-	
 	void _copy_frame_data();
 	void _clean_frame_data();
 
@@ -100,7 +91,6 @@ public:
 	~GoZenVideo() { close(); }
 
 	static Dictionary get_file_meta(String a_file_path);
-	static PackedStringArray get_available_hw_devices();
 
 	int open(const String& a_path);
 	void close();
@@ -121,18 +111,6 @@ public:
 	inline int get_height() { return resolution.y; }
 	inline int get_padding() { return padding; }
 	inline int get_rotation() { return rotation; }
-
-	inline void set_hw_decoding(bool a_value) {
-		if (loaded)
-			UtilityFunctions::printerr("Setting hw_decoding after opening file has no effect!");
-		hw_decoding = a_value; }
-	inline bool get_hw_decoding() { return hw_decoding; }
-
-	inline void set_prefered_hw_decoder(String a_value) {
-		if (loaded)
-			UtilityFunctions::printerr("Setting prefered_hw_decoder after opening file has no effect!");
-		prefered_hw_decoder = a_value.utf8(); }
-	inline String get_prefered_hw_decoder() { return prefered_hw_decoder; }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
 	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }

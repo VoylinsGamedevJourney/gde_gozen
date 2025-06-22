@@ -16,7 +16,7 @@ func _on_audio_drop(a_files: PackedStringArray) -> void:
 	stream.stereo = true
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 
-	stream.data = Audio.get_audio_data(a_files[0])
+	stream.data = GoZenAudio.get_audio_data(a_files[0])
 
 	player.stream = stream
 	print("Audio loaded")

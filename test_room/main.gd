@@ -4,7 +4,7 @@ const VIDEO_EXTENSIONS: PackedStringArray = [
 	"webm","mkv","flv","vob","ogv","ogg","mng","avi","mts","m2ts","ts","mov",
 	"qt","wmv","yuv","rm","rmvb","viv","asf","amv","mp4","m4p","mp2","mpe",
 	"mpv","mpg","mpeg","m2v","m4v","svi","3gp","3g2","mxf","roq","nsv","flv",
-	"f4v","f4p","f4a","f4b"]
+	"f4v","f4p","f4a","f4b", "gif"]
 
 
 @onready var video_playback: VideoPlayback = %VideoPlayback
