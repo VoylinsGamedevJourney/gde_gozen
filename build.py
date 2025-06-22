@@ -44,6 +44,17 @@ TARGET_RELEASE: str = 'release'
 
 ANDROID_API_LEVEL: int = 24
 
+ENABLED_MODULES = [
+    '--enable-swscale',
+
+    '--enable-libdav1d',
+    '--enable-decoder=av1',
+    '--enable-parser=av1',
+
+    '--enable-demuxer=ogg',
+    '--enable-demuxer=matroska,webm',
+]
+
 DISABLED_MODULES = [
     '--disable-muxers',
     '--disable-encoders',
@@ -59,7 +70,8 @@ DISABLED_MODULES = [
     '--disable-podpages',
     '--disable-txtpages',
     '--disable-ffplay',
-    '--disable-ffmpeg'
+    '--disable-ffmpeg',
+#    '--disable-hwaccels',
 ]
 
 
@@ -134,6 +146,7 @@ def compile_ffmpeg_linux(arch: str) -> None:
         '--extra-cflags=-fPIC',
         '--extra-ldflags=-fPIC',
     ]
+    cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 
     if arch == 'arm64':
@@ -182,6 +195,7 @@ def compile_ffmpeg_windows(arch) -> None:
         '--extra-ldflags=-fpic',
         '--extra-cflags=-fPIC',
     ]
+    cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
@@ -218,6 +232,7 @@ def compile_ffmpeg_macos(arch) -> None:
         '--extra-ldflags=-mmacosx-version-min=10.13',
         '--extra-cflags=-fPIC -mmacosx-version-min=10.13',
     ]
+    cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
@@ -287,6 +302,7 @@ def compile_ffmpeg_android(arch) -> None:
         '--extra-cflags=-fPIC',
         f'--extra-ldflags={arch_flags}',
     ]
+    cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
@@ -360,6 +376,7 @@ def compile_ffmpeg_web() -> None:
 
         '--enable-protocol=file,http,https',
     ]
+    cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 
     print(f'Running cmd: {" ".join(cmd)}')
