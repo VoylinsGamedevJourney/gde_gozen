@@ -47,7 +47,7 @@ ANDROID_API_LEVEL: int = 24
 ENABLED_MODULES = [
     '--enable-swscale',
 
-    '--enable-libdav1d',
+    '--enable-libaom',
     '--enable-decoder=av1',
     '--enable-parser=av1',
 

@@ -10,13 +10,54 @@ on:
 run-name: Building addon/test_room - ${{ inputs.version }}
 
 jobs:
-  build-linux:
+  build-linux-x86_64:
     runs-on: ubuntu-22.04
     steps:
       - name: Installing dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Compiling FFmpeg x86_64
+        run: python3 -c 'import build; build.compile_ffmpeg("linux", "x86_64")'
+      - name: Build Linux debug x86_64
+        run: scons -j4 target=template_debug platform=linux arch=x86_64
+      - name: Build Linux release x86_64
+        run: scons -j4 target=template_release platform=linux arch=x86_64
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_x86_64_bin_v${{ inputs.version }}
+          path: test_room/addons/gde_gozen/bin/
+          retention-days: 7
+
+  build-linux-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Installing dependencies
+        run: |
+          sudo dpkg --add-architecture arm64
+
+          sudo tee /etc/apt/sources.list > /dev/null <<'EOF'
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
+          
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse
+          EOF
+
+          sudo apt-get update
+          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev:arm64
 
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -30,21 +71,10 @@ jobs:
       - name: Build Linux release arm64
         run: scons -j4 target=template_release platform=linux arch=arm64
 
-      - name: Clean scons
-        run: scons --clean
-
-      - name: Compiling FFmpeg x86_64
-        run: python3 -c 'import build; build.compile_ffmpeg("linux", "x86_64")'
-      - name: Build Linux debug x86_64
-        run: scons -j4 target=template_debug platform=linux arch=x86_64
-      - name: Build Linux release x86_64
-        run: scons -j4 target=template_release platform=linux arch=x86_64
-
-
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_arm64_bin_v${{ inputs.version }}
           path: test_room/addons/gde_gozen/bin/
           retention-days: 7
 
@@ -54,11 +84,26 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg aarch64-linux-gnu-binutils aarch64-linux-gnu-gcc
+        run: pacman -Syu --noconfirm sudo fakeroot debugedit patch git bash meson yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg wine ninja aom
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install yay
+        run: |
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+          git clone https://aur.archlinux.org/yay.git
+          chown -R builder:builder yay
+
+          cd yay
+          sudo -u builder makepkg -si --noconfirm
+          cd ..
+
+      - name: Install dependency mingw-w64-aom
+        run: sudo -u builder yay -S --noconfirm mingw-w64-aom
 
       - name: Compiling FFmpeg x86
         run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_windows("x86_64")'
@@ -81,7 +126,7 @@ jobs:
       - name: Installing dependencies
         run: |
           brew update
-          brew install yasm scons diffutils make unzip ffmpeg
+          brew install yasm scons diffutils make unzip ffmpeg aom
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
@@ -96,7 +141,7 @@ jobs:
         run: scons -j4 target=template_release platform=macos arch=arm64
 
       - name: Correct MacOS Binary paths
-        run: python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64"); build.macos_fix("x86_64")'
+        run: python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64")'
 
       - name: Uploading binaries
         uses: actions/upload-artifact@v4
@@ -106,24 +151,30 @@ jobs:
           retention-days: 7
 
   build-addon:
-    needs: [build-linux, build-windows, build-macos]
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
+    needs: [build-linux-x86_64, build-linux-arm64, build-windows, build-macos]
+    runs-on: ubuntu-22.04
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg
 
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Prepare linux artifacts
+      - name: Prepare linux x86_64 artifacts
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
-          name: gde_gozen_linux_bin_v${{ inputs.version }}
+          name: gde_gozen_linux_x86_64_bin_v${{ inputs.version }}
+
+      - name: Prepare linux arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room/addons/gde_gozen/bin/
+          name: gde_gozen_linux_arm64_bin_v${{ inputs.version }}
 
       - name: Prepare windows artifacts
         uses: actions/download-artifact@v4

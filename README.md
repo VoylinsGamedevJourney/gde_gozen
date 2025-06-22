@@ -17,7 +17,6 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 
 ## Features
 - Smooth video playback;
-- Hardware decoding (Linux only);
 - Godot 4.3+ support;
 - Cross-platform (Linux, Windows, and MacOS);
 - Regular updates;
