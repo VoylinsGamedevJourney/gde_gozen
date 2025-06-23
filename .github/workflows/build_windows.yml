@@ -45,3 +45,10 @@ jobs:
           path: test_room/
           retention-days: 5
 
+      - name: Upload addon
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_windows_v${{ inputs.version }}
+          path: test_room/addons/
+          retention-days: 5
+

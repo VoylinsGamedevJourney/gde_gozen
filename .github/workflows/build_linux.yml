@@ -11,13 +11,61 @@ on:
 run-name: Building GDE GoZen - Linux - ${{ inputs.version }}
 
 jobs:
-  build:
+  build-x86_64:
     runs-on: ubuntu-22.04
     steps:
       - name: Installing dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev
+
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Compiling FFmpeg x86_64
+        run: python3 -c 'import build; build.compile_ffmpeg("linux", "x86_64")'
+      - name: Build Linux debug x86_64
+        run: scons -j4 target=template_debug platform=linux arch=x86_64
+      - name: Build Linux release x86_64
+        run: scons -j4 target=template_release platform=linux arch=x86_64
+
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_x86_64_bin_v${{ inputs.version }}
+          path: test_room/addons/gde_gozen/bin/
+          retention-days: 7
+
+      - name: Upload addon
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_v${{ inputs.version }}
+          path: test_room/addons/
+          retention-days: 5
+
+  build-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Installing dependencies
+        run: |
+          sudo dpkg --add-architecture arm64
+
+          sudo tee /etc/apt/sources.list > /dev/null <<'EOF'
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
+          
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse
+          EOF
+
+          sudo apt-get update
+          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev:arm64
 
       - name: Checkout submodules
         uses: actions/checkout@v4
@@ -31,27 +79,17 @@ jobs:
       - name: Build Linux release arm64
         run: scons -j4 target=template_release platform=linux arch=arm64
 
-      - name: Clean scons
-        run: scons --clean
-
-      - name: Compiling FFmpeg x86_64
-        run: python3 -c 'import build; build.compile_ffmpeg("linux", "x86_64")'
-      - name: Build Linux debug x86_64
-        run: scons -j4 target=template_debug platform=linux arch=x86_64
-      - name: Build Linux release x86_64
-        run: scons -j4 target=template_release platform=linux arch=x86_64
+      - name: Uploading binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: gde_gozen_linux_arm64_bin_v${{ inputs.version }}
+          path: test_room/addons/gde_gozen/bin/
+          retention-days: 7
 
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
           name: gde_gozen_linux_v${{ inputs.version }}
           path: test_room/addons/
-          retention-days: 5
-
-      - name: Upload test_room
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen_test_room_linux_v${{ inputs.version }}
-          path: test_room/
           retention-days: 5
 
