@@ -168,8 +168,60 @@ def compile_ffmpeg_linux(arch: str) -> None:
     for file in glob.glob('ffmpeg/bin/lib/*.so.*'):
         if file.count('.') == 2:
             shutil.copy2(file, path)
-    for file in glob.glob('/usr/lib/libx26*.so.*'):
-        shutil.copy2(file, path)
+
+    print('Finding and copying required system .so dependencies ...', flush=True)
+
+    def copy_dependencies(binary_path):
+        try:
+            output = subprocess.check_output(['ldd', binary_path], text=True)
+            for line in output.splitlines():
+                if '=>' not in line:
+                    continue
+                parts = line.strip().split('=>')
+                if len(parts) < 2:
+                    continue
+                lib_path = parts[1].split('(')[0].strip()
+                if not os.path.isfile(lib_path):
+                    continue
+
+                print(lib_path)
+
+                if any(lib_path.endswith(name) for name in (
+                    'libc.so.6',
+                    'libm.so.6',
+                    'libpthread.so.0',
+                    'libdl.so.2',
+                    'librt.so.1',
+                    'ld-linux-x86-64.so.2',
+                )):
+                    continue
+
+                lib_name = os.path.basename(lib_path)
+                dest_path = os.path.join(path, lib_name)
+
+                if os.path.abspath(lib_path) == os.path.abspath(dest_path):
+                    continue  # Avoid SameFileError
+
+                shutil.copy2(lib_path, path)
+        except subprocess.CalledProcessError as e:
+            print(f'Failed to run ldd on {binary_path}: {e}')
+
+    # TODO: Make this work without manually adding version number
+    binaries = [
+        f'{path}/libavcodec.so.60',
+        f'{path}/libavformat.so.60',
+        f'{path}/libavutil.so.58',
+        f'{path}/libswscale.so.7',
+        f'{path}/libswresample.so.4',
+        f'{path}/libgozen.linux.template_debug.{arch}.so'
+    ]
+
+    # TODO: Make this not copy all libraries, only needed ones (x264, x265)
+    for binary in binaries:
+        if os.path.exists(binary):
+            copy_dependencies(binary)
+        else:
+            print(f'Warning: {binary} not found, skipping...')
 
     print('Compiling FFmpeg for Linux finished!')
 
@@ -211,6 +263,7 @@ def compile_ffmpeg_windows(arch) -> None:
         shutil.copy2(file, path)
     os.system(f'cp /usr/{arch}-w64-mingw32/bin/libwinpthread-1.dll {path}')
     os.system(f'cp /usr/{arch}-w64-mingw32/bin/libstdc++-6.dll {path}')
+    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libaom.dll {path}')
 
     print('Compiling FFmpeg for Windows finished!')
 

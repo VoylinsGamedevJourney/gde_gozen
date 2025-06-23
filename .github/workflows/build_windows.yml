@@ -17,11 +17,26 @@ jobs:
       image: archlinux:latest
     steps:
       - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg aarch64-linux-gnu-binutils aarch64-linux-gnu-gcc
+        run: pacman -Syu --noconfirm sudo fakeroot debugedit patch git bash meson yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg wine ninja aom
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install yay
+        run: |
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+          git clone https://aur.archlinux.org/yay.git
+          chown -R builder:builder yay
+
+          cd yay
+          sudo -u builder makepkg -si --noconfirm
+          cd ..
+
+      - name: Install dependency mingw-w64-aom
+        run: sudo -u builder yay -S --noconfirm mingw-w64-aom
 
       - name: Compiling FFmpeg x86
         run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_windows("x86_64")'
@@ -31,12 +46,12 @@ jobs:
       - name: Build Windows release x86_64
         run: scons -j4 target=template_release platform=windows arch=x86_64
 
-      - name: Upload addon
+      - name: Uploading binaries
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_windows_v${{ inputs.version }}
-          path: test_room/addons/
-          retention-days: 5
+          name: gde_gozen_windows_bin_v${{ inputs.version }}
+          path: test_room/addons/gde_gozen/bin/
+          retention-days: 7
 
       - name: Upload test_room
         uses: actions/upload-artifact@v4

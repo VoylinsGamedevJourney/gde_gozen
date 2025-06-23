@@ -34,6 +34,8 @@ linux.debug.x86_64 = {
     "bin/linux_x86_64/libavutil.so.58" : "",
     "bin/linux_x86_64/libswresample.so.4" : "",
     "bin/linux_x86_64/libswscale.so.7" : "",
+	
+	"bin/linux_x86_64/libaom.so.3": "",
 }
 linux.release.x86_64 = {
     "bin/linux_x86_64/libavcodec.so.60" : "",
@@ -41,6 +43,8 @@ linux.release.x86_64 = {
     "bin/linux_x86_64/libavutil.so.58" : "",
     "bin/linux_x86_64/libswresample.so.4" : "",
     "bin/linux_x86_64/libswscale.so.7" : "",
+
+	"bin/linux_x86_64/libaom.so.3": "",
 }
 linux.debug.arm64 = {
     "bin/linux_arm64/libavcodec.so.60" : "",
@@ -48,6 +52,8 @@ linux.debug.arm64 = {
     "bin/linux_arm64/libavutil.so.58" : "",
     "bin/linux_arm64/libswresample.so.4" : "",
     "bin/linux_arm64/libswscale.so.7" : "",
+
+	"bin/linux_x86_64/libaom.so.3": "",
 }
 linux.release.arm64 = {
     "bin/linux_arm64/libavcodec.so.60" : "",
@@ -55,6 +61,8 @@ linux.release.arm64 = {
     "bin/linux_arm64/libavutil.so.58" : "",
     "bin/linux_arm64/libswresample.so.4" : "",
     "bin/linux_arm64/libswscale.so.7" : "",
+
+	"bin/linux_x86_64/libaom.so.3": "",
 }
 
 windows.debug.x86_64 = {
@@ -66,7 +74,8 @@ windows.debug.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll" : "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll" : "",
-	"bin/windows_x86_64/libstdc++-6.dll" : ""
+	"bin/windows_x86_64/libstdc++-6.dll" : "",
+	"bin/windows_arm64/libaom.dll" : "",
 }
 windows.release.x86_64 = {
     "bin/windows_x86_64/avcodec-60.dll" : "",
@@ -77,7 +86,8 @@ windows.release.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll" : "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll" : "",
-	"bin/windows_x86_64/libstdc++-6.dll" : ""
+	"bin/windows_x86_64/libstdc++-6.dll" : "",
+	"bin/windows_arm64/libaom.dll" : "",
 }
 windows.debug.arm64 = {
     "bin/windows_arm64/avcodec-60.dll" : "",
@@ -85,10 +95,11 @@ windows.debug.arm64 = {
 	"bin/windows_arm64/avutil-58.dll" : "",
 
 	"bin/windows_arm64/swresample-4.dll" : "",
-	"bin/windows_x86_32/swscale-7.dll" : "",
+	"bin/windows_arm64/swscale-7.dll" : "",
 
-	"bin/windows_x86_32/libwinpthread-1.dll" : "",
-	"bin/windows_x86_32/libstdc++-6.dll" : ""
+	"bin/windows_arm64/libwinpthread-1.dll" : "",
+	"bin/windows_arm64/libstdc++-6.dll" : "",
+	"bin/windows_arm64/libaom.dll" : "",
 }
 windows.release.arm64 = {
     "bin/windows_arm64/avcodec-60.dll" : "",
@@ -96,7 +107,11 @@ windows.release.arm64 = {
     "bin/windows_arm64/avutil-58.dll" : "",
 
 	"bin/windows_arm64/swresample-4.dll" : "",
-	"bin/windows_arm64/swscale-7.dll" : ""
+	"bin/windows_arm64/swscale-7.dll" : "",
+
+	"bin/windows_arm64/libwinpthread-1.dll" : "",
+	"bin/windows_arm64/libstdc++-6.dll" : "",
+	"bin/windows_arm64/libaom.dll" : "",
 }
 
 macos.debug.arm64 = {
