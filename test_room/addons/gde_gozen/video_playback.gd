@@ -387,7 +387,7 @@ func _print_system_debug() -> void:
 		print("OS version: ", OS.get_version())
 		print_rich("Memory info:\n\t", OS.get_memory_info())
 		print("CPU name: ", OS.get_processor_name())
-		print("Core/threads count: ", OS.get_processor_count())
+		print("Threads count: ", OS.get_processor_count())
 
 
 func _print_video_debug() -> void:

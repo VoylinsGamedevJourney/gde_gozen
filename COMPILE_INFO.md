@@ -29,4 +29,4 @@ Android builds are still in Alpha, work is still being done to it but it's expec
 You can join our Discord server to ask for help, but before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, **please** check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
 
 > [!CAUTION]
-> At this moment only Linux, Windows and MacOS are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done through 
+> At this moment only Linux, Windows and MacOS are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system.
