@@ -41,7 +41,7 @@ jobs:
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_v${{ inputs.version }}
+          name: gde_gozen_linux_x86_64_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 5
 
@@ -89,7 +89,7 @@ jobs:
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_v${{ inputs.version }}
+          name: gde_gozen_linux_arm64_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 5
 
