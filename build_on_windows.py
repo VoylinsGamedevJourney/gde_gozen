@@ -83,16 +83,8 @@ def main():
 
         install_wsl_required_programs()
 
-    try:
-        # Navigate to the correct directory in WSL and run the script again.
-        l_wsl_path = subprocess.run(['wsl', 'wslpath', os.getcwd()], capture_output=True, text=True, shell=True).stdout.strip()
-        subprocess.run(['wsl', 'python3', 'build.py'], cwd=l_wsl_path, check=True, shell=True)
-
-        print('Build completed successfully!')
-    except subprocess.CalledProcessError as l_error:
-        print(f'Error during build process: {l_error}')
-        input('Press Enter to exit...')
-        sys.exit(1)
+    print('Run the build.py script again but with following command:')
+    print('  wsl python3 build.py')
 
 
 if __name__ == '__main__':

@@ -261,9 +261,14 @@ def compile_ffmpeg_windows(arch) -> None:
     print('Copying lib files ...')
     for file in glob.glob('ffmpeg/bin/bin/*.dll'):
         shutil.copy2(file, path)
-    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libwinpthread-1.dll {path}')
-    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libstdc++-6.dll {path}')
-    os.system(f'cp /usr/{arch}-w64-mingw32/bin/libaom.dll {path}')
+
+    # Somehow some distro's put the dll's in bin, and others in lib.
+    if os.path.exists('/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll'):
+        subprocess.run(['cp', '/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll', path], check=True)
+    else:
+        subprocess.run(['cp', '/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll', path], check=True)
+
+    subprocess.run(['cp', '/usr/x86_64-w64-mingw32/bin/libaom.dll', path], check=True)
 
     print('Compiling FFmpeg for Windows finished!')
 
@@ -468,12 +473,12 @@ def macos_fix(arch) -> None:
 
     if os.path.exists(debug_binary):
         for file in os.listdir(debug_bin_folder):
-            os.system(f'install_name_tool -change ./bin/lib/{file} @loader_path/lib/{file} {debug_binary}')
+            subprocess.run(['install_name_tool', '-change', f'./bin/lib/{file}', f'@loader_path/lib/{file}', debug_binary], check=True)
         subprocess.run(['otool', '-L', debug_binary], cwd='./')
 
     if os.path.exists(release_binary):
         for file in os.listdir(release_bin_folder):
-            os.system(f'install_name_tool -change ./bin/lib/{file} @loader_path/lib/{file} {release_binary}')
+            subprocess.run(['install_name_tool', '-change', f'./bin/lib/{file}', f'@loader_path/lib/{file}', release_binary], check=True)
         subprocess.run(['otool', '-L', release_binary], cwd='./')
 
 
