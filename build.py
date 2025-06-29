@@ -47,12 +47,14 @@ ANDROID_API_LEVEL: int = 24
 ENABLED_MODULES = [
     '--enable-swscale',
 
+    '--enable-demuxer=ogg',
+    '--enable-demuxer=matroska,webm',
+]
+
+ENABLE_AV1 = [
     '--enable-libaom',
     '--enable-decoder=av1',
     '--enable-parser=av1',
-
-    '--enable-demuxer=ogg',
-    '--enable-demuxer=matroska,webm',
 ]
 
 DISABLED_MODULES = [
@@ -71,7 +73,7 @@ DISABLED_MODULES = [
     '--disable-txtpages',
     '--disable-ffplay',
     '--disable-ffmpeg',
-#    '--disable-hwaccels',
+    '--disable-hwaccels',
 ]
 
 
@@ -147,6 +149,7 @@ def compile_ffmpeg_linux(arch: str) -> None:
         '--extra-ldflags=-fPIC',
     ]
     cmd += ENABLED_MODULES
+    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
 
     if arch == 'arm64':
@@ -248,6 +251,7 @@ def compile_ffmpeg_windows(arch) -> None:
         '--extra-cflags=-fPIC',
     ]
     cmd += ENABLED_MODULES
+    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
@@ -291,6 +295,7 @@ def compile_ffmpeg_macos(arch) -> None:
         '--extra-cflags=-fPIC -mmacosx-version-min=10.13',
     ]
     cmd += ENABLED_MODULES
+    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
@@ -361,6 +366,8 @@ def compile_ffmpeg_android(arch) -> None:
         f'--extra-ldflags={arch_flags}',
     ]
     cmd += ENABLED_MODULES
+    # TODO: Implement a way to add AV1 support for Android
+    # cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
