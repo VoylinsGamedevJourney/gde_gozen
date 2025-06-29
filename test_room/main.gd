@@ -33,6 +33,8 @@ var was_playing: bool = false
 func _ready() -> void:
 	if OS.get_cmdline_args().size() > 1:
 		open_video(OS.get_cmdline_args()[1])
+	if OS.get_name().to_lower() == "android" and OS.request_permissions():
+		print("Permissions already granted!")
 
 	_connect(get_window().files_dropped, _on_video_drop)
 	_connect(video_playback.video_loaded, after_video_open)
@@ -47,10 +49,10 @@ func _input(event: InputEvent) -> void:
 		_on_play_pause_button_pressed()
 
 
-func _on_video_drop(a_files: PackedStringArray) -> void:
-	if a_files[0].get_extension().to_lower() not in VIDEO_EXTENSIONS:
+func _on_video_drop(file_paths: PackedStringArray) -> void:
+	if file_paths[0].get_extension().to_lower() not in VIDEO_EXTENSIONS:
 		return print("Not a valid video file!");
-	open_video(a_files[0])
+	open_video(file_paths[0])
 
 
 func _on_url_line_edit_text_submitted(path: String) -> void:
@@ -60,13 +62,13 @@ func _on_url_line_edit_text_submitted(path: String) -> void:
 func _frame_changed(value: int) -> void:
 	timeline.value = value
 	current_frame_value.text = str(value)
-	editor_fps_value.text = str(Engine.get_frames_per_second())
 
 
-func open_video(a_file: String) -> void:
+func open_video(file_path: String) -> void:
+	max_frame_value.text = file_path
 	timeline.value = 0
 	loading_screen.visible = true
-	video_playback.set_video_path(a_file)
+	video_playback.set_video_path(file_path)
 
 
 func after_video_open() -> void:
@@ -107,8 +109,8 @@ func _on_timeline_drag_ended(_value: bool) -> void:
 		video_playback.play()
 
 
-func _on_speed_spin_box_value_changed(a_value: float) -> void:
-	video_playback.playback_speed = a_value
+func _on_speed_spin_box_value_changed(value: float) -> void:
+	video_playback.playback_speed = value
 
 
 func _on_load_video_button_pressed() -> void:
@@ -118,8 +120,8 @@ func _on_load_video_button_pressed() -> void:
 	dialog.force_native = true
 	dialog.use_native_dialog = true
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
-	_connect(dialog.file_selected, _on_video_drop)
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_connect(dialog.file_selected, open_video)
 
 	add_child(dialog)
 	dialog.popup_centered()

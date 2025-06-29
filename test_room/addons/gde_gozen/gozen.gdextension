@@ -18,10 +18,10 @@ windows.release.arm64 = "res://addons/gde_gozen/bin/windows_arm64/libgozen.windo
 macos.debug.arm64 = "res://addons/gde_gozen/bin/macos_arm64/debug/libgozen.macos.template_debug.arm64.dylib"
 macos.release.arm64 = "res://addons/gde_gozen/bin/macos_arm64/release/libgozen.macos.template_release.arm64.dylib"
 
-android.debug.arm64 = "res://addons/gde_gozen/bin/android_arm64/debug/libgozen.android.template_debug.arm64.so"
-android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/release/libgozen.android.template_release.arm64.so"
-android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/debug/libgozen.android.template_debug.arm32.so"
-android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/release/libgozen.android.template_release.arm32.so"
+android.debug.arm64 = "res://addons/gde_gozen/bin/android_arm64/libgozen.android.template_debug.arm64.so"
+android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/libgozen.android.template_release.arm64.so"
+android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.android.template_debug.arm32.so"
+android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.android.template_release.arm32.so"
 
 web.debug.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_debug.wasm32.wasm"
 web.release.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_release.wasm32.wasm"
@@ -157,10 +157,38 @@ macos.release.arm64 = {
     "bin/macos_arm64/release/libswscale.7.5.100.dylib" : "Contents/Frameworks"
 }
 
-android.debug.arm64 = {}
-android.release.arm64 = {}
-android.debug.arm32 = {}
-android.release.arm32 = {}
+android.debug.arm64 = {
+	"bin/android_arm64/libavcodec.so" : "",
+	"bin/android_arm64/libavformat.so" : "",
+	"bin/android_arm64/libavutil.so" : "",
+
+	"bin/android_arm64/libswresample.so" : "",
+	"bin/android_arm64/libswscale.so" : "",
+}
+android.release.arm64 = {
+	"bin/android_arm64/libavcodec.so" : "",
+	"bin/android_arm64/libavformat.so" : "",
+	"bin/android_arm64/libavutil.so" : "",
+
+	"bin/android_arm64/libswresample.so" : "",
+	"bin/android_arm64/libswscale.so" : "",
+}
+android.debug.arm32 = {
+	"bin/android_arm32/libavcodec.so" : "",
+	"bin/android_arm32/libavformat.so" : "",
+	"bin/android_arm32/libavutil.so" : "",
+
+	"bin/android_arm32/libswresample.so" : "",
+	"bin/android_arm32/libswscale.so" : "",
+}
+android.release.arm32 = {
+	"bin/android_arm32/libavcodec.so" : "",
+	"bin/android_arm32/libavformat.so" : "",
+	"bin/android_arm32/libavutil.so" : "",
+
+	"bin/android_arm32/libswresample.so" : "",
+	"bin/android_arm32/libswscale.so" : "",
+}
 
 web.debug.wasm32 = {}
 web.release.wasm32 = {}
