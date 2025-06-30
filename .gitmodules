@@ -10,5 +10,5 @@
 	ignore = dirty
 [submodule "emsdk"]
 	path = emsdk
-	url = git@github.com:emscripten-core/emsdk.git
+	url = https://github.com/emscripten-core/emsdk.git
 	ignore = dirty

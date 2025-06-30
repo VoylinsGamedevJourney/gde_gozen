@@ -35,6 +35,8 @@ func _ready() -> void:
 		open_video(OS.get_cmdline_args()[1])
 	if OS.get_name().to_lower() == "android" and OS.request_permissions():
 		print("Permissions already granted!")
+#	if OS.get_name().to_lower() == "web":
+#		JavaScriptBridge.get_interface("window").openFileDialog(js_callback)
 
 	_connect(get_window().files_dropped, _on_video_drop)
 	_connect(video_playback.video_loaded, after_video_open)
@@ -65,7 +67,6 @@ func _frame_changed(value: int) -> void:
 
 
 func open_video(file_path: String) -> void:
-	max_frame_value.text = file_path
 	timeline.value = 0
 	loading_screen.visible = true
 	video_playback.set_video_path(file_path)

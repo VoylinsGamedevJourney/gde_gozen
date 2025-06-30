@@ -51,7 +51,6 @@ var _frame_rate: float = 0.
 var _frame_count: int = 0
 
 var _resolution: Vector2i = Vector2i.ZERO
-var _uv_resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
 var _threads: PackedInt64Array = []
@@ -152,20 +151,16 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
 	_frame_count = video.get_frame_count()
-	_uv_resolution = Vector2i(int((_resolution.x + _padding) / 2.), int(_resolution.y / 2.))
 	image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
 	if debug:
 		_print_video_debug()
 
 	video_texture.texture.set_image(image)
-	if video.get_pixel_format().begins_with("yuv"):
-		if video.is_full_color_range():
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
-		else:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
-	else: # BGRA format from GIF files.
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/bgra.gdshader")
+	if video.is_full_color_range():
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
+	else:
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
 
 	match video.get_color_profile():
 		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
@@ -181,14 +176,12 @@ func _update_video(new_video: GoZenVideo) -> void:
 
 	if(!y_texture):
 		y_texture = ImageTexture.create_from_image(video.get_y_data())
-		if !video.get_pixel_format().begins_with("bgr"):
-			u_texture = ImageTexture.create_from_image(video.get_u_data())
-			v_texture = ImageTexture.create_from_image(video.get_v_data())
+		u_texture = ImageTexture.create_from_image(video.get_u_data())
+		v_texture = ImageTexture.create_from_image(video.get_v_data())
 
 	_shader_material.set_shader_parameter("y_data", y_texture)
-	if video.get_pixel_format().begins_with("yuv"):
-		_shader_material.set_shader_parameter("u_data", u_texture)
-		_shader_material.set_shader_parameter("v_data", v_texture)
+	_shader_material.set_shader_parameter("u_data", u_texture)
+	_shader_material.set_shader_parameter("v_data", v_texture)
 
 	seek_frame(current_frame)
 
@@ -338,10 +331,8 @@ func _set_current_frame(new_current_frame: int) -> void:
 
 func _set_frame_image() -> void:
 	y_texture.update(video.get_y_data())
-
-	if video.get_pixel_format().begins_with("yuv"):
-		u_texture.update(video.get_u_data())
-		v_texture.update(video.get_v_data())
+	u_texture.update(video.get_u_data())
+	v_texture.update(video.get_v_data())
 
 
 func set_playback_speed(new_playback_value: float) -> void:
@@ -380,9 +371,10 @@ func _open_audio() -> void:
 
 
 func _print_system_debug() -> void:
-	print_rich("[b]System info")
-	print("OS name: ", OS.get_name())
-	if OS.get_name() != "Web":
+	# Debug printing for web builds doesn't really work.
+	if OS.get_name().to_lower() != "web":
+		print_rich("[b]System info")
+		print("OS name: ", OS.get_name())
 		print("Distro name: ", OS.get_distribution_name())
 		print("OS version: ", OS.get_version())
 		print_rich("Memory info:\n\t", OS.get_memory_info())

@@ -9,9 +9,6 @@ Windows and Linux can be build on Linux or Windows with WSL.
 For MacOS you need to use MacOS itself else building fails.
 
 For Web you need Emscripten installed.
-`emsdk/emsdk install 3.1.64`
-`emsdk/emsdk activate 3.1.64`
-`source emsdk/emsdk_env.sh`
 You may also need to custom build the Godot web export debug/release template with:
 `scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes\
 extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
@@ -386,7 +383,13 @@ def compile_ffmpeg_android(arch) -> None:
 
 
 def compile_ffmpeg_web() -> None:
+    print('Install/activate emsdk ...')
+    subprocess.run(['emsdk/emsdk', 'install', '3.1.64'], check=True)
+    subprocess.run(['emsdk/emsdk', 'activate', '3.1.64'], check=True)
+    #subprocess.run(['source', 'emsdk/emsdk_env.sh'], shell=True, executable='/bin/bash', check=True)
+
     print('Configuring FFmpeg for Web ...')
+
     path: str = './test_room/addons/gde_gozen/bin/web'
     target_include_dir: str = f'{path}/include'
     ffmpeg_bin_dir: str = 'ffmpeg/bin'

@@ -174,9 +174,6 @@ int GoZenVideo::open(const String& a_path) {
 		u_data = Image::create_empty(av_frame->linesize[1] , resolution.y/2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_frame->linesize[2] , resolution.y/2, false, Image::FORMAT_R8);
 		padding = av_frame->linesize[0] - resolution.x;
-	} else if (av_frame->format == AV_PIX_FMT_BGRA) {
-		y_data = Image::create_empty(resolution.x, resolution.y, false, Image::FORMAT_RGBA8);
-		padding = 0;
 	} else {
 		using_sws = true;
 		sws_ctx = make_unique_ffmpeg<SwsContext, SwsCtxDeleter>(sws_getContext(
@@ -312,8 +309,6 @@ void GoZenVideo::_copy_frame_data() {
 		memcpy(v_data->ptrw(), av_sws_frame->data[2], v_data->get_size().x * v_data->get_size().y);
 
 		av_frame_unref(av_sws_frame.get());
-	} else if (av_frame->format == AV_PIX_FMT_BGRA) {
-		memcpy(y_data->ptrw(), av_frame->data[0], y_data->get_size().x * y_data->get_size().y * 4);
 	} else {
 		memcpy(y_data->ptrw(), av_frame->data[0], y_data->get_size().x * y_data->get_size().y);
 		memcpy(u_data->ptrw(), av_frame->data[1], u_data->get_size().x * u_data->get_size().y);
