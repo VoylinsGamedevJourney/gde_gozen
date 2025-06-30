@@ -168,9 +168,14 @@ func _update_video(new_video: GoZenVideo) -> void:
 
 	video_texture.texture.set_image(image)
 	if video.is_full_color_range():
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
-	else:
+		if video.get_interlaced() == 0:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
+		else:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader")
+	elif video.get_interlaced() == 0:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
+	else:
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
 
 	match video.get_color_profile():
 		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
@@ -411,6 +416,7 @@ func _print_video_debug() -> void:
 	print("Padding: ", _padding)
 	print("Rotation: ", _rotation)
 	print("Full color range: ", video.is_full_color_range())
+	print("Interlaced flag: ", video.get_interlaced())
 	print("Using sws: ", video.is_using_sws())
 	print("Sar: ", video.get_sar())
 	

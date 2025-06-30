@@ -383,6 +383,7 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(get_height);
 	BIND_METHOD(get_padding);
 	BIND_METHOD(get_rotation);
+	BIND_METHOD(get_interlaced);
 
 	BIND_METHOD(get_frame_count);
 	BIND_METHOD(get_sar);

@@ -112,6 +112,7 @@ public:
 	inline int get_height() { return resolution.y; }
 	inline int get_padding() { return padding; }
 	inline int get_rotation() { return rotation; }
+	inline int get_interlaced() { return interlaced; }
 	inline float get_sar() { return sar; }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
