@@ -158,14 +158,33 @@ int GoZenVideo::open(const String& a_path) {
 	full_color_range = av_frame->color_range == AVCOL_RANGE_JPEG;
 
 	// Getting frame rate
-	framerate = av_q2d(av_guess_frame_rate(av_format_ctx.get(), av_stream, av_frame.get()));
-	if (framerate == 0) {
+	// - Average framerate
+	if (av_stream->avg_frame_rate.num > 0 && av_stream->avg_frame_rate.den > 0) {
+		double avg_rate = av_q2d(av_stream->avg_frame_rate);
+		if (avg_rate > 0.1) framerate = avg_rate;
+	}
+
+	// - Real framerate (not always correct)
+	if (framerate <= 0.1 && av_stream->r_frame_rate.num > 0 && av_stream->r_frame_rate.den > 0) {
+		double r_rate = av_q2d(av_stream->r_frame_rate);
+		if (r_rate > 0.1) framerate = r_rate;
+	}
+
+	// - Guess the framerate
+	if (framerate <= 0.1) {
+		AVRational guessed_rate_q = av_guess_frame_rate(av_format_ctx.get(), av_stream, av_frame.get());
+		double guessed_rate = av_q2d(guessed_rate_q);
+
+		if (guessed_rate > 0.1) framerate = guessed_rate;
+	}
+
+	if (framerate <= 0) { // Make sure we have a valid framerate after all checks
 		close();
-		return _log_err("Invalid framerate");
+		return _log_err("Invalid framerate (could not be determined)");
 	}
 
 	// Setting variables
-	average_frame_duration = 10000000.0 / framerate;								// eg. 1 sec / 25 fps = 400.000 ticks (40ms)
+	average_frame_duration = 10000000.0 / framerate; // eg. 1 sec / 25 fps = 400.000 ticks (40ms)
 	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks
 
 	// Preparing the data array's
@@ -213,7 +232,11 @@ int GoZenVideo::open(const String& a_path) {
 		av_stream->duration = duration;
 	}
 
-	frame_count = (static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate;
+	if (av_stream->nb_frames > 0) {
+		frame_count = av_stream->nb_frames;
+	} else {
+		frame_count = static_cast<int>(std::round((static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate));
+	}
 
 	if (av_packet)
 		av_packet_unref(av_packet.get());
@@ -327,18 +350,18 @@ int GoZenVideo::_seek_frame(int a_frame_nr) {
 }
 
 #define BIND_STATIC_METHOD(method_name) \
-    ClassDB::bind_static_method("GoZenVideo", D_METHOD(#method_name), &GoZenVideo::method_name)
+	ClassDB::bind_static_method("GoZenVideo", D_METHOD(#method_name), &GoZenVideo::method_name)
 
 #define BIND_STATIC_METHOD_1(method_name, param1) \
-    ClassDB::bind_static_method("GoZenVideo",  \
-        D_METHOD(#method_name, param1), &GoZenVideo::method_name)
+	ClassDB::bind_static_method("GoZenVideo",  \
+		D_METHOD(#method_name, param1), &GoZenVideo::method_name)
 
 #define BIND_METHOD(method_name) \
-    ClassDB::bind_method(D_METHOD(#method_name), &GoZenVideo::method_name)
+	ClassDB::bind_method(D_METHOD(#method_name), &GoZenVideo::method_name)
 
 #define BIND_METHOD_1(method_name, param1) \
-    ClassDB::bind_method( \
-        D_METHOD(#method_name, param1), &GoZenVideo::method_name)
+	ClassDB::bind_method( \
+		D_METHOD(#method_name, param1), &GoZenVideo::method_name)
 
 void GoZenVideo::_bind_methods() {
 	BIND_STATIC_METHOD_1(get_file_meta, "a_file_path");

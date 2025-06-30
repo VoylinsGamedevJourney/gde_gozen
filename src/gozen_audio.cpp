@@ -169,10 +169,10 @@ PackedByteArray GoZenAudio::combine_data(PackedByteArray audio_one,
 	const int16_t *p_two = (const int16_t*)audio_two.ptr();
 
 	for (size_t i = 0; i < audio_one.size() / 2; i++)
-        ((int16_t*)audio_one.ptrw())[i] = Math::clamp(
+		((int16_t*)audio_one.ptrw())[i] = Math::clamp(
 				p_one[i] + p_one[i], -32768, 32767);
 
-    return audio_one;
+	return audio_one;
 }
 
 
@@ -206,7 +206,7 @@ PackedByteArray GoZenAudio::change_to_mono(PackedByteArray audio_data, bool left
 	if (left) {
 		for (size_t i = 0; i < sample_count; i += 2)
 			pw_data[i + 1] = p_data[i];
-    } else {
+	} else {
 		for (size_t i = 0; i < sample_count; i += 2)
 			pw_data[i] = p_data[i + 1];
 	}
@@ -216,12 +216,12 @@ PackedByteArray GoZenAudio::change_to_mono(PackedByteArray audio_data, bool left
 
 
 #define BIND_STATIC_METHOD_1(method_name, param1) \
-    ClassDB::bind_static_method("GoZenAudio", \
-        D_METHOD(#method_name, param1), &GoZenAudio::method_name)
+	ClassDB::bind_static_method("GoZenAudio", \
+		D_METHOD(#method_name, param1), &GoZenAudio::method_name)
 
 #define BIND_STATIC_METHOD_2(method_name, param1, param2) \
-    ClassDB::bind_static_method("GoZenAudio", \
-        D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name)
+	ClassDB::bind_static_method("GoZenAudio", \
+		D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name)
 
 
 void GoZenAudio::_bind_methods() {
