@@ -10,7 +10,7 @@ void FFmpeg::print_av_error(const char *a_message, int a_error) {
 }
 
 void FFmpeg::enable_multithreading(AVCodecContext *a_codec_ctx, const AVCodec *a_codec) {
-	a_codec_ctx->thread_count = OS::get_singleton()->get_processor_count() - 1;
+	a_codec_ctx->thread_count = 2;
 	if (a_codec->capabilities & AV_CODEC_CAP_FRAME_THREADS) {
 		a_codec_ctx->thread_type = FF_THREAD_FRAME;
 	} else if (a_codec->capabilities & AV_CODEC_CAP_SLICE_THREADS) {
