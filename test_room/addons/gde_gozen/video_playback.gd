@@ -168,7 +168,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 		_: # bt709 and unknown
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
-	_shader_material.set_shader_parameter("resolution", _resolution)
+	_shader_material.set_shader_parameter("resolution", Vector2i(_resolution.x / video.get_sar(), _resolution.y))
 
 	is_playing = false
 	set_playback_speed(playback_speed)
@@ -393,4 +393,6 @@ func _print_video_debug() -> void:
 	print("Padding: ", _padding)
 	print("Rotation: ", _rotation)
 	print("Full color range: ", video.is_full_color_range())
+	print("Using sws: ", video.is_using_sws())
+	print("Sar: ", video.get_sar())
 	

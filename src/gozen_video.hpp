@@ -51,6 +51,7 @@ private:
 	double average_frame_duration = 0;
 	double stream_time_base_video = 0;
 
+	float sar = 0;
 	float framerate = 0.;
 
 	bool loaded = false; // Is true after open()
@@ -111,6 +112,7 @@ public:
 	inline int get_height() { return resolution.y; }
 	inline int get_padding() { return padding; }
 	inline int get_rotation() { return rotation; }
+	inline float get_sar() { return sar; }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
 	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }
@@ -120,6 +122,7 @@ public:
 	inline String get_color_profile() { return av_color_primaries_name(color_profile); }
 
 	inline bool is_full_color_range() { return full_color_range; }
+	inline bool is_using_sws() { return using_sws; }
 
 	inline Ref<Image> get_y_data() { return y_data; }
 	inline Ref<Image> get_u_data() { return u_data; }

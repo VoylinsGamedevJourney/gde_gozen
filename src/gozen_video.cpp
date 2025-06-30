@@ -193,6 +193,9 @@ int GoZenVideo::open(const String& a_path) {
 		av_frame_unref(av_sws_frame.get());
 	}
 
+	// Set the aspect ratio.
+	sar = av_q2d(av_stream->codecpar->sample_aspect_ratio);
+
 	// Checking second frame
 	if ((response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(), av_stream->index, av_frame.get(), av_packet.get())))
 		FFmpeg::print_av_error("Something went wrong getting second frame!", response);
@@ -359,6 +362,7 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(get_rotation);
 
 	BIND_METHOD(get_frame_count);
+	BIND_METHOD(get_sar);
 
 	BIND_METHOD(enable_debug);
 	BIND_METHOD(disable_debug);
@@ -368,6 +372,7 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(get_color_profile);
 
 	BIND_METHOD(is_full_color_range);
+	BIND_METHOD(is_using_sws);
 
 	BIND_METHOD(get_y_data);
 	BIND_METHOD(get_u_data);
