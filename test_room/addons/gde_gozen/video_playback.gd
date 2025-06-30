@@ -145,12 +145,18 @@ func _update_video(new_video: GoZenVideo) -> void:
 		return
 
 	var image: Image
+	var sar: float = video.get_sar()
+	var rotation_radians: float = deg_to_rad(float(video.get_rotation()))
 
 	_padding = video.get_padding()
 	_rotation = video.get_rotation()
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
 	_frame_count = video.get_frame_count()
+
+	if sar < 1.0 and sar not in [0.0, 1.0]:
+		# Very old video's can have this, we need to adjust the image resolution.
+		_resolution.x = _resolution.x * sar
 
 	if abs(_rotation) == 90:
 		image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_R8)
@@ -172,11 +178,9 @@ func _update_video(new_video: GoZenVideo) -> void:
 		_: # bt709 and unknown
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
-	var sar: float = video.get_sar()
-	var rotation_radians: float = deg_to_rad(float(_rotation))
 
 	# Setting pixel aspect ratio.
-	if sar != 0.0:
+	if sar not in [0.0, 1.0]:
 		_shader_material.set_shader_parameter("resolution", Vector2i(_resolution.x / video.get_sar(), _resolution.y))
 	else:
 		_shader_material.set_shader_parameter("resolution", _resolution)
