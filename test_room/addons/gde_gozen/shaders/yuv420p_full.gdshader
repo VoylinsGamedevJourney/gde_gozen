@@ -7,11 +7,21 @@ uniform sampler2D v_data;
 
 uniform vec2 resolution;
 uniform vec4 color_profile;
+uniform float rotation;
 
 
 
 void fragment() {
 	vec2 uv = UV;
+	vec2 centered_uv = uv - vec2(0.5);
+	float cos_angle = cos(rotation);
+	float sin_angle = sin(rotation);
+	vec2 rotated_uv = vec2(
+		centered_uv.x * cos_angle - centered_uv.y * sin_angle,
+		centered_uv.x * sin_angle + centered_uv.y * cos_angle
+	);
+
+	uv = rotated_uv + vec2(0.5);
 	uv *= resolution / vec2(textureSize(y_data, 0));
 	uv = clamp(uv, vec2(0.0), vec2(1.0));
 	

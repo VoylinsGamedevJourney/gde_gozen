@@ -170,9 +170,9 @@ int GoZenVideo::open(const String& a_path) {
 
 	// Preparing the data array's
 	if (av_frame->format == AV_PIX_FMT_YUV420P) {
-		y_data = Image::create_empty(av_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
-		u_data = Image::create_empty(av_frame->linesize[1] , resolution.y/2, false, Image::FORMAT_R8);
-		v_data = Image::create_empty(av_frame->linesize[2] , resolution.y/2, false, Image::FORMAT_R8);
+		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(av_frame->linesize[1], resolution.y/2, false, Image::FORMAT_R8);
+		v_data = Image::create_empty(av_frame->linesize[2], resolution.y/2, false, Image::FORMAT_R8);
 		padding = av_frame->linesize[0] - resolution.x;
 	} else {
 		using_sws = true;
@@ -185,9 +185,9 @@ int GoZenVideo::open(const String& a_path) {
 		av_sws_frame = make_unique_avframe();
 		sws_scale_frame(sws_ctx.get(), av_sws_frame.get(), av_frame.get());
 
-		y_data = Image::create_empty(av_sws_frame->linesize[0] , resolution.y, false, Image::FORMAT_R8);
-		u_data = Image::create_empty(av_sws_frame->linesize[1] , resolution.y/2, false, Image::FORMAT_R8);
-		v_data = Image::create_empty(av_sws_frame->linesize[2] , resolution.y/2, false, Image::FORMAT_R8);
+		y_data = Image::create_empty(av_sws_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(av_sws_frame->linesize[1], resolution.y/2, false, Image::FORMAT_R8);
+		v_data = Image::create_empty(av_sws_frame->linesize[2], resolution.y/2, false, Image::FORMAT_R8);
 		padding = av_sws_frame->linesize[0] - resolution.x;
 
 		av_frame_unref(av_sws_frame.get());
