@@ -26,11 +26,11 @@ Due to MacOS being made by Apple, you will need an MacOS device for making the c
 Web builds are still in Alpha, work is still being done but the web exports have some downsides such as not being able to load video files from storage. The goal is to get it working with displaying video's through URL's. When compiling for Web you will need to follow the instructions which are in the comments in the `build.py` file.
 
 #### For Android builds
-Android builds are still in Alpha, work is still being done to it but it's expected to be usable in the near future. For this you will need Android studio installed and a lot more work goes into setting up the entire compiling environment for this. If you can export your Godot projects to Android already, than compiling GDE GoZen may work without issues. I'm by no means an Android developer so for problems compiling I would suggest creating an issue in the repo.
+Android builds need to make certain that permissions are set correctly when using. You will need Android-studio or install the SDK's manually. The compiling environment with emsdk should get setup correctly. Do note that building this is only possible on Linux. If you're on Windows, you have to use a VM or WSL. If you can export your Godot projects to Android already, than compiling GDE GoZen may work without issues. I'm by no means an Android developer so for problems compiling I would suggest creating an issue in the repo.
 
 ## Struggling and need help?
 
 You can join our Discord server to ask for help, but before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, **please** check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
 
 > [!CAUTION]
-> At this moment only Linux, Windows and MacOS are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system.
+> At this moment only Linux, Windows MacOS, Android are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system. Compiling Android comes with challenges of setting up your system correctly and is generally advised to do this on a Linux machine.

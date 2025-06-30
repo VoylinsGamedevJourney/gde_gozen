@@ -1,6 +1,26 @@
 # Changelog
 All releases can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
+
+## [v7.0] - 2025/07/01
+### Added
+- Non-square pixel support;
+- Automatic rotation;
+- Android support;
+- De-interlace video support;
+- Correct playback with SAR smaller than 1.0;
+
+### Fixed
+- Fixed framerate;
+- Editor FPS display fixed;
+- GIF Playback now works correctly;
+- GIF playback not showing correctly with certain resolutions;
+
+### Improved
+- Better handling of video file padding;
+- Test room VSync turned off;
+
+
 ## [v6.2] - 2025/06/23
 ### Added
 - AV1 playback support;

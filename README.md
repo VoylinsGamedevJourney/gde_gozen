@@ -17,11 +17,12 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 
 ## Features
 - Smooth video playback;
+- Video seeking;
 - Godot 4.3+ support;
-- Cross-platform (Linux, Windows, and MacOS);
+- Cross-platform (Linux, Windows, MacOS, and Android);
 - Regular updates;
 
-Support for Web and Android is on the way! However, getting those builds to work requires a bit more work so they won't be available for some time.
+Support for Web is a WIP and is not guarantee to arrive due to the nature of web builds being very sandboxed.
 
 ## How to use?
 Before you can use GDE GoZen in your project, you will need to compile the GDExtension. You will **need** the debug build for your current operating system, and the necessary compiled (debug and/or release) builds for the platforms you want to support.
