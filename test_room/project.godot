@@ -26,10 +26,6 @@ gdscript/warnings/unsafe_cast=1
 gdscript/warnings/unsafe_call_argument=1
 gdscript/warnings/return_value_discarded=1
 
-[display]
-
-window/vsync/vsync_mode=0
-
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gde_gozen/plugin.cfg")

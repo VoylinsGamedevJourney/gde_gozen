@@ -64,6 +64,7 @@ func _on_url_line_edit_text_submitted(path: String) -> void:
 func _frame_changed(value: int) -> void:
 	timeline.value = value
 	current_frame_value.text = str(value)
+	editor_fps_value.text = str(Engine.get_frames_per_second())
 
 
 func open_video(file_path: String) -> void:
