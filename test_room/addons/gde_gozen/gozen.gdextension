@@ -23,9 +23,6 @@ android.release.arm64 = "res://addons/gde_gozen/bin/android_arm64/libgozen.andro
 android.debug.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.android.template_debug.arm32.so"
 android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.android.template_release.arm32.so"
 
-web.debug.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_debug.wasm32.wasm"
-web.release.wasm32 = "res://addons/gde_gozen/bin/web/libgozen.web.template_release.wasm32.wasm"
-
 [dependencies]
 
 linux.debug.x86_64 = {
@@ -189,7 +186,4 @@ android.release.arm32 = {
 	"bin/android_arm32/libswresample.so" : "",
 	"bin/android_arm32/libswscale.so" : "",
 }
-
-web.debug.wasm32 = {}
-web.release.wasm32 = {}
 

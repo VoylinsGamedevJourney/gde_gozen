@@ -7,11 +7,6 @@ for multiple platforms and architectures.
 
 Windows and Linux can be build on Linux or Windows with WSL.
 For MacOS you need to use MacOS itself else building fails.
-
-For Web you need Emscripten installed.
-You may also need to custom build the Godot web export debug/release template with:
-`scons platform=web target=template_debug use_llvm=yes dlink_enabled=yes\
-extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1" -j10`
 """
 
 import os
@@ -34,7 +29,6 @@ OS_LINUX: str = 'linux'
 OS_WINDOWS: str = 'windows'
 OS_MACOS: str = 'macos'
 OS_ANDROID: str = 'android'
-OS_WEB: str = 'web'
 
 TARGET_DEV: str = 'debug'
 TARGET_RELEASE: str = 'release'
@@ -122,8 +116,6 @@ def compile_ffmpeg(platform, arch) -> None:
         compile_ffmpeg_macos(arch)
     elif platform == OS_ANDROID:
         compile_ffmpeg_android(arch)
-    elif platform == OS_WEB:
-        compile_ffmpeg_web()
 
 
 def compile_ffmpeg_linux(arch: str) -> None:
@@ -156,14 +148,17 @@ def compile_ffmpeg_linux(arch: str) -> None:
             '--cc=aarch64-linux-gnu-gcc',
         ]
 
-    result = subprocess.run(cmd, cwd='./ffmpeg/')
-    if result.returncode != 0:
+    if subprocess.run(cmd, cwd='./ffmpeg/').returncode != 0:
         print('Error: FFmpeg failed!')
 
     print('Compiling FFmpeg for Linux ...')
     subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/')
     subprocess.run(['make', 'install'], cwd='./ffmpeg/')
 
+    copy_linux_dependencies(path, arch)
+
+
+def copy_linux_dependencies(path: str, arch: str):
     print('Copying lib files ...')
     for file in glob.glob('ffmpeg/bin/lib/*.so.*'):
         if file.count('.') == 2:
@@ -382,93 +377,6 @@ def compile_ffmpeg_android(arch) -> None:
     print('Compiling FFmpeg for Android finished!')
 
 
-def compile_ffmpeg_web() -> None:
-    print('Install/activate emsdk ...')
-    subprocess.run(['emsdk/emsdk', 'install', '3.1.64'], check=True)
-    subprocess.run(['emsdk/emsdk', 'activate', '3.1.64'], check=True)
-    #subprocess.run(['source', 'emsdk/emsdk_env.sh'], shell=True, executable='/bin/bash', check=True)
-
-    print('Configuring FFmpeg for Web ...')
-
-    path: str = './test_room/addons/gde_gozen/bin/web'
-    target_include_dir: str = f'{path}/include'
-    ffmpeg_bin_dir: str = 'ffmpeg/bin'
-    ffmpeg_lib_dir: str = f'{ffmpeg_bin_dir}/lib'
-    ffmpeg_include_dir: str = f'{ffmpeg_bin_dir}/include'
-
-    os.makedirs(path, exist_ok=True)
-
-    cmd = [
-        'emconfigure',
-        './configure',
-        '--cc=emcc',
-        '--cxx=em++',
-        '--ar=emar',
-        '--ranlib=emranlib',
-        '--nm=emnm',
-        '--enable-static',
-        '--disable-shared',
-        '--prefix=./bin',
-        '--enable-cross-compile',
-        '--target-os=none',
-        '--arch=wasm32',
-        '--cpu=generic',
-        '--disable-x86asm',
-        '--disable-inline-asm',
-        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -fPIC -sASYNCIFY=1',
-        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -fPIC -sASYNCIFY=1 --proxy-to-worker',
-        '--enable-pic',
-        '--enable-small',
-        '--disable-everything',
-
-        '--enable-avcodec',
-        '--enable-avformat',
-        '--enable-avutil',
-        '--enable-swscale',
-        '--enable-swresample',
-        '--enable-network',
-
-        '--enable-demuxer=mov,mp4,m4a,3gp,3g2,mj2',
-        '--enable-demuxer=matroska,webm',
-
-        '--enable-decoder=vp9',
-        '--enable-decoder=h264',
-        '--enable-decoder=opus',
-        '--enable-decoder=aac',
-
-        '--enable-parser=h264',
-        '--enable-parser=aac',
-
-        '--enable-bsf=h264_mp4toannexb',
-        '--enable-bsf=aac_adtstoasc',
-
-        '--enable-protocol=file,http,https',
-    ]
-    cmd += ENABLED_MODULES
-    cmd += DISABLED_MODULES
-
-    print(f'Running cmd: {" ".join(cmd)}')
-    result = subprocess.run(cmd, cwd='./ffmpeg/')
-    if result.returncode != 0:
-        print('Error: FFmpeg configure failed for Emscripten!')
-        sys.exit(1)
-
-    print('Compiling FFmpeg for Web (using emmake)...')
-    subprocess.run(['emmake', 'make', f'-j{THREADS}'], cwd='./ffmpeg/')
-    subprocess.run(['emmake', 'make', 'install'], cwd='./ffmpeg/')
-
-    print('Copying static lib files (.a) ...')
-    for file in glob.glob(os.path.join(ffmpeg_lib_dir, '*.a')):
-        print(f'Copying {file} to {path}')
-        shutil.copy2(file, path)
-
-    if os.path.exists(target_include_dir):
-        shutil.rmtree(target_include_dir)
-    shutil.copytree(ffmpeg_include_dir, target_include_dir)
-
-    print('Compiling FFmpeg for Web finished!')
-
-
 def macos_fix(arch) -> None:
     # This is a fix for the MacOS builds to get the libraries to properly connect to
     # the gdextension library. Without it, the FFmpeg libraries can't be found.
@@ -514,35 +422,29 @@ def main():
             subprocess.run(['git', 'submodule', 'update',
                             '--recursive', '--remote'], cwd='./')
 
-    platform: str = OS_LINUX
-    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
-        case 2: platform = OS_WINDOWS
-        case 3: platform = OS_MACOS
-        case 4: platform = OS_ANDROID
-        case 5: platform = OS_WEB
-
-    # arm64 isn't supported yet by mingw for Windows, so x86_64 only.
-    # Web doesn't need any architecture, just 'wasm32'
+    # Arm64 isn't supported yet by mingw for Windows, so x86_64 only.
     title_arch: str = 'Choose architecture'
+    platform: str = OS_LINUX
     arch: str = ARCH_X86_64
-    match platform:
-        case 'linux':
-            if _print_options(title_arch, [ARCH_X86_64, ARCH_ARM64]) == 2:
-                arch = ARCH_ARM64
-        case 'macos':
+    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID]):
+        case 2:
+            platform = OS_WINDOWS
+        case 3:
+            platform = OS_MACOS
             arch = ARCH_ARM64
-        case 'android':
+        case 4:
+            platform = OS_ANDROID
             if _print_options(title_arch, [ARCH_ARM64, ARCH_ARMV7A]) == 2:
                 arch = ARCH_ARMV7A
             else:
                 arch = ARCH_ARM64
-        case 'web':
-            arch = ARCH_WASM32
+        case _:  # Linux
+            if _print_options(title_arch, [ARCH_X86_64, ARCH_ARM64]) == 2:
+                arch = ARCH_ARM64
 
     target: str = TARGET_DEV
-    match _print_options('Select target', [TARGET_DEV, TARGET_RELEASE]):
-        case 2:
-            target = TARGET_RELEASE
+    if _print_options('Select target', [TARGET_DEV, TARGET_RELEASE]) == 2:
+        target = TARGET_RELEASE
 
     clean_scons = True
     if _print_options('Clean Scons?', ['yes', 'no']) == 2:

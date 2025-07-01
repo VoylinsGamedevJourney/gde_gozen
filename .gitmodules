@@ -8,7 +8,3 @@
 	url = https://github.com/godotengine/godot-cpp.git
 	branch = 4.2
 	ignore = dirty
-[submodule "emsdk"]
-	path = emsdk
-	url = https://github.com/emscripten-core/emsdk.git
-	ignore = dirty

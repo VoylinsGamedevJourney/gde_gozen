@@ -35,8 +35,6 @@ func _ready() -> void:
 		open_video(OS.get_cmdline_args()[1])
 	if OS.get_name().to_lower() == "android" and OS.request_permissions():
 		print("Permissions already granted!")
-#	if OS.get_name().to_lower() == "web":
-#		JavaScriptBridge.get_interface("window").openFileDialog(js_callback)
 
 	_connect(get_window().files_dropped, _on_video_drop)
 	_connect(video_playback.video_loaded, after_video_open)

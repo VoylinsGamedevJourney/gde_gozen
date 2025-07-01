@@ -45,7 +45,6 @@ if 'linux' in platform:
             '-Iffmpeg/bin/include'],
         LIBPATH=['ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
-
 elif 'windows' in platform:
     libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
     if os_platform.system().lower() == 'windows':
@@ -61,7 +60,6 @@ elif 'windows' in platform:
     env.Append(
         CPPPATH=['ffmpeg/bin/include'],
         LIBPATH=['ffmpeg/bin/bin'])
-
 elif 'macos' in platform:
     # MacOS can only be build on a MacOS machine!
     macos_base_path = f'{libpath}/{target}'
@@ -89,7 +87,6 @@ elif 'macos' in platform:
             '-framework', 'AVFoundation',
             '-rpath', '@loader_path/lib']
     )
-
 elif 'android' in platform:
     libpath += f'_{arch}/libgozen{env_suffix}{env_shlibsuffix}'
 
@@ -111,33 +108,6 @@ elif 'android' in platform:
             'ffmpeg/bin/include/libswscale',
             'ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
-
-elif 'web' in platform:
-    web_bin_path = libpath
-    web_include_path = f'{web_bin_path}/include'
-    libpath += f'/libgozen{env_suffix}{env_shlibsuffix}'
-
-    env.Append(
-        CPPPATH=[web_include_path],
-        LIBPATH=[web_bin_path],
-        LIBS=[
-            'libavcodec',
-            'libavformat',
-            'libavutil',
-            'libswresample',
-            'libswscale',
-        ],
-        CCFLAGS=['-pthread', '-sUSE_PTHREADS=1'],
-        LINKFLAGS=[
-            '-pthread',
-            '-sUSE_PTHREADS=1',
-            '-sSHARED_MEMORY=1',
-            '-sINITIAL_MEMORY=1024MB',
-            '-sSTACK_SIZE=512MB',
-            '-sSIDE_MODULE=1',
-        ]
-    )
-
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 

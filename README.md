@@ -22,8 +22,6 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Cross-platform (Linux, Windows, MacOS, and Android);
 - Regular updates;
 
-Support for Web is a WIP and is not guarantee to arrive due to the nature of web builds being very sandboxed.
-
 ## How to use?
 Before you can use GDE GoZen in your project, you will need to compile the GDExtension. You will **need** the debug build for your current operating system, and the necessary compiled (debug and/or release) builds for the platforms you want to support.
 

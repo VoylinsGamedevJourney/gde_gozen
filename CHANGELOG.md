@@ -20,6 +20,9 @@ All releases can be found on the [GDE GoZen repo release page](https://github.co
 - Better handling of video file padding;
 - Test room VSync turned off;
 
+### Deleted
+- Web build;
+
 
 ## [v6.2] - 2025/06/23
 ### Added

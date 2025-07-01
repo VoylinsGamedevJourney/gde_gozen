@@ -394,15 +394,13 @@ func _open_audio() -> void:
 
 
 func _print_system_debug() -> void:
-	# Debug printing for web builds doesn't really work.
-	if OS.get_name().to_lower() != "web":
-		print_rich("[b]System info")
-		print("OS name: ", OS.get_name())
-		print("Distro name: ", OS.get_distribution_name())
-		print("OS version: ", OS.get_version())
-		print_rich("Memory info:\n\t", OS.get_memory_info())
-		print("CPU name: ", OS.get_processor_name())
-		print("Threads count: ", OS.get_processor_count())
+	print_rich("[b]System info")
+	print("OS name: ", OS.get_name())
+	print("Distro name: ", OS.get_distribution_name())
+	print("OS version: ", OS.get_version())
+	print_rich("Memory info:\n\t", OS.get_memory_info())
+	print("CPU name: ", OS.get_processor_name())
+	print("Threads count: ", OS.get_processor_count())
 
 
 func _print_video_debug() -> void:
