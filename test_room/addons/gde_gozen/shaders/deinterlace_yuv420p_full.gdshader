@@ -8,6 +8,7 @@ uniform sampler2D v_data;
 uniform vec2 resolution;
 uniform vec4 color_profile;
 uniform float rotation;
+uniform float interlaced = 1.0; // 0 = no, 1 = top first, 2 = bottom first
 
 
 
