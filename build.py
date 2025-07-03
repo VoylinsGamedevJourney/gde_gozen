@@ -414,13 +414,16 @@ def main():
         subprocess.run([sys.executable, PATH_BUILD_WINDOWS], cwd='./', check=True)
         sys.exit(3)
 
-    match _print_options('Init/Update submodules', ['no', 'initialize', 'update']):
-        case 2:
-            subprocess.run(['git', 'submodule', 'update',
-                            '--init', '--recursive'], cwd='./')
-        case 3:
-            subprocess.run(['git', 'submodule', 'update',
-                            '--recursive', '--remote'], cwd='./')
+    if os.path.exists('./ffmpeg/.config'):
+        match _print_options('Init/Update submodules', ['no', 'initialize', 'update']):
+            case 2:
+                subprocess.run(['git', 'submodule', 'update',
+                                '--init', '--recursive'], cwd='./')
+            case 3:
+                subprocess.run(['git', 'submodule', 'update',
+                                '--recursive', '--remote'], cwd='./')
+    else:
+        subprocess.run(['git', 'submodule', 'update', '--init', '--recursive'], cwd='./')
 
     # Arm64 isn't supported yet by mingw for Windows, so x86_64 only.
     title_arch: str = 'Choose architecture'

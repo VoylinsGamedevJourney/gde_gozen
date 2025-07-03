@@ -96,7 +96,9 @@ func _ready() -> void:
 
 #------------------------------------------------ VIDEO DATA HANDLING
 func set_video_path(new_path: String) -> void:
-	## This is the starting point for video playback, provide a path of where the video file can be found and it will load a Video object. After which [code]_update_video()[/code] get's run and set's the first frame image.
+	## This is the starting point for video playback, provide a path of where
+	## the video file can be found and it will load a Video object. After which
+	## [code]_update_video()[/code] get's run and set's the first frame image.
 	if video != null:
 		close()
 
@@ -107,8 +109,10 @@ func set_video_path(new_path: String) -> void:
 
 	audio_player.stream = stream
 
-	if path.contains("res://") or path.contains("user://"):
+	if path.begins_with("res://") or path.begins_with("user://"):
+		print("Path's with 'res://' don't work, globalizing path '%s' ...", % path)
 		path = ProjectSettings.globalize_path(new_path)
+		print("New path: ", path)
 	else:
 		path = new_path
 
@@ -163,6 +167,9 @@ func _update_video(new_video: GoZenVideo) -> void:
 	else:
 		image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
+
+	image.fill(Color.BLACK)
+
 	if debug:
 		_print_video_debug()
 
@@ -174,6 +181,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 			_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader")
 	elif video.get_interlaced() == 0:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
+		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.tres")
 		_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
 	else:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
