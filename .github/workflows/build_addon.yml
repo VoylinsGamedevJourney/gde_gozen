@@ -1,307 +1,90 @@
-name: Full build
-on: 
+name: 0 | Build GDE GoZen
+
+on:
   workflow_dispatch:
     inputs:
       version:
-        description: Addon version
-        required: true
-        default: '7.0'
+        description: 'Version'
+        type: string
+        default: 'v0.0'
 
-run-name: Full build - ${{ inputs.version }}
-
-env:
-  ANDROID_SDK_ROOT: /opt/android-sdk
-  ANDROID_HOME: /opt/android-sdk
-
-  ANDROID_BUILD_TOOLS_VERSION: '34.0.0'
-  ANDROID_PLATFORM_VERSION: '34'
-  ANDROID_API_LEVEL: '24'
-
-  NDK_VERSION: '23.2.8568313'
-  CMAKE_VERSION: '3.22.1'
-  JAVA_VERSION: '17'
+run-name: 'Build GoZen Release: ${{ inputs.version }} by @${{ github.actor }}'
 
 jobs:
-  build-linux-x86_64:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Installing dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Compiling FFmpeg x86_64
-        run: python3 -c 'import build; build.compile_ffmpeg("linux", "x86_64")'
-      - name: Build Linux debug x86_64
-        run: scons -j4 target=template_debug platform=linux arch=x86_64
-      - name: Build Linux release x86_64
-        run: scons -j4 target=template_release platform=linux arch=x86_64
-
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_x86_64
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
-  build-linux-arm64:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Installing dependencies
-        run: |
-          sudo dpkg --add-architecture arm64
-
-          sudo tee /etc/apt/sources.list > /dev/null <<'EOF'
-          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse
-          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
-          deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
-          deb [arch=amd64] http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
-          
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse
-          EOF
-
-          sudo apt-get update
-          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libaom-dev:arm64
-
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Compiling FFmpeg arm64
-        run: python3 -c 'import build; build.compile_ffmpeg("linux", "arm64")'
-      - name: Build Linux debug arm64
-        run: scons -j4 target=template_debug platform=linux arch=arm64
-      - name: Build Linux release arm64
-        run: scons -j4 target=template_release platform=linux arch=arm64
-
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_arm64
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
-  build-android:
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-    steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm git bash yasm python python-pip scons gcc diffutils make wget unzip tar ffmpeg gradle libtool nasm cmake jdk${JAVA_VERSION}-openjdk
-
-      - name: Set ANDROID_HOME and ANDROID_NDK_ROOT environment variables
-        run: |
-          echo "ANDROID_HOME=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> $GITHUB_ENV
-          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "${ANDROID_SDK_ROOT}/platform-tools" >> $GITHUB_PATH
-          echo "${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> $GITHUB_PATH
-
-      # Android stuff
-      - name: Setup Android SDK on Arch
-        run: |
-          set -e # Exit if a command exits with a non-zero status.
-          CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-          echo "Downloading Android Command-line tools..."
-          wget -q "${CMDLINE_TOOLS_URL}" -O cmdline-tools.zip
-
-          echo "Installing to ${ANDROID_SDK_ROOT}/cmdline-tools/latest..."
-          mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
-          unzip -q cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools/temp"
-
-          mv "${ANDROID_SDK_ROOT}/cmdline-tools/temp/cmdline-tools/"* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/"
-          rm -rf "${ANDROID_SDK_ROOT}/cmdline-tools/temp" cmdline-tools.zip
-
-          echo "Installed cmdline-tools:"
-          ls -la "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin"
-
-      - name: Accept SDK Licenses and Install SDK Components (including NDK)
-        run: |
-          set -e
-          echo "Accepting licenses..."
-
-          # Create dummy file expected by sdkmanager for license stuff.
-          mkdir -p ${ANDROID_SDK_ROOT}/licenses/
-          yes | sdkmanager --licenses || echo "License acceptance might have had non-zero exit code but continuing..."
-
-          echo "Installing SDK components..."
-          sdkmanager --install "ndk;${NDK_VERSION}" \
-                               "platform-tools" \
-                               "platforms;android-${ANDROID_PLATFORM_VERSION}" \
-                               "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" \
-                               --sdk_root=${ANDROID_SDK_ROOT}
-
-          echo "Verifying NDK installation..."
-          ls -la "${ANDROID_NDK_ROOT}" # Check if NDK directory exists.
-          
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Compiling FFmpeg arm64
-        run: python -c 'import build; build.compile_ffmpeg_android("arm64")'
-
-      - name: Build Android debug + release
-        run: |
-          scons -j4 target=template_debug platform=android arch=arm64
-          scons -j4 target=template_release platform=android arch=arm64
-        env:
-          ANDROID_NDK: ${{ env.ANDROID_NDK }}
-          ANDROID_SDK: ${{ env.ANDROID_SDK }}
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-
-
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: android_arm64
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
+  build-linux:
+    name: 'Build Linux'
+    uses: ./.github/workflows/linux.yml
+    with:
+      version: ${{ inputs.version }}
 
   build-windows:
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux:latest
-    steps:
-      - name: Installing dependencies
-        run: pacman -Syu --noconfirm sudo fakeroot debugedit patch git bash meson yasm python python-pip scons gcc diffutils make wget unzip tar mingw-w64 ffmpeg wine ninja aom
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install yay
-        run: |
-          useradd -m builder
-          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-
-          git clone https://aur.archlinux.org/yay.git
-          chown -R builder:builder yay
-
-          cd yay
-          sudo -u builder makepkg -si --noconfirm
-          cd ..
-
-      - name: Install dependency mingw-w64-aom
-        run: sudo -u builder yay -S --noconfirm mingw-w64-aom
-
-      - name: Compiling FFmpeg x86
-        run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_windows("x86_64")'
-
-      - name: Build Windows debug x86_64
-        run: scons -j4 target=template_debug platform=windows arch=x86_64
-      - name: Build Windows release x86_64
-        run: scons -j4 target=template_release platform=windows arch=x86_64
-
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
+    name: 'Build Windows'
+    uses: ./.github/workflows/windows.yml
+    with:
+      version: ${{ inputs.version }}
 
   build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Installing dependencies
-        run: |
-          brew update
-          brew install yasm scons diffutils make unzip ffmpeg aom
-      - name: Checkout submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    name: 'Build MacOs'
+    uses: ./.github/workflows/macos.yml
+    with:
+      version: ${{ inputs.version }}
 
-      - name: Compiling FFmpeg arm64
-        run: python -c 'import sys; sys.path.append("."); import build; build.compile_ffmpeg_macos("arm64")'
+  build-android:
+    name: 'Build Android'
+    uses: ./.github/workflows/android.yml
+    with:
+      version: ${{ inputs.version }}
 
-      - name: Build MacOS debug arm64
-        run: scons -j4 target=template_debug platform=macos arch=arm64
-      - name: Build MacOS release arm64
-        run: scons -j4 target=template_release platform=macos arch=arm64
-
-      - name: Correct MacOS Binary paths
-        run: python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64")'
-
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
 
   build-addon:
-    needs: [build-linux-x86_64, build-linux-arm64, build-windows, build-macos, build-android]
+    needs: [build-linux, build-windows, build-macos, build-android]
     runs-on: ubuntu-22.04
     steps:
-      - name: Installing dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git bash yasm python3 python3-pip scons build-essential diffutils make wget unzip tar ffmpeg
-
       - name: Checkout submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Prepare linux x86_64 artifacts
+      - name: Linux bin
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
-          name: linux_x86_64
+          name: bin_linux
 
-      - name: Prepare linux arm64 artifacts
+      - name: Windows bin
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
-          name: linux_arm64
+          name: bin_windows
 
-      - name: Prepare android arm64 artifacts
+      - name: MacOS bin
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
-          name: android_arm64
-        
-      - name: Prepare windows artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: test_room/addons/gde_gozen/bin/
-          name: windows
-          
-      - name: Prepare macos artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: test_room/addons/gde_gozen/bin/
-          name: macos
+          name: bin_macos
 
-      - name: Copying license
-        run: cp LICENSE test_room/addons/gde_gozen/
+      - name: Android bin
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room/addons/gde_gozen/bin/
+          name: bin_android
 
-      - name: Updating version number
-        run: sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
+      - name: Finalizing
+        run: |
+          cp LICENSE test_room/addons/gde_gozen/
+          sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
 
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_v${{ inputs.version }}
+          name: GDE_GoZen_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 7
 
       - name: Upload test_room
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_test_room_v${{ inputs.version }}
+          name: GDE_GoZen_test_room_v${{ inputs.version }}
           path: test_room/
           retention-days: 7
 

@@ -1,6 +1,11 @@
-name: Android
+name: 3 | Android
 
 on: 
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -8,7 +13,7 @@ on:
         required: true
         default: "6.0"
 
-run-name: Building GDE GoZen - Android - ${{ inputs.version }}
+run-name: Android build - ${{ inputs.version }}
 
 env:
   ANDROID_SDK_ROOT: '/opt/android-sdk'
@@ -97,17 +102,10 @@ jobs:
           ANDROID_SDK: ${{ env.ANDROID_SDK }}
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
-      - name: Uploading addon build
+      - name: Uploading Android bin
         uses: actions/upload-artifact@v4
         with:
-          name: Addon_GDE_GoZen_Android
-          path: test_room/addons/
-          retention-days: 5
-
-      - name: Uploading test room build
-        uses: actions/upload-artifact@v4
-        with:
-          name: Test_room_GDE_GoZen_Android
-          path: test_room/
-          retention-days: 5
+          name: bin_android
+          path: test_room/addons/gde_gozen/bin
+          retention-days: 1
 

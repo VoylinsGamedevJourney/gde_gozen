@@ -1,6 +1,11 @@
-name: MacOS
+name: 3 | MacOS
 
 on: 
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -8,7 +13,7 @@ on:
         required: true
         default: "6.0"
 
-run-name: Building GDE GoZen - MacOS - ${{ inputs.version }}
+run-name: MacOS build - ${{ inputs.version }}
 
 jobs:
   build:
@@ -34,17 +39,10 @@ jobs:
       - name: Correct MacOS Binary paths
         run: python -c 'import sys; sys.path.append("."); import build; build.macos_fix("arm64")'
 
-      - name: Uploading binaries
+      - name: Uploading MacOS bin
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_macos_bin_v${{ inputs.version }}
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
-      - name: Upload addon
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen_macos_v${{ inputs.version }}
-          path: test_room/addons/
-          retention-days: 5
+          name: bin_macos
+          path: test_room/addons/gde_gozen/bin
+          retention-days: 1
 

@@ -1,6 +1,11 @@
-name: Windows
+name: 2 | Windows
 
 on: 
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -8,7 +13,7 @@ on:
         required: true
         default: "6.0"
 
-run-name: Building GDE GoZen - Windows - ${{ inputs.version }}
+run-name: Windows build - ${{ inputs.version }}
 
 jobs:
   build:
@@ -46,24 +51,10 @@ jobs:
       - name: Build Windows release x86_64
         run: scons -j4 target=template_release platform=windows arch=x86_64
 
-      - name: Uploading binaries
+      - name: Uploading Windows bin
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_windows_bin_v${{ inputs.version }}
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
-      - name: Upload test_room
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen_test_room_windows_v${{ inputs.version }}
-          path: test_room/
-          retention-days: 5
-
-      - name: Upload addon
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen_windows_v${{ inputs.version }}
-          path: test_room/addons/
-          retention-days: 5
+          name: bin_windows
+          path: test_room/addons/gde_gozen/bin
+          retention-days: 1
 
