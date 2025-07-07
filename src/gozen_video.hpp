@@ -22,7 +22,7 @@ class GoZenVideo : public Resource {
 	GDCLASS(GoZenVideo, Resource);
 
 private:
-	// FFmpeg classes
+	// FFmpeg classes.
 	UniqueAVFormatCtxInput av_format_ctx;
 	UniqueAVCodecCtx av_codec_ctx = nullptr;
 	AVStream *av_stream = nullptr;
@@ -34,12 +34,12 @@ private:
 
 	enum AVColorPrimaries color_profile;
 
-	// Default variable types
+	// Default variable types.
 	int response = 0;
 	int padding = 0;
 
 	int8_t rotation = 0;
-	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first
+	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first.
 	
 	int64_t duration = 0;
 	int64_t frame_count = 0;
@@ -54,29 +54,27 @@ private:
 	float sar = 0;
 	float framerate = 0.;
 
-	bool loaded = false; // Is true after open()
+	bool loaded = false; // Is true after open().
 	bool debug = false;
-	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon
+	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon.
 	bool full_color_range = true;
 
-	// Godot classes
+	// Godot classes.
 	String path = "";
 	String pixel_format = "";
 
 	Vector2i resolution = Vector2i(0, 0);
-
-	AudioStreamWAV *audio = nullptr;
+	Vector2i actual_resolution = Vector2i(0, 0);
 
 	Ref<Image> y_data;
 	Ref<Image> u_data;
 	Ref<Image> v_data;
 
-
-	// Private functions
+	// Private functions.
 	void _copy_frame_data();
 	void _clean_frame_data();
 
-	int _seek_frame(int a_frame_nr);
+	int _seek_frame(int frame_nr);
 
 	inline void _log(String message) {
 		if (debug)
@@ -91,43 +89,42 @@ public:
 	GoZenVideo() {}
 	~GoZenVideo() { close(); }
 
-	static Dictionary get_file_meta(String a_file_path);
+	static Dictionary get_file_meta(String file_path);
 
-	int open(const String& a_path);
+	int open(const String& video_path);
 	void close();
 
-	inline bool is_open() { return loaded; }
+	inline bool is_open() const { return loaded; }
 
-	int seek_frame(int a_frame_nr);
-	bool next_frame(bool a_skip = false);
+	int seek_frame(int frame_nr);
+	bool next_frame(bool skip = false);
 
-	inline Ref<AudioStreamWAV> get_audio() { return audio; };
+	inline String get_path() const { return path; }
 
-	inline String get_path() { return path; }
-
-	inline float get_framerate() { return framerate; }
-	inline int get_frame_count() { return std::round(frame_count); };
-	inline Vector2i get_resolution() { return resolution; }
-	inline int get_width() { return resolution.x; }
-	inline int get_height() { return resolution.y; }
-	inline int get_padding() { return padding; }
-	inline int get_rotation() { return rotation; }
-	inline int get_interlaced() { return interlaced; }
-	inline float get_sar() { return sar; }
+	inline float get_framerate() const { return framerate; }
+	inline int get_frame_count() const { return std::round(frame_count); };
+	inline Vector2i get_resolution() const { return resolution; }
+	inline Vector2i get_actual_resolution() const { return actual_resolution; }
+	inline int get_width() const { return resolution.x; }
+	inline int get_height() const { return resolution.y; }
+	inline int get_padding() const { return padding; }
+	inline int get_rotation() const { return rotation; }
+	inline int get_interlaced() const { return interlaced; }
+	inline float get_sar() const { return sar; }
 
 	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
 	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }
-	inline bool get_debug_enabled() { return debug; }
+	inline bool get_debug_enabled() const { return debug; }
 
-	inline String get_pixel_format() { return pixel_format; }
-	inline String get_color_profile() { return av_color_primaries_name(color_profile); }
+	inline String get_pixel_format() const { return pixel_format; }
+	inline String get_color_profile() const { return av_color_primaries_name(color_profile); }
 
-	inline bool is_full_color_range() { return full_color_range; }
-	inline bool is_using_sws() { return using_sws; }
+	inline bool is_full_color_range() const { return full_color_range; }
+	inline bool is_using_sws() const { return using_sws; }
 
-	inline Ref<Image> get_y_data() { return y_data; }
-	inline Ref<Image> get_u_data() { return u_data; }
-	inline Ref<Image> get_v_data() { return v_data; }
+	inline Ref<Image> get_y_data() const { return y_data; }
+	inline Ref<Image> get_u_data() const { return u_data; }
+	inline Ref<Image> get_v_data() const { return v_data; }
 
 
 protected:

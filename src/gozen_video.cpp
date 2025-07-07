@@ -2,46 +2,48 @@
 
 
 //----------------------------------------------- STATIC FUNCTIONS
-Dictionary GoZenVideo::get_file_meta(String a_file_path) {
-	AVFormatContext *l_av_format_ctx = NULL;
-	const AVDictionaryEntry *l_av_dic = NULL;
-	Dictionary l_dic = {};
+Dictionary GoZenVideo::get_file_meta(String file_path) {
+	AVFormatContext *av_format_ctx = NULL;
+	const AVDictionaryEntry *av_dic = NULL;
+	Dictionary dic = {};
 
-	if (avformat_open_input(&l_av_format_ctx, a_file_path.utf8(), NULL, NULL)) {
+	if (avformat_open_input(&av_format_ctx, file_path.utf8(), NULL, NULL)) {
 		UtilityFunctions::printerr("Couldn't open file!");
-		return l_dic;
+		return dic;
 	}
 
-	if (avformat_find_stream_info(l_av_format_ctx, NULL)) {
+	if (avformat_find_stream_info(av_format_ctx, NULL)) {
 		UtilityFunctions::printerr("Couldn't find stream info!");
-		avformat_close_input(&l_av_format_ctx);
-		return l_dic;
+		avformat_close_input(&av_format_ctx);
+		return dic;
 	}
 
-	while ((l_av_dic = av_dict_iterate(l_av_format_ctx->metadata, l_av_dic)))
-		l_dic[l_av_dic->key] = l_av_dic->value;
+	while ((av_dic = av_dict_iterate(av_format_ctx->metadata, av_dic)))
+		dic[av_dic->key] = av_dic->value;
 
-	avformat_close_input(&l_av_format_ctx);
-	return l_dic;
+	avformat_close_input(&av_format_ctx);
+	return dic;
 }
 
 //----------------------------------------------- NON-STATIC FUNCTIONS
-int GoZenVideo::open(const String& a_path) {
+int GoZenVideo::open(const String& video_path) {
 	if (loaded)
 			return _log_err("Already open");
 
-	path = a_path;
+	path = video_path;
+	resolution = Vector2i(0,0);
 
-	// Allocate video file context
+	// Allocate video file context.
 	AVFormatContext* temp_format_ctx = nullptr;
 	if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
 		close();
 		return _log_err("Couldn't open video");
 	}
+
 	av_format_ctx = make_unique_ffmpeg<AVFormatContext, AVFormatCtxInputDeleter>(
 			temp_format_ctx);
 
-	// Getting video stream information
+	// Getting video stream information.
 	avformat_find_stream_info(av_format_ctx.get(), NULL);
 
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
@@ -57,9 +59,9 @@ int GoZenVideo::open(const String& a_path) {
 			resolution.y = av_codec_params->height;
 			color_profile = av_codec_params->color_primaries;
 
-			AVDictionaryEntry *l_rotate_tag = av_dict_get(av_stream->metadata, "rotate", nullptr, 0);
-			rotation = l_rotate_tag ? atoi(l_rotate_tag->value) : 0;
-			if (rotation == 0) { // Check modern rotation detecting
+			AVDictionaryEntry *rotate_tag = av_dict_get(av_stream->metadata, "rotate", nullptr, 0);
+			rotation = rotate_tag ? atoi(rotate_tag->value) : 0;
+			if (rotation == 0) { // Check modern rotation detecting.
 				for (int i = 0; i < av_stream->codecpar->nb_coded_side_data; ++i) {
 					const AVPacketSideData *side_data = &av_stream->codecpar->coded_side_data[i];
 
@@ -73,22 +75,21 @@ int GoZenVideo::open(const String& a_path) {
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
-	// Setup Decoder codec context
+	// Setup Decoder codec context.
 	const AVCodec *av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
 	if (!av_codec) {
 		close();
 		return _log_err("Couldn't find decoder");
 	}
 
-	// Allocate codec context for decoder
-	av_codec_ctx = make_unique_ffmpeg<AVCodecContext, AVCodecCtxDeleter>(
-			avcodec_alloc_context3(av_codec));
+	// Allocate codec context for decoder.
+	av_codec_ctx = make_unique_ffmpeg<AVCodecContext, AVCodecCtxDeleter>(avcodec_alloc_context3(av_codec));
 	if (av_codec_ctx == NULL) {
 		close();
 		return _log_err("Failed alloc codec");
 	}
 	
-	// Copying parameters
+	// Copying parameters.
 	if (avcodec_parameters_to_context(av_codec_ctx.get(), av_stream->codecpar)) {
 		close();
 		return _log_err("Couldn't init codec");
@@ -96,22 +97,28 @@ int GoZenVideo::open(const String& a_path) {
 
 	FFmpeg::enable_multithreading(av_codec_ctx.get(), av_codec);
 	
-	// Open codec - Video
+	// Open codec - Video.
 	if (avcodec_open2(av_codec_ctx.get(), av_codec, NULL)) {
 		close();
 		return _log_err("Couldn't open codec");
 	}
 
-	float l_aspect_ratio = av_q2d(av_stream->codecpar->sample_aspect_ratio);
-	if (l_aspect_ratio > 1.0)
-		resolution.x = static_cast<int>(std::round(resolution.x * l_aspect_ratio));
+	sar = av_q2d(av_stream->codecpar->sample_aspect_ratio);
+	actual_resolution = resolution;
+	if (sar > 1.0)
+		resolution.x *= sar;
+	else if (sar != 0.0 && sar != 1.0)
+		resolution.x /= sar;
 
 	pixel_format = av_get_pix_fmt_name(av_codec_ctx->pix_fmt);
 	_log(String("Selected pixel format is: ") + pixel_format);
 
-	start_time_video = av_stream->start_time != AV_NOPTS_VALUE ? (int64_t)(av_stream->start_time * stream_time_base_video) : 0;
+	if (av_stream->start_time != AV_NOPTS_VALUE)
+		start_time_video = (int64_t)(av_stream->start_time * stream_time_base_video);
+	else
+		start_time_video = 0;
 
-	// Getting some data out of first frame
+	// Getting some data out of first frame.
 	av_packet = make_unique_avpacket();
 	av_frame = make_unique_avframe();
 	av_sws_frame = make_unique_avframe();
@@ -121,8 +128,8 @@ int GoZenVideo::open(const String& a_path) {
 	}
 
 	avcodec_flush_buffers(av_codec_ctx.get());
-	bool l_duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
-	if (l_duration_from_bitrate) {
+	bool duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
+	if (duration_from_bitrate) {
 		close();
 		return _log_err("Invalid video");
 	}
@@ -150,27 +157,27 @@ int GoZenVideo::open(const String& a_path) {
 		}
 	}
 	
-	// Checking for interlacing and what type of interlacing
+	// Checking for interlacing and what type of interlacing.
 	if (av_frame->flags & AV_FRAME_FLAG_INTERLACED)
 		interlaced = av_frame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST ? 1 : 2;
 
-	// Checking color range
+	// Checking color range.
 	full_color_range = av_frame->color_range == AVCOL_RANGE_JPEG;
 
-	// Getting frame rate
-	// - Average framerate
+	// Getting frame rate.
+	// - Average framerate.
 	if (av_stream->avg_frame_rate.num > 0 && av_stream->avg_frame_rate.den > 0) {
 		double avg_rate = av_q2d(av_stream->avg_frame_rate);
 		if (avg_rate > 0.1) framerate = avg_rate;
 	}
 
-	// - Real framerate (not always correct)
+	// - Real framerate (not always correct).
 	if (framerate <= 0.1 && av_stream->r_frame_rate.num > 0 && av_stream->r_frame_rate.den > 0) {
 		double r_rate = av_q2d(av_stream->r_frame_rate);
 		if (r_rate > 0.1) framerate = r_rate;
 	}
 
-	// - Guess the framerate
+	// - Guess the framerate.
 	if (framerate <= 0.1) {
 		AVRational guessed_rate_q = av_guess_frame_rate(av_format_ctx.get(), av_stream, av_frame.get());
 		double guessed_rate = av_q2d(guessed_rate_q);
@@ -178,17 +185,18 @@ int GoZenVideo::open(const String& a_path) {
 		if (guessed_rate > 0.1) framerate = guessed_rate;
 	}
 
-	if (framerate <= 0) { // Make sure we have a valid framerate after all checks
+	// - Make sure we have a valid framerate after all checks..
+	if (framerate <= 0) {
 		close();
 		return _log_err("Invalid framerate (could not be determined)");
 	}
 
-	// Setting variables
-	average_frame_duration = 10000000.0 / framerate; // eg. 1 sec / 25 fps = 400.000 ticks (40ms)
-	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks
+	// Setting variables.
+	average_frame_duration = 10000000.0 / framerate; // eg. 1 sec / 25 fps = 400.000 ticks (40ms).
+	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks.
 
-	// Preparing the data array's
-	if (av_frame->format == AV_PIX_FMT_YUV420P) {
+	// Preparing the data images.
+	if (av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P) {
 		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
 		u_data = Image::create_empty(av_frame->linesize[1], resolution.y/2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_frame->linesize[2], resolution.y/2, false, Image::FORMAT_R8);
@@ -212,22 +220,19 @@ int GoZenVideo::open(const String& a_path) {
 		av_frame_unref(av_sws_frame.get());
 	}
 
-	// Set the aspect ratio.
-	sar = av_q2d(av_stream->codecpar->sample_aspect_ratio);
-
-	// Checking second frame
+	// Checking second frame.
 	if ((response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(), av_stream->index, av_frame.get(), av_packet.get())))
 		FFmpeg::print_av_error("Something went wrong getting second frame!", response);
 
 	duration = av_format_ctx->duration;
-	if (av_stream->duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
-		if (duration == AV_NOPTS_VALUE || l_duration_from_bitrate) {
+	if (av_stream->duration == AV_NOPTS_VALUE || duration_from_bitrate) {
+		if (duration == AV_NOPTS_VALUE || duration_from_bitrate) {
 			close();
 			return _log_err("Invalid video duration");
 		} else {
-			AVRational l_temp_rational = AVRational{1, AV_TIME_BASE};
-			if (l_temp_rational.num != av_stream->time_base.num || l_temp_rational.num != av_stream->time_base.num)
-				duration = std::ceil(static_cast<double>(duration) * av_q2d(l_temp_rational) / av_q2d(av_stream->time_base));
+			AVRational temp_rational = AVRational{1, AV_TIME_BASE};
+			if (temp_rational.num != av_stream->time_base.num || temp_rational.num != av_stream->time_base.num)
+				duration = std::ceil(static_cast<double>(duration) * av_q2d(temp_rational) / av_q2d(av_stream->time_base));
 		}
 		av_stream->duration = duration;
 	}
@@ -252,6 +257,7 @@ int GoZenVideo::open(const String& a_path) {
 void GoZenVideo::close() {
 	_log("Closing video file on path: " + path);
 	loaded = false;
+	response = OK;
 
 	av_packet.reset();
 	av_frame.reset();
@@ -263,36 +269,69 @@ void GoZenVideo::close() {
 	av_format_ctx.reset();
 }
 
-int GoZenVideo::seek_frame(int a_frame_nr) {
+int GoZenVideo::seek_frame(int frame_nr) {
 	if (!loaded)
 		return _log_err("Video is not open");
 
-	// Video seeking
-	if ((response = _seek_frame(a_frame_nr)) < 0)
+	// Video seeking.
+	if ((response = _seek_frame(frame_nr)) < 0)
 		return _log_err("Couldn't seek video");
 	
+	int attempts = 0;
+	while (true) {
+		response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(),
+									 av_stream->index, av_frame.get(), av_packet.get());
+
+		if (response == 0)
+			break;
+		else if (response == AVERROR(EAGAIN) || response == AVERROR(EWOULDBLOCK)) {
+			if (attempts > 10) {
+				FFmpeg::print_av_error("Reached max attempts trying to get first frame!", response);
+				break;
+			}
+
+			attempts++;
+		} else if (response == AVERROR_EOF) {
+			FFmpeg::print_av_error("Reached EOF trying to get first frame!", response);
+			break;
+		} else {
+			FFmpeg::print_av_error("Something went wrong getting first frame!", response);
+			break;
+		}
+	}
+
 	while (true) {
 		if ((response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(),
 									av_stream->index, av_frame.get(), av_packet.get()))) {
-			if (response == AVERROR_EOF) {
-				_log("End of file reached! Going back 1 frame!");
+			if (response == AVERROR(EAGAIN) || response == AVERROR(EWOULDBLOCK)) {
+				if (attempts > 10) {
+					FFmpeg::print_av_error("Reached max attempts trying to get first frame!", response);
+					break;
+				}
 
-				if ((response = _seek_frame(a_frame_nr--)) < 0)
-					return _log_err("Couldn't seek video");
+				attempts++;
+				continue;
+			} else if (response == AVERROR_EOF) {
+				_log_err("End of file reached! Going back 1 frame!");
+
+				if ((response = _seek_frame(frame_nr--)) < 0)
+					return _log_err("Couldn't seek");
 
 				continue;
 			}
+			
 			FFmpeg::print_av_error("Problem happened getting frame in seek_frame! ", response);
 			response = 1;
 			break;
 		}
 
-		// Get frame pts
-		current_pts = av_frame->best_effort_timestamp == AV_NOPTS_VALUE ? av_frame->pts : av_frame->best_effort_timestamp;
+		// Get frame pts.
+		current_pts = av_frame->best_effort_timestamp == AV_NOPTS_VALUE ?
+				av_frame->pts : av_frame->best_effort_timestamp;
 		if (current_pts == AV_NOPTS_VALUE)
 			continue;
 
-		// Skip to actual requested frame
+		// Skip to actual requested frame.
 		if ((int64_t)(current_pts * stream_time_base_video) / 10000 >=
 			frame_timestamp / 10000) {
 			_copy_frame_data();
@@ -306,13 +345,13 @@ int GoZenVideo::seek_frame(int a_frame_nr) {
 	return OK;
 }
 
-bool GoZenVideo::next_frame(bool a_skip) {
+bool GoZenVideo::next_frame(bool skip) {
 	if (!loaded)
 		return false;
 
 	FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(), av_stream->index, av_frame.get(), av_packet.get());
 
-	if (!a_skip)
+	if (!skip)
 		_copy_frame_data();
 
 	av_frame_unref(av_frame.get());
@@ -342,12 +381,13 @@ void GoZenVideo::_copy_frame_data() {
 	}
 }
 
-int GoZenVideo::_seek_frame(int a_frame_nr) {
+int GoZenVideo::_seek_frame(int frame_nr) {
 	avcodec_flush_buffers(av_codec_ctx.get());
 
-	frame_timestamp = (int64_t)(a_frame_nr * average_frame_duration);
+	frame_timestamp = (int64_t)(frame_nr * average_frame_duration);
 	return av_seek_frame(av_format_ctx.get(), -1, (start_time_video + frame_timestamp) / 10, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
 }
+
 
 #define BIND_STATIC_METHOD(method_name) \
 	ClassDB::bind_static_method("GoZenVideo", D_METHOD(#method_name), &GoZenVideo::method_name)
@@ -364,21 +404,21 @@ int GoZenVideo::_seek_frame(int a_frame_nr) {
 		D_METHOD(#method_name, param1), &GoZenVideo::method_name)
 
 void GoZenVideo::_bind_methods() {
-	BIND_STATIC_METHOD_1(get_file_meta, "a_file_path");
+	BIND_STATIC_METHOD_1(get_file_meta, "file_path");
 
-	BIND_METHOD_1(open, "a_path");
+	BIND_METHOD_1(open, "video_path");
 
 	BIND_METHOD(is_open);
 
-	BIND_METHOD_1(seek_frame, "a_frame_nr");
-	BIND_METHOD_1(next_frame, "a_skip");
-	BIND_METHOD(get_audio);
+	BIND_METHOD_1(seek_frame, "frame_nr");
+	BIND_METHOD_1(next_frame, "skip");
 
 	BIND_METHOD(get_framerate);
 
 	BIND_METHOD(get_path);
 
 	BIND_METHOD(get_resolution);
+	BIND_METHOD(get_actual_resolution);
 	BIND_METHOD(get_width);
 	BIND_METHOD(get_height);
 	BIND_METHOD(get_padding);

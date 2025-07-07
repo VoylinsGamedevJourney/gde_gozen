@@ -43,12 +43,12 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 	
 	SwrContext* temp_swr_ctx = nullptr;
 	int response = swr_alloc_set_opts2(&temp_swr_ctx,
-			&TARGET_LAYOUT,			// Out channel layout: Stereo
-			TARGET_FORMAT,			// We need 16 bits
-			TARGET_SAMPLE_RATE,		// Sample rate should be the Godot default
-			&codec_ctx->ch_layout,	// In channel layout
-			codec_ctx->sample_fmt,	// In sample format
-			codec_ctx->sample_rate,	// In sample rate
+			&TARGET_LAYOUT,			// Out channel layout: Stereo.
+			TARGET_FORMAT,			// We need 16 bits.
+			TARGET_SAMPLE_RATE,		// Sample rate should be the Godot default.
+			&codec_ctx->ch_layout,	// In channel layout.
+			codec_ctx->sample_fmt,	// In sample format.
+			codec_ctx->sample_rate,	// In sample rate.
 			0, nullptr);
 	swr_ctx = make_unique_ffmpeg<SwrContext, SwrCtxDeleter>(temp_swr_ctx);
 
@@ -72,7 +72,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 
 	while (!(FFmpeg::get_frame(format_ctx, codec_ctx.get(), stream->index,
 							   av_frame.get(), av_packet.get()))) {
-		// Copy decoded data to new frame
+		// Copy decoded data to new frame.
 		av_decoded_frame->format = TARGET_FORMAT;
 		av_decoded_frame->ch_layout = TARGET_LAYOUT;
 		av_decoded_frame->sample_rate = TARGET_SAMPLE_RATE;
@@ -117,7 +117,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 		av_frame_unref(av_decoded_frame.get());
 	}
 
-	// Cleanup
+	// Cleanup.
 	avcodec_flush_buffers(codec_ctx.get());
 
 	return audio_data;
