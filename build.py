@@ -21,7 +21,7 @@ THREADS: int = os.cpu_count() or 4
 PATH_BUILD_WINDOWS: str = 'build_on_windows.py'
 
 ARCH_X86_64: str = 'x86_64'
-ARCH_ARM64: str = 'arm64'
+ARCH_ARM64: str = 'arm64'  # armv8
 ARCH_ARMV7A: str = 'armv7a'
 ARCH_WASM32: str = 'wasm32'
 
@@ -33,6 +33,8 @@ OS_ANDROID: str = 'android'
 TARGET_DEV: str = 'debug'
 TARGET_RELEASE: str = 'release'
 
+# WARNING: Change the path to you android sdk!
+ANDROID_SDK_PATH: str = '/opt/android-sdk'
 ANDROID_API_LEVEL: int = 24
 
 ENABLED_MODULES = [
@@ -102,7 +104,7 @@ def get_ndk_host_tag() -> str:
             sys.exit(2)
 
 
-def compile_ffmpeg(platform, arch) -> None:
+def compile_ffmpeg(platform: str, arch: str) -> None:
     if os.path.exists('./ffmpeg/ffbuild/config.mak'):
         print('Cleaning FFmpeg...')
         subprocess.run(['make', 'distclean'], cwd='./ffmpeg/')
@@ -166,7 +168,7 @@ def copy_linux_dependencies(path: str, arch: str):
 
     print('Finding and copying required system .so dependencies ...', flush=True)
 
-    def copy_dependencies(binary_path):
+    def copy_dependencies(binary_path: str):
         try:
             output = subprocess.check_output(['ldd', binary_path], text=True)
             for line in output.splitlines():
@@ -221,7 +223,7 @@ def copy_linux_dependencies(path: str, arch: str):
     print('Compiling FFmpeg for Linux finished!')
 
 
-def compile_ffmpeg_windows(arch) -> None:
+def compile_ffmpeg_windows(arch: str) -> None:
     print('Configuring FFmpeg for Windows ...')
     path: str = f'./test_room/addons/gde_gozen/bin/windows_{arch}'
     os.environ['PKG_CONFIG_LIBDIR'] = f'/usr/{arch}-w64-mingw32/lib/pkgconfig'
@@ -269,7 +271,7 @@ def compile_ffmpeg_windows(arch) -> None:
     print('Compiling FFmpeg for Windows finished!')
 
 
-def compile_ffmpeg_macos(arch) -> None:
+def compile_ffmpeg_macos(arch: str) -> None:
     print('Configuring FFmpeg for MacOS ...')
     path_debug: str = './test_room/addons/gde_gozen/bin/macos/debug/lib'
     path_release: str = './test_room/addons/gde_gozen/bin/macos/release/lib'
@@ -306,7 +308,7 @@ def compile_ffmpeg_macos(arch) -> None:
     print('Compiling FFmpeg for MacOS finished!')
 
 
-def compile_ffmpeg_android(arch) -> None:
+def compile_ffmpeg_android(arch: str) -> None:
     print('Configuring FFmpeg for Android ...')
     path: str = f'./test_room/addons/gde_gozen/bin/android_{arch}'
     ndk: str = os.getenv('ANDROID_NDK_ROOT')
@@ -361,6 +363,9 @@ def compile_ffmpeg_android(arch) -> None:
     # TODO: Implement a way to add AV1 support for Android
     # cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
+
+    if arch == ARCH_ARMV7A:
+        cmd += ['--disable-vulkan']
 
     result = subprocess.run(cmd, cwd='./ffmpeg/')
     if result.returncode != 0:
@@ -456,20 +461,25 @@ def main():
     if _print_options('(Re)compile ffmpeg?', ['yes', 'no']) == 1:
         compile_ffmpeg(platform, arch)
 
+    # Godot requires arm32 instead of armv7a.
+    if arch == ARCH_ARMV7A:
+        arch = "arm32"
+
     cmd = ['scons', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
+    env = os.environ.copy()
 
     if platform == OS_ANDROID:
         # We need to check if ANDROID_HOME is set to the sdk folder.
         if os.getenv('ANDROID_HOME') is None:
             if os_platform.system() == 'Linux':
                 print('Linux detected for setting ANDROID_HOME')
-                cmd += 'ANDROID_HOME=/opt/android-sdk'
+                env['ANDROID_HOME'] = os.getenv('ANDROID_HOME', ANDROID_SDK_PATH)
 
     if clean_scons:
         clean_cmd = ['scons', '--clean', f'-j{THREADS}', f'target=template_{target}', f'platform={platform}', f'arch={arch}']
-        subprocess.run(clean_cmd, cwd='./')
+        subprocess.run(clean_cmd, cwd='./', env=env)
 
-    subprocess.run(cmd, cwd='./')
+    subprocess.run(cmd, cwd='./', env=env)
 
     if platform == OS_MACOS:
         macos_fix(arch)

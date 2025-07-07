@@ -100,13 +100,7 @@ elif 'android' in platform:
         CPPFLAGS=[
             '-Iffmpeg/bin',
             '-Iffmpeg/bin/include'],
-        LIBPATH=[
-            'ffmpeg/bin/include/libavcodec',
-            'ffmpeg/bin/include/libavformat',
-            'ffmpeg/bin/include/libavutil',
-            'ffmpeg/bin/include/libswresample',
-            'ffmpeg/bin/include/libswscale',
-            'ffmpeg/bin/lib'],
+        LIBPATH=['ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
