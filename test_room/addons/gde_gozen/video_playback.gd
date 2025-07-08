@@ -61,6 +61,8 @@ var u_texture: ImageTexture;
 var v_texture: ImageTexture;
 
 
+
+
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
 	_shader_material = ShaderMaterial.new()
@@ -109,15 +111,14 @@ func set_video_path(new_path: String) -> void:
 
 	audio_player.stream = stream
 
-	if path.begins_with("res://") or path.begins_with("user://"):
+	path = new_path
+	if path == "":
+		return
+	elif path.begins_with("res://") or path.begins_with("user://"):
 		print("Path's with 'res://' don't work, globalizing path '%s' ...", % path)
 		path = ProjectSettings.globalize_path(new_path)
 		print("New path: ", path)
-	else:
-		path = new_path
 
-	if path == "":
-		return
 
 	video = GoZenVideo.new()
 	if debug:
