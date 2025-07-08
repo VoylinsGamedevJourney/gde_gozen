@@ -310,7 +310,7 @@ def compile_ffmpeg_macos(arch: str) -> None:
 
 def compile_ffmpeg_android(arch: str) -> None:
     print('Configuring FFmpeg for Android ...')
-    path: str = f'./test_room/addons/gde_gozen/bin/android_{arch}'
+    path: str = './test_room/addons/gde_gozen/bin/android_'
     ndk: str = os.getenv('ANDROID_NDK_ROOT')
 
     if not ndk:
@@ -329,10 +329,12 @@ def compile_ffmpeg_android(arch: str) -> None:
     strip_tool: str = ''
 
     if arch == ARCH_ARM64:
+        path += 'arm64'
         target_arch = 'aarch64-linux-android'
         arch_flags = '-march=armv8-a'
         ffmpeg_arch = 'aarch64'
     else:  # armv7a
+        path += 'arm32'
         target_arch = 'armv7a-linux-androideabi'
         arch_flags = '-march=armv7-a -mfloat-abi=softfp -mfpu=neon'
         ffmpeg_arch = 'arm'
