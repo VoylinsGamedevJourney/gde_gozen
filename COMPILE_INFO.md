@@ -9,12 +9,16 @@ For the people who need extra help, feel free to watch [this video](https://yout
 The build process needs to be done through the terminal. There is no other way of compiling it 
 Install python 3, scons, and git! You will also need to initialize the submodules of the git repo with `git submodule update --init --recursive`. Updating the submodules can be done with `git submodule update --recursive --remote`.
 
+You'll also need aom installed. If you don't care for AV1 support, you can delete the lines containing `libaom`.
+
 ### Building
 To start compiling the GDExtension, run `python3 build.py`. You'll need to select the options you want and to select for which platform and architecture you want to build GDE GoZen for. The building does take some time as you will need to compile both FFmpeg and the GDExtension. However, the build.py script makes everything very straightforward. Do remember though that you will need to say yes to compiling FFmpeg, without FFmpeg this won't work.
 
 #### For building on Windows
 For Window builds you will need WSL installed, without this you won't be able to compile FFmpeg or the GDExtension.
-If you are building for Windows on WSL, you will need to compile lib aom with mingw on your WSL install first to have AV1 support. If you don't need AV1 support, you can delete the lines containing `libaom` from the `build.py` file.
+If you are building for Windows on WSL, you will need to compile lib aom with mingw on your WSL install first to have AV1 support. 
+
+If you don't need AV1 support, you can delete the lines containing `libaom` from the `build.py` file.
 
 #### For Windows builds
 I recommend compiling on a Linux system since it'll go a lot smoother, just be certain to install mingw and if you want AV1 support you should compile lib aom with mingw. Some distro's such as Arch Linux can install lib aom with mingw through the AUR which speeds things up.

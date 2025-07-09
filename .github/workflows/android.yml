@@ -167,8 +167,8 @@ jobs:
 
       - name: Build Android debug + release
         run: |
-          scons -j4 target=template_debug platform=android arch=armv7a
-          scons -j4 target=template_release platform=android arch=armv7a
+          scons -j4 target=template_debug platform=android arch=arm32
+          scons -j4 target=template_release platform=android arch=arm32
         env:
           ANDROID_NDK: ${{ env.ANDROID_NDK }}
           ANDROID_SDK: ${{ env.ANDROID_SDK }}
