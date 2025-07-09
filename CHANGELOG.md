@@ -2,7 +2,7 @@
 All releases can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
 
-## [v7.2] - 2025/**/**
+## [v7.2] - 2025/07/09
 ### Added
 - Actual resolution variable;
 - Virtual shader for YUV conversion;
