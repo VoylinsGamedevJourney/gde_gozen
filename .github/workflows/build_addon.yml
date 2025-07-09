@@ -45,11 +45,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Linux bin
+      - name: Linux bin x86_64
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
-          name: bin_linux
+          name: bin_linux_x86_64
+
+      - name: Linux bin arm64
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room/addons/gde_gozen/bin/
+          name: bin_linux_arm64
 
       - name: Windows bin
         uses: actions/download-artifact@v4
@@ -63,13 +69,13 @@ jobs:
           path: test_room/addons/gde_gozen/bin/
           name: bin_macos
 
-      - name: Android bin
+      - name: Android bin arm32
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/
           name: bin_android_armv7a
 
-      - name: Android bin
+      - name: Android bin arm64
         uses: actions/download-artifact@v4
         with:
           path: test_room/addons/gde_gozen/bin/

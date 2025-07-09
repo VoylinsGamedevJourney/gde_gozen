@@ -189,7 +189,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 	# Applying shader params.
-	_shader_material.set_shader_parameter("resolution", _resolution)
+	_shader_material.set_shader_parameter("resolution", video.get_actual_resolution())
 	_shader_material.set_shader_parameter("rotation", rotation_radians)
 
 	is_playing = false

@@ -36,18 +36,11 @@ jobs:
       - name: Build Linux release x86_64
         run: scons -j4 target=template_release platform=linux arch=x86_64
 
-      - name: Uploading binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: gde_gozen_linux_x86_64_bin_v${{ inputs.version }}
-          path: test_room/addons/gde_gozen/bin/
-          retention-days: 7
-
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: gde_gozen_linux_x86_64_v${{ inputs.version }}
-          path: test_room/addons/
+          name: bin_linux_x86_64
+          path: test_room/addons/gde_gozen/bin
           retention-days: 5
 
   build-arm64:
@@ -87,7 +80,7 @@ jobs:
       - name: Uploading Linux bin
         uses: actions/upload-artifact@v4
         with:
-          name: bin_linux
+          name: bin_linux_arm64
           path: test_room/addons/gde_gozen/bin
           retention-days: 1
 
