@@ -2,6 +2,24 @@
 All releases can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
 
+## [v7.2] - 2025/**/**
+### Added
+- Actual resolution variable;
+- Virtual shader for YUV conversion;
+- Android armv7a support;
+
+### Fixed
+- Res path fix;
+
+### Improved
+- SAR;
+- GitHub workflows;
+
+
+## [v7.0] - 2025/07/02
+Minor update with a MacOS fix.
+
+
 ## [v7.0] - 2025/07/01
 ### Added
 - Non-square pixel support;
