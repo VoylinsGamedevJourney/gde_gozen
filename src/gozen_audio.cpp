@@ -70,8 +70,31 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 	size_t audio_size = 0;
 	int bytes_per_samples = av_get_bytes_per_sample(TARGET_FORMAT);
 
+	int64_t duration = (stream->duration != AV_NOPTS_VALUE)
+		? stream->duration
+		: format_ctx->duration;
+
+	double stream_duration_sec = (stream->duration != AV_NOPTS_VALUE)
+		? (stream->duration * av_q2d(stream->time_base))
+		: ((double)format_ctx->duration / AV_TIME_BASE);
+
+	size_t estimated_total_samples = (size_t)(stream_duration_sec * TARGET_SAMPLE_RATE);
+	audio_data.resize(estimated_total_samples * bytes_per_samples * 2);
+	_log("Stream duration: " + String::num_int64(stream_duration_sec));
+	_log("Total size: " + String::num_int64(estimated_total_samples * bytes_per_samples * 2));
+
+	if (audio_data.size() >= 2147483600) {
+		_log_err("Audio is too big, cut video into smaller parts in order to use");
+		return audio_data;
+	}
+
 	while (!(FFmpeg::get_frame(format_ctx, codec_ctx.get(), stream->index,
 							   av_frame.get(), av_packet.get()))) {
+		if (av_frame->nb_samples <= 0) {
+			_log("End of audio reached!");
+			break;
+		}
+
 		// Copy decoded data to new frame.
 		av_decoded_frame->format = TARGET_FORMAT;
 		av_decoded_frame->ch_layout = TARGET_LAYOUT;
@@ -107,7 +130,15 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 
 		size_t byte_size = av_decoded_frame->nb_samples * bytes_per_samples * 2;
 
-		audio_data.resize(audio_size + byte_size);
+		if (audio_size + byte_size > audio_data.size()) {
+			_log("Audio buffer overflow");
+			_log("Size needed is " + String::num_int64(audio_size + byte_size));
+			_log("Size of array is " + String::num_int64(audio_data.size()));
+
+			size_t new_size = audio_size + byte_size + 4096;
+			audio_data.resize(new_size);
+		}
+
 		memcpy(&(audio_data.ptrw()[audio_size]), 
 				av_decoded_frame->extended_data[0],
 				byte_size);
@@ -115,6 +146,13 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 
 		av_frame_unref(av_frame.get());
 		av_frame_unref(av_decoded_frame.get());
+	}
+
+	if (audio_size < audio_data.size()) {
+		_log("Resizing PackedByteArray");
+		_log("Audio size: " + String::num_int64(audio_size));
+		_log("PackedByteArray size: " + String::num_int64(audio_data.size()));
+		audio_data.resize(audio_size);
 	}
 
 	// Cleanup.

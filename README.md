@@ -20,6 +20,7 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Video seeking;
 - Godot 4.3+ support;
 - Cross-platform (Linux, Windows, MacOS, and Android);
+- Playback speed control;
 - Regular updates;
 
 ## How to use?
