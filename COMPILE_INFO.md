@@ -33,5 +33,9 @@ Android builds need to make certain that permissions are set correctly when usin
 
 You can join our Discord server to ask for help, but before joining the [Discord server](https://discord.com/invite/BdbUf7VKYC) because compiling doesn't work, **please** check if your submodules are properly initialized. If you run into some issues after trying, feel free to ask for help in the [Discord server](https://discord.com/invite/BdbUf7VKYC) in the `gozen-video-editor` channel.
 
+### Error: ./configure can't be found
+This error is most likely due to not having initialized the submodules. Check the FFmpeg folder to see if it's empty or not. Empty = not initialized. Not empty = Create an issue as something might be wrong (but show a screenshot of the not empty folder for confirmation).
+
+
 > [!CAUTION]
 > At this moment only Linux, Windows MacOS, Android are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system. Compiling Android comes with challenges of setting up your system correctly and is generally advised to do this on a Linux machine.

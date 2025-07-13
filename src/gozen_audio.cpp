@@ -79,14 +79,16 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 		: ((double)format_ctx->duration / AV_TIME_BASE);
 
 	size_t estimated_total_samples = (size_t)(stream_duration_sec * TARGET_SAMPLE_RATE);
-	audio_data.resize(estimated_total_samples * bytes_per_samples * 2);
-	_log("Stream duration: " + String::num_int64(stream_duration_sec));
-	_log("Total size: " + String::num_int64(estimated_total_samples * bytes_per_samples * 2));
+	int64_t total_size = estimated_total_samples * bytes_per_samples * 2;
 
-	if (audio_data.size() >= 2147483600) {
+	_log("Stream duration: " + String::num_int64(stream_duration_sec));
+	_log("Total size: " + String::num_int64(total_size));
+
+	if (total_size >= 2147483600) {
 		_log_err("Audio is too big, cut video into smaller parts in order to use");
 		return audio_data;
 	}
+	audio_data.resize(total_size);
 
 	while (!(FFmpeg::get_frame(format_ctx, codec_ctx.get(), stream->index,
 							   av_frame.get(), av_packet.get()))) {
