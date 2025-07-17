@@ -26,6 +26,8 @@ I recommend compiling on a Linux system since it'll go a lot smoother, just be c
 #### For MacOS builds
 Due to MacOS being made by Apple, you will need an MacOS device for making the compiling work. There isn't much I can do about this sadly enough and compiled builds may also need their library files to be approved by the user before the GDExtension becomes accepted/usable on the MacOS system.
 
+For compiling you will need aom and pkg-config installed through brew.
+
 #### For Android builds
 Android builds need to make certain that permissions are set correctly when using. You will need Android-studio or install the SDK's manually. The compiling environment with emsdk should get setup correctly. Do note that building this is only possible on Linux. If you're on Windows, you have to use a VM or WSL. If you can export your Godot projects to Android already, than compiling GDE GoZen may work without issues. I'm by no means an Android developer so for problems compiling I would suggest creating an issue in the repo.
 
