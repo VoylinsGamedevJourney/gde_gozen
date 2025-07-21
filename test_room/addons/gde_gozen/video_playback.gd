@@ -110,11 +110,10 @@ func set_video_path(new_path: String) -> void:
 	path = new_path
 	if path == "":
 		return
-	elif path.begins_with("res://") or path.begins_with("user://"):
-		print("Path's with 'res://' don't work, globalizing path '%s' ...", % path)
+	elif not path.begins_with("res://") or not path.begins_with("user://"):
 		path = ProjectSettings.globalize_path(new_path)
-		print("New path: ", path)
-
+	else:
+		path = new_path
 
 	video = GoZenVideo.new()
 	if debug:
