@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 
 extern "C" {
@@ -11,7 +12,7 @@ extern "C" {
 }
 
 
-// AV Format Context helpers
+// AV Format Context helpers.
 struct AVFormatCtxInputDeleter {
 	void operator()(AVFormatContext* ctx) const {
 		if (ctx)
@@ -34,7 +35,7 @@ struct AVFormatCtxOutputDeleter {
 using UniqueAVFormatCtxOutput = std::unique_ptr<AVFormatContext, AVFormatCtxOutputDeleter>;
 
 
-// AV Codec Context helpers
+// AV Codec Context helpers.
 struct AVCodecCtxDeleter {
 	void operator()(AVCodecContext* ctx) const {
 		if (ctx) {
@@ -45,7 +46,7 @@ struct AVCodecCtxDeleter {
 using UniqueAVCodecCtx = std::unique_ptr<AVCodecContext, AVCodecCtxDeleter>;
 
 
-// AV Frame helper
+// AV Frame helper.
 struct AVFrameDeleter {
 	void operator()(AVFrame* frame) const {
 		if (frame) {
@@ -56,7 +57,7 @@ struct AVFrameDeleter {
 using UniqueAVFrame = std::unique_ptr<AVFrame, AVFrameDeleter>;
 
 
-// AV Packet helper
+// AV Packet helper.
 struct AVPacketDeleter {
 	void operator()(AVPacket* packet) const {
 		if (packet) {
@@ -67,7 +68,7 @@ struct AVPacketDeleter {
 using UniqueAVPacket = std::unique_ptr<AVPacket, AVPacketDeleter>;
 
 
-// SWResample Context helper
+// SWResample Context helper.
 struct SwrCtxDeleter {
 	void operator()(SwrContext* ctx) const {
 		if (ctx) {
@@ -78,7 +79,7 @@ struct SwrCtxDeleter {
 using UniqueSwrCtx = std::unique_ptr<SwrContext, SwrCtxDeleter>;
 
 
-// SWScale Context helper
+// SWScale Context helper.
 struct SwsCtxDeleter {
 	void operator()(SwsContext* ctx) const {
 		if (ctx) {
@@ -103,4 +104,11 @@ inline UniqueAVFrame make_unique_avframe() {
 inline UniqueAVPacket make_unique_avpacket() {
 	return make_unique_ffmpeg<AVPacket, AVPacketDeleter>(av_packet_alloc());
 }
+
+// For `res://` videos.
+struct BufferData {
+	uint8_t *ptr;
+	size_t size;
+	size_t offset;
+};
 
