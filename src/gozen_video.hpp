@@ -9,11 +9,14 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/gd_extension_manager.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include "godot_cpp/classes/file_access.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
+#include "godot_cpp/variant/packed_byte_array.hpp"
 
 #include "ffmpeg.hpp"
 #include "ffmpeg_helpers.hpp"
+#include "libavformat/avio.h"
 
 
 using namespace godot;
@@ -24,7 +27,8 @@ class GoZenVideo : public Resource {
 private:
 	// FFmpeg classes.
 	UniqueAVFormatCtxInput av_format_ctx;
-	UniqueAVCodecCtx av_codec_ctx = nullptr;
+	UniqueAVCodecCtx av_codec_ctx;
+	UniqueAVIOContext avio_ctx;
 	AVStream *av_stream = nullptr;
 
 	UniqueAVPacket av_packet;
@@ -33,6 +37,8 @@ private:
 	UniqueSwsCtx sws_ctx;
 
 	enum AVColorPrimaries color_profile;
+
+	BufferData buffer_data;
 
 	// Default variable types.
 	int response = 0;
@@ -70,6 +76,8 @@ private:
 	Ref<Image> u_data;
 	Ref<Image> v_data;
 
+	PackedByteArray file_buffer; // For `res://` videos.
+
 	// Private functions.
 	void _copy_frame_data();
 	void _clean_frame_data();
@@ -91,6 +99,7 @@ public:
 
 	static Dictionary get_file_meta(String file_path);
 
+	// For `res://` videos.
 	int open(const String& video_path);
 	void close();
 

@@ -25,17 +25,51 @@ Dictionary GoZenVideo::get_file_meta(String file_path) {
 	return dic;
 }
 
+
 //----------------------------------------------- NON-STATIC FUNCTIONS
 int GoZenVideo::open(const String& video_path) {
 	if (loaded)
-			return _log_err("Already open");
+		return _log_err("Already open");
+
+	// Allocate video file context.
+	AVFormatContext* temp_format_ctx = nullptr;
 
 	path = video_path;
 	resolution = Vector2i(0,0);
 
-	// Allocate video file context.
-	AVFormatContext* temp_format_ctx = nullptr;
-	if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
+	if (path.begins_with("res://") || path.begins_with("user://")) {
+		if (!(temp_format_ctx = avformat_alloc_context()))
+			return _log_err("Failed to allocate AVFormatContext");
+
+		file_buffer = FileAccess::get_file_as_bytes(path);
+
+		if (file_buffer.is_empty()) {
+			avformat_free_context(temp_format_ctx);
+			close();
+			return _log_err("Couldn't load file from res:// at path '" + path + "'");
+		}
+
+		buffer_data.ptr = file_buffer.ptrw();
+		buffer_data.size = file_buffer.size();
+		buffer_data.offset = 0;
+
+		unsigned char *avio_ctx_buffer = (unsigned char*)av_malloc(4096);
+		avio_ctx = make_unique_ffmpeg<AVIOContext, AVIOContextDeleter>(
+			avio_alloc_context(avio_ctx_buffer, 4096, 0, &buffer_data, &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
+
+		if (!avio_ctx) {
+			close();
+			av_free(avio_ctx_buffer);
+			return _log_err("Failed to create avio_ctx");
+		}
+
+		temp_format_ctx->pb = avio_ctx.get();
+
+		if (avformat_open_input(&temp_format_ctx, nullptr, nullptr, nullptr) != 0) {
+			close();
+			return _log_err("Failed to open input from memory buffer");
+		}
+	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
 		close();
 		return _log_err("Couldn't open video");
 	}
@@ -258,6 +292,9 @@ void GoZenVideo::close() {
 	av_packet.reset();
 	av_frame.reset();
 	av_sws_frame.reset();
+	avio_ctx.reset();
+
+	file_buffer.clear();
 
 	sws_ctx.reset();
 
