@@ -7,6 +7,7 @@ extern "C" {
 	#include <libavcodec/packet.h>
 	
 	#include <libavformat/avformat.h>
+	#include "libavformat/avio.h"
 	
 	#include <libavutil/avassert.h>
 	#include <libavutil/avutil.h>
@@ -31,6 +32,8 @@ extern "C" {
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "ffmpeg_helpers.hpp"
+
 
 using namespace godot;
 
@@ -46,5 +49,6 @@ public:
 	static int get_frame(AVFormatContext *a_format_ctx, AVCodecContext *a_codec_ctx, int a_stream_id, AVFrame *a_frame, AVPacket *a_packet);
 	static enum AVPixelFormat get_hw_format(const enum AVPixelFormat *a_pix_fmt, enum AVPixelFormat *a_hw_pix_fmt);
 
-	static AudioStreamWAV *get_audio(AVFormatContext *a_format_ctx, AVStream *a_stream);
+	static int read_buffer_packet(void *opaque, uint8_t *buffer, int buffer_size);
+	static int64_t seek_buffer(void *opaque, int64_t offset, int where);
 };

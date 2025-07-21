@@ -165,16 +165,48 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 
 
 PackedByteArray GoZenAudio::get_audio_data(String file_path) {
-	av_log_set_level(AV_LOG_VERBOSE);
-	AVFormatContext *format_ctx = avformat_alloc_context();
+	AVFormatContext *format_ctx = nullptr;
 	PackedByteArray data = PackedByteArray();
+	PackedByteArray file_buffer; // For `res://` videos.
+	UniqueAVIOContext avio_ctx;
 
-	if (!format_ctx) {
-		_log_err("Couldn't create AV Format");
-		return data;
-	}
+	if (file_path.begins_with("res://") || file_path.begins_with("user://")) {
+		BufferData buffer_data;
+		if (!(format_ctx = avformat_alloc_context())) {
+			_log_err("Failed to allocate AVFormatContext");
+			return data;
+	 	}
 
-	if (avformat_open_input(&format_ctx, file_path.utf8(), NULL, NULL)) {
+		file_buffer = FileAccess::get_file_as_bytes(file_path);
+
+		if (file_buffer.is_empty()) {
+			avformat_free_context(format_ctx);
+			_log_err("Couldn't load file from res:// at path '" + file_path + "'");
+			return data;
+		}
+
+		buffer_data.ptr = file_buffer.ptrw();
+		buffer_data.size = file_buffer.size();
+		buffer_data.offset = 0;
+
+		unsigned char *avio_ctx_buffer = (unsigned char*)av_malloc(4096);
+		avio_ctx = make_unique_ffmpeg<AVIOContext, AVIOContextDeleter>(
+			avio_alloc_context(avio_ctx_buffer, 4096, 0, &buffer_data, &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
+
+		if (!avio_ctx) {
+			av_free(avio_ctx_buffer);
+			_log_err("Failed to create avio_ctx");
+			return data;
+		}
+
+		format_ctx->pb = avio_ctx.get();
+
+		if (avformat_open_input(&format_ctx, nullptr, nullptr, nullptr) != 0) {
+			_log_err("Failed to open input from memory buffer");
+			return data;
+		}
+
+	} else if (avformat_open_input(&format_ctx, file_path.utf8(), NULL, NULL)) {
 		_log_err("Couldn't open audio");
 		return data;
 	}
