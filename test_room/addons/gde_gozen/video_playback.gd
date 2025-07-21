@@ -3,10 +3,6 @@ extends Control
 ## Video playback and seeking inside of Godot.
 ##
 ## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(new_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
-## [br][br]
-## There is a small limitation right now as FFmpeg requires a path to the video file so you can't make the video's part of the exported project and the [code]res://[/code] paths also don't work. This is just the nature of the beast and not something I can easily solve, but luckily there are solutions! First of all, the video path should be the full path, for testing this is easy as you can make the path whatever you want it to be, for exported projects ... Well, chances of the path being in the exact same location as on your pc are quite low.
-## [br][br]
-## The solution for exported projects is to create a folder inside of your exported projects in which you keep the video files, inside of your code you can check if the project is run from the editor or not with: [code]OS.has_feature(“editor”)[/code]. To get the path of your running project to find the folder where your video's are stored you can use [code]OS.get_executable_path()[/code]. So it requires a bit of code to get things properly working but everything should work without issues this way.
 
 
 signal frame_changed(frame_nr: int) ## Emitted when the current frame has changed, for showing and skipped frames.
@@ -24,7 +20,7 @@ const PLAYBACK_SPEED_MIN: float = 0.25
 const PLAYBACK_SPEED_MAX: float = 4
 
 
-@export_file var path: String = "": set = set_video_path ## Full path to video file. Do not use [code]res://[/code] paths, only provide [b]full[/b] paths. Solutions for setting the path in both editor and exported projects can be found in the readme info or on top.
+@export_file var path: String = "": set = set_video_path ## Full path to video file.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
 @export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
