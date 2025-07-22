@@ -28,6 +28,11 @@ Due to MacOS being made by Apple, you will need an MacOS device for making the c
 
 For compiling you will need aom and pkg-config installed through brew.
 
+#### For Web builds
+Web builds are only partially working. There is no audio support, no AV1 support, no access to system files due to Godot web builds running in a sandbox, and performance is a lower compared to the other platform support. When compiling for Web you will need to follow the instructions which are in the comments in the `build.py` file.
+
+Web builds aren't included in the official builds because of these reasons. Preferably you should use the build in Theora video playback which Godot provides.
+
 #### For Android builds
 Android builds need to make certain that permissions are set correctly when using. You will need Android-studio or install the SDK's manually. The compiling environment with emsdk should get setup correctly. Do note that building this is only possible on Linux. If you're on Windows, you have to use a VM or WSL. If you can export your Godot projects to Android already, than compiling GDE GoZen may work without issues. I'm by no means an Android developer so for problems compiling I would suggest creating an issue in the repo.
 
@@ -40,4 +45,4 @@ This error is most likely due to not having initialized the submodules. Check th
 
 
 > [!CAUTION]
-> At this moment only Linux, Windows MacOS, Android are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system. Compiling Android comes with challenges of setting up your system correctly and is generally advised to do this on a Linux machine.
+> At this moment only Linux, Windows, Web, MacOS, and Android are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system. Compiling Android comes with challenges of setting up your system correctly and is generally advised to do this on a Linux machine.

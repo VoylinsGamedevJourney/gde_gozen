@@ -1,6 +1,16 @@
 # Changelog
 All releases can be found on the [GDE GoZen repo release page](https://github.com/VoylinsGamedevJourney/gde_gozen/releases)
 
+## [v8.0] - 2025/07/22
+### Added
+- Playback support for videos in `res://`;
+- Web support (Only video playback, audio doesn't work);
+
+### Improved
+- Switching to FFmpeg 7.1;
+
+The web builds won't be included in the official builds since audio doesn't work and I can't deal with the amount of people who will not read the documentation to see that audio doesn't work before sending me mails.
+
 
 ## [v7.2] - 2025/07/09
 ### Added

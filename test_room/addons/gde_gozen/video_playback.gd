@@ -77,7 +77,7 @@ func _enter_tree() -> void:
 	audio_player.bus = AudioServer.get_bus_name(AudioServer.bus_count - 1)
 	AudioServer.add_bus_effect(AudioServer.bus_count - 1, _audio_pitch_effect)
 
-	if debug:
+	if debug and OS.get_name().to_lower() != "web":
 		_print_system_debug()
 
 
@@ -110,10 +110,6 @@ func set_video_path(new_path: String) -> void:
 	path = new_path
 	if path == "":
 		return
-	elif not path.begins_with("res://") or not path.begins_with("user://"):
-		path = ProjectSettings.globalize_path(new_path)
-	else:
-		path = new_path
 
 	video = GoZenVideo.new()
 	if debug:
@@ -384,7 +380,12 @@ func _open_video() -> void:
 
 
 func _open_audio() -> void:
-	audio_player.stream.data = GoZenAudio.get_audio_data(path)
+	var data: PackedByteArray = GoZenAudio.get_audio_data(path)
+	if data.size() != 0:
+		audio_player.stream.data = data
+	else:
+		printerr("Audio data for video '%s' was 0!" % path)
+		enable_audio = false
 
 
 func _print_system_debug() -> void:

@@ -68,7 +68,7 @@ operator = 2
 linked_parent_graph_frame = 26
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_78tac"]
-size = Vector2(444, 505)
+size = Vector2(444, 473)
 title = "R"
 attached_nodes = PackedInt32Array(24, 25, 79)
 
@@ -93,12 +93,12 @@ linked_parent_graph_frame = 32
 operator = 1
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_2qxuc"]
-size = Vector2(684, 424)
+size = Vector2(684, 305)
 title = "G"
 attached_nodes = PackedInt32Array(29, 31, 30, 28)
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_x7ioe"]
-size = Vector2(464, 404)
+size = Vector2(464, 285)
 title = "B"
 attached_nodes = PackedInt32Array(34, 35)
 
@@ -112,7 +112,7 @@ linked_parent_graph_frame = 33
 [sub_resource type="VisualShaderNodeVectorCompose" id="VisualShaderNodeVectorCompose_3ejn6"]
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_gjxn1"]
-size = Vector2(1604, 784)
+size = Vector2(1604, 665)
 title = "uv"
 attached_nodes = PackedInt32Array(40, 52, 3, 9, 42, 43, 44, 45, 46, 47, 48, 51, 50)
 
@@ -171,19 +171,19 @@ op_type = 0
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_dynwm"]
 linked_parent_graph_frame = 23
-size = Vector2(1249, 401)
+size = Vector2(1204, 401)
 title = "v_uv"
 attached_nodes = PackedInt32Array(61, 68, 64, 85, 73, 86)
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_e18cs"]
 linked_parent_graph_frame = 13
-size = Vector2(1269, 401)
+size = Vector2(1224, 401)
 title = "y_uv"
 attached_nodes = PackedInt32Array(56, 57, 58, 81, 71, 82)
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_xi8bo"]
 linked_parent_graph_frame = 16
-size = Vector2(1269, 401)
+size = Vector2(1224, 401)
 title = "u_uv"
 attached_nodes = PackedInt32Array(60, 69, 65, 83, 72, 84)
 

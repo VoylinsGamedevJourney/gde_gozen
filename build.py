@@ -7,6 +7,11 @@ for multiple platforms and architectures.
 
 Windows and Linux can be build on Linux or Windows with WSL.
 For MacOS you need to use MacOS itself else building fails.
+
+For Web you need Emscripten installed.
+You may also need to custom build the Godot web export debug/release template with:
+`scons platform=web target=template_debug use_llvm=yes threads_enabled=yes dlink_enabled=yes\
+extra_web_link_flags="-sINITIAL_MEMORY=1024MB -sSTACK_SIZE=5MB -sALLOW_MEMORY_GROWTH=1 -sUSE_PTHREADS=1" -j10`
 """
 
 import os
@@ -29,6 +34,7 @@ OS_LINUX: str = 'linux'
 OS_WINDOWS: str = 'windows'
 OS_MACOS: str = 'macos'
 OS_ANDROID: str = 'android'
+OS_WEB: str = 'web'
 
 TARGET_DEV: str = 'debug'
 TARGET_RELEASE: str = 'release'
@@ -118,6 +124,8 @@ def compile_ffmpeg(platform: str, arch: str) -> None:
         compile_ffmpeg_macos(arch)
     elif platform == OS_ANDROID:
         compile_ffmpeg_android(arch)
+    elif platform == OS_WEB:
+        compile_ffmpeg_web()
 
 
 def compile_ffmpeg_linux(arch: str) -> None:
@@ -154,8 +162,8 @@ def compile_ffmpeg_linux(arch: str) -> None:
         print('Error: FFmpeg failed!')
 
     print('Compiling FFmpeg for Linux ...')
-    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/')
-    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/', check=True)
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/', check=True)
 
     copy_linux_dependencies(path, arch)
 
@@ -248,8 +256,8 @@ def compile_ffmpeg_macos(arch: str) -> None:
         print('Error: FFmpeg failed!')
 
     print('Compiling FFmpeg for MacOS ...')
-    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/')
-    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/', check=True)
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/', check=True)
 
     print('Copying lib files ...')
     for file in glob.glob('./ffmpeg/bin/lib/*.dylib'):
@@ -323,8 +331,8 @@ def compile_ffmpeg_android(arch: str) -> None:
         print('Error: FFmpeg failed!')
 
     print('Compiling FFmpeg for Android ...')
-    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/')
-    subprocess.run(['make', 'install'], cwd='./ffmpeg/')
+    subprocess.run(['make', f'-j{THREADS}'], cwd='./ffmpeg/', check=True)
+    subprocess.run(['make', 'install'], cwd='./ffmpeg/', check=True)
 
     print('Copying lib files ...')
     os.makedirs(path, exist_ok=True)
@@ -332,6 +340,105 @@ def compile_ffmpeg_android(arch: str) -> None:
         shutil.copy2(file, path)
 
     print('Compiling FFmpeg for Android finished!')
+
+
+def compile_ffmpeg_web() -> None:
+    print('Install/activate emsdk ...')
+    subprocess.run(['emsdk/emsdk', 'install', '3.1.64'], check=True)
+    subprocess.run(['emsdk/emsdk', 'activate', '3.1.64'], check=True)
+
+    emsdk_output = subprocess.check_output(
+        ['bash', '-c', 'source ./emsdk/emsdk_env.sh && env'], text=True)
+
+    for line in emsdk_output.splitlines():
+        key, _, value = line.partition("=")
+        os.environ[key] = value
+
+    print('Configuring FFmpeg for Web ...')
+
+    path: str = './test_room/addons/gde_gozen/bin/web'
+    target_include_dir: str = f'{path}/include'
+    ffmpeg_bin_dir: str = 'ffmpeg/bin'
+    ffmpeg_lib_dir: str = f'{ffmpeg_bin_dir}/lib'
+    ffmpeg_include_dir: str = f'{ffmpeg_bin_dir}/include'
+
+    os.makedirs(path, exist_ok=True)
+
+    cmd = [
+        'emconfigure',
+        './configure',
+        '--cc=emcc',
+        '--cxx=em++',
+        '--ar=emar',
+        '--ranlib=emranlib',
+        '--nm=emnm',
+        '--enable-static',
+        '--disable-shared',
+        '--prefix=./bin',
+        '--enable-cross-compile',
+        '--target-os=none',
+        '--arch=wasm32',
+        '--cpu=generic',
+        '--disable-asm',
+        '--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -sASYNCIFY=1 -fPIC',
+        '--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sASYNCIFY=1 -fPIC -sWASM_BIGINT=1',
+        '--enable-pic',
+        '--enable-small',
+        '--disable-everything',
+
+        '--enable-avcodec',
+        '--enable-avformat',
+        '--enable-avutil',
+        '--enable-swscale',
+        '--enable-swresample',
+        '--enable-network',
+
+        '--enable-demuxer=mov,mp4,m4a,3gp,3g2,mj2',
+        '--enable-demuxer=matroska,webm',
+        '--enable-demuxer=aac',
+
+        '--enable-decoder=vp9',
+        '--enable-decoder=h264',
+        '--enable-decoder=opus',
+        '--enable-decoder=pcm_s16le',
+        '--enable-decoder=aac',
+
+        '--enable-parser=h264',
+        '--enable-parser=aac',
+        '--enable-parser=opus',
+        '--enable-parser=vorbis',
+        '--enable-parser=mpegaudio',
+        '--enable-parser=vp9',
+
+        '--enable-bsf=h264_mp4toannexb',
+        '--enable-bsf=aac_adtstoasc',
+        '--enable-bsf=extract_extradata',
+        '--enable-bsf=noise',
+
+        '--enable-protocol=file,http',
+    ]
+    cmd += DISABLED_MODULES
+
+    print(f'Running cmd: {cmd}')
+    result = subprocess.run(cmd, cwd='./ffmpeg/', check=True)
+    if result.returncode != 0:
+        print('Error: FFmpeg configure failed for Emscripten!')
+        sys.exit(1)
+
+    print('Compiling FFmpeg for Web (using emmake)...')
+    subprocess.run(['emmake', 'make', f'-j{THREADS}'], cwd='./ffmpeg/', check=True)
+    subprocess.run(['emmake', 'make', 'install'], cwd='./ffmpeg/', check=True)
+
+    print('Copying static lib files (.a) ...')
+    for file in glob.glob(os.path.join(ffmpeg_lib_dir, '*.a')):
+        print(f'Copying {file} to {path}')
+        shutil.copy2(file, path)
+
+    if os.path.exists(target_include_dir):
+        shutil.rmtree(target_include_dir)
+    shutil.copytree(ffmpeg_include_dir, target_include_dir)
+
+    print('Compiling FFmpeg for Web finished!')
 
 
 def macos_fix(arch) -> None:
@@ -386,7 +493,7 @@ def main():
     title_arch: str = 'Choose architecture'
     platform: str = OS_LINUX
     arch: str = ARCH_X86_64
-    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID]):
+    match _print_options('Select platform', [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
         case 2:
             platform = OS_WINDOWS
         case 3:
@@ -394,10 +501,14 @@ def main():
             arch = ARCH_ARM64
         case 4:
             platform = OS_ANDROID
+
             if _print_options(title_arch, [ARCH_ARM64, ARCH_ARMV7A]) == 2:
                 arch = ARCH_ARMV7A
             else:
                 arch = ARCH_ARM64
+        case 5:
+            platform = OS_WEB
+            arch = ARCH_WASM32
         case _:  # Linux
             if _print_options(title_arch, [ARCH_X86_64, ARCH_ARM64]) == 2:
                 arch = ARCH_ARM64

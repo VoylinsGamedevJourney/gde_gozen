@@ -1,10 +1,14 @@
 [submodule "FFmpeg"]
 	path = ffmpeg
 	url = https://github.com/FFmpeg/FFmpeg.git
-	branch = release/6.1
+	branch = release/7.1
 	ignore = dirty
 [submodule "godot-cpp"]
 	path = godot_cpp
 	url = https://github.com/godotengine/godot-cpp.git
 	branch = 4.2
+	ignore = dirty
+[submodule "emsdk"]
+	path = emsdk
+	url = https://github.com/emscripten-core/emsdk.git
 	ignore = dirty

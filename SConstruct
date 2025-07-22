@@ -6,9 +6,9 @@ import platform as os_platform
 LIBS_COMMON = [
     'avcodec',
     'avformat',
-    'avutil',
     'swresample',
-    'swscale']
+    'swscale',
+    'avutil']
 LOCATION = "test_room/addons/gde_gozen/bin"
 
 march_flags = {
@@ -102,6 +102,23 @@ elif 'android' in platform:
             '-Iffmpeg/bin/include'],
         LIBPATH=['ffmpeg/bin/lib'],
         LIBS=LIBS_COMMON)
+elif 'web' in platform:
+    web_bin_path = libpath
+    web_include_path = f'{web_bin_path}/include'
+    libpath += f'/libgozen{env_suffix}{env_shlibsuffix}'
+
+    env.Append(
+        CPPPATH=[web_include_path],
+        LIBPATH=[web_bin_path],
+        LIBS=LIBS_COMMON,
+        CCFLAGS=['-pthread'],
+        LINKFLAGS=[
+            '-pthread',
+            '-sUSE_PTHREADS=1',
+            '-sSHARED_MEMORY=1',
+            '-sALLOW_MEMORY_GROWTH=1',
+        ]
+    )
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 
