@@ -74,7 +74,6 @@ windows.debug.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll": "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll": "",
-	"bin/windows_x86_64/libstdc++-6.dll": "",
 	"bin/windows_arm64/libaom.dll": "",
 }
 windows.release.x86_64 = {
@@ -86,7 +85,6 @@ windows.release.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll": "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll": "",
-	"bin/windows_x86_64/libstdc++-6.dll": "",
 	"bin/windows_arm64/libaom.dll": "",
 }
 windows.debug.arm64 = {
@@ -98,7 +96,6 @@ windows.debug.arm64 = {
 	"bin/windows_arm64/swscale-7.dll": "",
 
 	"bin/windows_arm64/libwinpthread-1.dll": "",
-	"bin/windows_arm64/libstdc++-6.dll": "",
 	"bin/windows_arm64/libaom.dll": "",
 }
 windows.release.arm64 = {
@@ -110,7 +107,6 @@ windows.release.arm64 = {
 	"bin/windows_arm64/swscale-7.dll": "",
 
 	"bin/windows_arm64/libwinpthread-1.dll": "",
-	"bin/windows_arm64/libstdc++-6.dll": "",
 	"bin/windows_arm64/libaom.dll": "",
 }
 
