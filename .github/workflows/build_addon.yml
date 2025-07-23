@@ -6,9 +6,9 @@ on:
       version:
         description: 'Version'
         type: string
-        default: 'v0.0'
+        default: '8.1'
 
-run-name: 'Build GoZen Release: ${{ inputs.version }} by @${{ github.actor }}'
+run-name: 'Build GoZen Release: v${{ inputs.version }} by @${{ github.actor }}'
 
 jobs:
   build-linux:
@@ -89,14 +89,14 @@ jobs:
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
-          name: GDE_GoZen_${{ inputs.version }}
+          name: GDE_GoZen_v${{ inputs.version }}
           path: test_room/addons/
           retention-days: 7
 
       - name: Upload test_room
         uses: actions/upload-artifact@v4
         with:
-          name: GDE_GoZen_test_room_${{ inputs.version }}
+          name: GDE_GoZen_test_room_v${{ inputs.version }}
           path: test_room/
           retention-days: 7
 

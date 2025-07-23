@@ -11,7 +11,7 @@ on:
       version:
         description: 'Addon version'
         required: true
-        default: "6.0"
+        default: "8.1"
 
 run-name: Windows build - ${{ inputs.version }}
 
