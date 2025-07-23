@@ -178,6 +178,14 @@ def copy_linux_dependencies(path: str, arch: str):
     for file in glob.glob('/usr/lib/libaom.so*'):
         if file.count('.') == 2:
             shutil.copy2(file, path)
+    # AOM lib for Ubuntu.
+    if arch == ARCH_X86_64:
+        for file in glob.glob('/usr/lib/x86_64*/libaom.so*', recursive=True):
+            if file.count('.') == 2:
+                shutil.copy2(file, path)
+    else:
+        for file in glob.glob('/usr/lib/aarch64*/libaom.so*', recursive=True):
+            shutil.copy2(file, path)
 
     print('Compiling FFmpeg for Linux finished!')
 
