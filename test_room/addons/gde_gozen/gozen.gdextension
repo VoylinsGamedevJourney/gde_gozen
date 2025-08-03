@@ -74,7 +74,7 @@ windows.debug.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll": "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll": "",
-	"bin/windows_arm64/libaom.dll": "",
+	"bin/windows_x86_64/libaom.dll": "",
 }
 windows.release.x86_64 = {
     "bin/windows_x86_64/avcodec-60.dll": "",
@@ -85,7 +85,7 @@ windows.release.x86_64 = {
 	"bin/windows_x86_64/swscale-7.dll": "",
 
 	"bin/windows_x86_64/libwinpthread-1.dll": "",
-	"bin/windows_arm64/libaom.dll": "",
+	"bin/windows_x86_64/libaom.dll": "",
 }
 windows.debug.arm64 = {
     "bin/windows_arm64/avcodec-60.dll": "",
