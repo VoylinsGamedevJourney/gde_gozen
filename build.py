@@ -454,10 +454,10 @@ def macos_fix(arch) -> None:
     # the gdextension library. Without it, the FFmpeg libraries can"t be found.
     print("Running fix for MacOS builds ...")
 
-    debug_binary: str = f"./test_room/addons/gde_gozen/bin/macos_{arch}/debug/libgozen.macos.template_debug.{arch}.dylib"
-    release_binary: str = f"./test_room/addons/gde_gozen/bin/macos_{arch}/release/libgozen.macos.template_release.{arch}.dylib"
-    debug_bin_folder: str = f"./test_room/addons/gde_gozen/bin/macos_{arch}/debug/lib"
-    release_bin_folder: str = f"./test_room/addons/gde_gozen/bin/macos_{arch}/release/lib"
+    debug_binary: str = f"./test_room/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
+    release_binary: str = f"./test_room/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
+    debug_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
+    release_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
 
     print("Updating @loader_path for MacOS builds")
 
