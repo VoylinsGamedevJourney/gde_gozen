@@ -241,19 +241,6 @@ func close() -> void:
 
 #------------------------------------------------ PLAYBACK HANDLING
 func _process(delta: float) -> void:
-	if !_threads.is_empty():
-		for i: int in _threads:
-			if WorkerThreadPool.is_task_completed(i):
-				WorkerThreadPool.wait_for_task_completion(i)
-				_threads.remove_at(_threads.find(i))
-
-			if _threads.is_empty():
-				_update_video(video)
-
-				if enable_auto_play:
-					play()
-		return
-
 	if is_playing:
 		_time_elapsed += delta
 
@@ -281,6 +268,17 @@ func _process(delta: float) -> void:
 				next_frame(true)
 				_skips -= 1
 			next_frame()
+	elif !_threads.is_empty():
+		for i: int in _threads:
+			if WorkerThreadPool.is_task_completed(i):
+				WorkerThreadPool.wait_for_task_completion(i)
+				_threads.remove_at(_threads.find(i))
+
+			if _threads.is_empty():
+				_update_video(video)
+
+				if enable_auto_play:
+					play()
 
 
 func play() -> void:
