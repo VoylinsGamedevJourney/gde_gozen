@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Addon version'
+        description: Addon version
         required: true
-        default: "8.1"
+        default: test
 
 run-name: Windows build - ${{ inputs.version }}
 
