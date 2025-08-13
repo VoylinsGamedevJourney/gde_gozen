@@ -93,10 +93,10 @@ func _ready() -> void:
 
 
 #------------------------------------------------ VIDEO DATA HANDLING
+## This is the starting point for video playback, provide a path of where
+## the video file can be found and it will load a Video object. After which
+## [code]_update_video()[/code] get's run and set's the first frame image.
 func set_video_path(new_path: String) -> void:
-	## This is the starting point for video playback, provide a path of where
-	## the video file can be found and it will load a Video object. After which
-	## [code]_update_video()[/code] get's run and set's the first frame image.
 	if video != null:
 		close()
 
@@ -133,8 +133,8 @@ func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = nul
 	_update_video(video_instance)
 
 
+## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
 func _update_video(new_video: GoZenVideo) -> void:
-	## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
 	video = new_video
 	if !is_open():
 		printerr("Video isn't open!")
@@ -201,8 +201,8 @@ func _update_video(new_video: GoZenVideo) -> void:
 	video_loaded.emit()
 
 
+## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
 func seek_frame(new_frame_nr: int) -> void:
-	## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
 	if !is_open() and new_frame_nr == current_frame:
 		return
 
@@ -218,8 +218,8 @@ func seek_frame(new_frame_nr: int) -> void:
 		audio_player.set_stream_paused(!is_playing)
 
 
+## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
 func next_frame(skip: bool = false) -> void:
-	## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
 	if video.next_frame(skip) and !skip:
 		_set_frame_image()
 		next_frame_called.emit(current_frame)
@@ -281,8 +281,8 @@ func _process(delta: float) -> void:
 					play()
 
 
+## Start the video playback. This will play until reaching the end of the video and then pause and go back to the start.
 func play() -> void:
-	## Start the video playback. This will play until reaching the end of the video and then pause and go back to the start.
 	if video != null and !is_open() and is_playing:
 		return
 	is_playing = true
@@ -295,8 +295,8 @@ func play() -> void:
 	playback_started.emit()
 
 
+## Pausing the video.
 func pause() -> void:
-	## Pausing the video.
 	if video != null and !is_open():
 		return
 	is_playing = false
@@ -308,23 +308,23 @@ func pause() -> void:
 
 
 #------------------------------------------------ GETTERS
+## Getting the total amount of frames found in the video file.
 func get_video_frame_count() -> int:
-	## Getting the total amount of frames found in the video file.
 	return _frame_count
 
 
+## Getting the framerate of the video
 func get_video_framerate() -> float:
-	## Getting the framerate of the video
 	return _frame_rate
 
 
+## Getting the rotation in degrees of the video
 func get_video_rotation() -> int:
-	## Getting the rotation in degrees of the video
 	return _rotation
 
 
+## Checking to see if the video is open or not, trying to run functions without checking if open can crash your project.
 func is_open() -> bool:
-	## Checking to see if the video is open or not, trying to run functions without checking if open can crash your project.
 	return video != null and video.is_open()
 
 
