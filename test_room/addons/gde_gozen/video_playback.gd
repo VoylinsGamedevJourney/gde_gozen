@@ -114,6 +114,8 @@ func set_video_path(new_path: String) -> void:
 
 	if new_path == "" or new_path.ends_with(".tscn"):
 		return
+	elif new_path.split(":")[0] == "uid":
+		new_path = ResourceUID.get_id_path(ResourceUID.text_to_id(new_path))
 
 	path = new_path
 
