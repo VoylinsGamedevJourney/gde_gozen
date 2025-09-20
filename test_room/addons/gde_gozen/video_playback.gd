@@ -100,6 +100,11 @@ func set_video_path(new_path: String) -> void:
 	if video != null:
 		close()
 
+	if !is_node_ready():
+		await ready
+	if !get_tree().root.is_node_ready():
+		await get_tree().root.ready
+
 	var stream: AudioStreamWAV = AudioStreamWAV.new()
 	stream.mix_rate = 44100
 	stream.stereo = true
@@ -107,18 +112,16 @@ func set_video_path(new_path: String) -> void:
 
 	audio_player.stream = stream
 
-	path = new_path
-	if path == "":
+	if new_path == "" or new_path.ends_with(".tscn"):
 		return
+
+	path = new_path
 
 	video = GoZenVideo.new()
 	if debug:
 		video.enable_debug()
 	else:
 		video.disable_debug()
-
-	if !is_node_ready():
-		await ready
 
 	_threads.append(WorkerThreadPool.add_task(_open_video))
 	if enable_audio:
