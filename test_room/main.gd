@@ -42,7 +42,7 @@ func _ready() -> void:
 
 	loading_screen.visible = false
 	speed_spin_box.value = video_playback.playback_speed
-	
+
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_released("play_pause"):
@@ -52,7 +52,10 @@ func _input(event: InputEvent) -> void:
 func _on_video_drop(file_paths: PackedStringArray) -> void:
 	if file_paths[0].get_extension().to_lower() not in VIDEO_EXTENSIONS:
 		return print("Not a valid video file!");
-	open_video(file_paths[0])
+	for path: String in file_paths:
+		if !path.ends_with(".tscn"):
+			open_video(path)
+			return
 
 
 func _on_url_line_edit_text_submitted(path: String) -> void:
@@ -130,4 +133,3 @@ func _on_load_video_button_pressed() -> void:
 func _connect(from_signal: Signal, target_func: Callable) -> void:
 	if from_signal.connect(target_func):
 		printerr("Couldn't connect function '", target_func.get_method(), "' to '", from_signal.get_name(), "'!")
-
