@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://b1e501df8faw"]
+[gd_scene load_steps=10 format=3 uid="uid://b1e501df8faw"]
 
 [ext_resource type="Script" uid="uid://bew656lm826vq" path="res://main.gd" id="1_kus11"]
+[ext_resource type="Script" uid="uid://bxx4q4yqsd1b4" path="res://addons/gde_gozen/video_playback_playlist.gd" id="2_1bvp3"]
 [ext_resource type="Script" uid="uid://ivx7m2bfysip" path="res://addons/gde_gozen/video_playback.gd" id="2_p7wtn"]
 [ext_resource type="Texture2D" uid="uid://cnmcxoy57tr0" path="res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png" id="3_vr00e"]
 
@@ -45,6 +46,13 @@ theme_override_constants/separation = 0
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="VideoPlaybackPlaylist" type="Control" parent="VBox/FramePanel"]
+visible = false
+layout_mode = 2
+script = ExtResource("2_1bvp3")
+playback_list = PackedStringArray()
+metadata/_custom_type_script = "uid://bxx4q4yqsd1b4"
+
 [node name="FrameImage" type="TextureRect" parent="VBox/FramePanel"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -56,6 +64,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
+path = "uid://c8tskrr1of1bj"
 debug = true
 
 [node name="BottomPanel" type="PanelContainer" parent="VBox"]
