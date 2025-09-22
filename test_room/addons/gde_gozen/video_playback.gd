@@ -312,7 +312,7 @@ func play() -> void:
 		return
 	is_playing = true
 
-	if enable_audio:
+	if enable_audio and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play((current_frame + 1) / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -408,7 +408,6 @@ func _open_audio() -> void:
 		audio_player.stream.data = data
 	else:
 		printerr("Audio data for video '%s' was 0!" % path)
-		enable_audio = false
 
 
 func _print_system_debug() -> void:
