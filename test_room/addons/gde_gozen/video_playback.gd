@@ -4,6 +4,8 @@ extends Control
 ##
 ## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(new_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
 
+enum COLOR_PROFILE { AUTO, BT470, BT601, BT709, BT2020, BT2100 }
+
 
 signal frame_changed(frame_nr: int) ## Emitted when the current frame has changed, for showing and skipped frames.
 signal next_frame_called(frame_nr: int) ## Emitted when a new frame is showing.
@@ -27,6 +29,8 @@ const PLAYBACK_SPEED_MAX: float = 4
 var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video playback speed, 0.5 = half the speed and 2 = double the speed.
 @export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
 @export var loop: bool = false ## Enable/disable looping on video_ended.
+@export_group("Extra's")
+@export var color_profile: COLOR_PROFILE = COLOR_PROFILE.AUTO: set = _set_color_profile ## Force a specific color profile if needed.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
 
 var video: GoZenVideo = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
@@ -178,11 +182,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 		_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
 		_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
 
-	match video.get_color_profile():
-		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
-		"bt2020", "bt2100": _shader_material.set_shader_parameter("color_profile", Vector4(1.4746, 0.16455, 0.57135, 1.8814))
-		_: # bt709 and unknown
-			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
+	_set_color_profile()
 
 	# Applying shader params.
 	_shader_material.set_shader_parameter("resolution", video.get_actual_resolution())
@@ -204,6 +204,26 @@ func _update_video(new_video: GoZenVideo) -> void:
 	seek_frame(current_frame)
 
 	video_loaded.emit()
+
+
+## Sometimes color profiles are unknown from video files and in case that happens, the colors might be slightly off. Changing the export variable `color_profile` might help fixing the colors.
+func _set_color_profile(new_profile: COLOR_PROFILE = color_profile) -> void:
+	var profile: String = ""
+	color_profile = new_profile
+
+	match color_profile:
+		COLOR_PROFILE.AUTO: profile = video.get_color_profile()
+		COLOR_PROFILE.BT470: profile = "bt470"
+		COLOR_PROFILE.BT601: profile = "bt601"
+		COLOR_PROFILE.BT709: profile = "bt709"
+		COLOR_PROFILE.BT2020: profile = "bt2020"
+		COLOR_PROFILE.BT2100: profile = "bt2100"
+
+	match profile:
+		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
+		"bt2020", "bt2100": _shader_material.set_shader_parameter("color_profile", Vector4(1.4746, 0.16455, 0.57135, 1.8814))
+		_: # bt709 and unknown
+			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
 
 
 ## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
