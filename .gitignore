@@ -57,3 +57,7 @@ test_room/addons/gde_gozen/bin/linux*
 test_room/addons/gde_gozen/bin/windows*
 test_room/addons/gde_gozen/bin/macos*
 bin
+
+# C# Stuff
+.idea/
+.qodo/
