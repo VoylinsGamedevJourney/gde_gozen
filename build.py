@@ -110,25 +110,25 @@ def get_ndk_host_tag() -> str:
             sys.exit(2)
 
 
-def compile_ffmpeg(platform: str, arch: str) -> None:
+def compile_ffmpeg(platform: str, arch: str, add_av1: bool) -> None:
     if os.path.exists("./ffmpeg/ffbuild/config.mak"):
         print("Cleaning FFmpeg...")
         subprocess.run(["make", "distclean"], cwd="./ffmpeg/")
         subprocess.run(["rm", "-rf", "bin"], cwd="./ffmpeg/")
 
     if platform == OS_LINUX:
-        compile_ffmpeg_linux(arch)
+        compile_ffmpeg_linux(arch, add_av1)
     elif platform == OS_WINDOWS:
-        compile_ffmpeg_windows(arch)
+        compile_ffmpeg_windows(arch, add_av1)
     elif platform == OS_MACOS:
-        compile_ffmpeg_macos(arch)
+        compile_ffmpeg_macos(arch, add_av1)
     elif platform == OS_ANDROID:
-        compile_ffmpeg_android(arch)
+        compile_ffmpeg_android(arch, add_av1)
     elif platform == OS_WEB:
         compile_ffmpeg_web()
 
 
-def compile_ffmpeg_linux(arch: str) -> None:
+def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Linux ...")
     path: str = f"./test_room/addons/gde_gozen/bin/linux_{arch}"
     os.environ["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig"
@@ -148,8 +148,10 @@ def compile_ffmpeg_linux(arch: str) -> None:
         "--extra-ldflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
-    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
+
+    if add_av1:
+        cmd += ENABLE_AV1
 
     if arch == "arm64":
         cmd += [
@@ -165,32 +167,33 @@ def compile_ffmpeg_linux(arch: str) -> None:
     subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
     subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
 
-    copy_linux_dependencies(path, arch)
+    copy_linux_dependencies(path, arch, add_av1)
 
 
-def copy_linux_dependencies(path: str, arch: str):
+def copy_linux_dependencies(path: str, arch: str, add_av1: bool = False):
     print("Copying lib files ...")
     for file in glob.glob("ffmpeg/bin/lib/*.so.*"):
         if file.count(".") == 2:
             shutil.copy2(file, path)
 
-    # AOM lib.
-    for file in glob.glob("/usr/lib/libaom.so*"):
-        if file.count(".") == 2:
-            shutil.copy2(file, path)
-    # AOM lib for Ubuntu.
-    if arch == ARCH_X86_64:
-        for file in glob.glob("/usr/lib/x86_64*/libaom.so*", recursive=True):
+    if add_av1:
+        # AOM lib.
+        for file in glob.glob("/usr/lib/libaom.so*"):
             if file.count(".") == 2:
                 shutil.copy2(file, path)
-    else:
-        for file in glob.glob("/usr/lib/aarch64*/libaom.so*", recursive=True):
-            shutil.copy2(file, path)
+        # AOM lib for Ubuntu.
+        if arch == ARCH_X86_64:
+            for file in glob.glob("/usr/lib/x86_64*/libaom.so*", recursive=True):
+                if file.count(".") == 2:
+                    shutil.copy2(file, path)
+        else:
+            for file in glob.glob("/usr/lib/aarch64*/libaom.so*", recursive=True):
+                shutil.copy2(file, path)
 
     print("Compiling FFmpeg for Linux finished!")
 
 
-def compile_ffmpeg_windows(arch: str) -> None:
+def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Windows ...")
     path: str = f"./test_room/addons/gde_gozen/bin/windows_{arch}"
     os.environ["PKG_CONFIG_LIBDIR"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
@@ -212,8 +215,10 @@ def compile_ffmpeg_windows(arch: str) -> None:
         "--extra-cflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
-    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
+
+    if add_av1:
+        cmd += ENABLE_AV1
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -230,15 +235,19 @@ def compile_ffmpeg_windows(arch: str) -> None:
     # Somehow some distro"s put the dll"s in bin, and others in lib.
     if os.path.exists("/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll"):
         subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path], check=True)
+
+        if add_av1:
+            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path], check=True)
     else:
         subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path], check=True)
+
+        if add_av1:
+            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path], check=True)
 
     print("Compiling FFmpeg for Windows finished!")
 
 
-def compile_ffmpeg_macos(arch: str) -> None:
+def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for MacOS ...")
     path_debug: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
     path_release: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
@@ -256,8 +265,10 @@ def compile_ffmpeg_macos(arch: str) -> None:
         "--extra-cflags=-fPIC -mmacosx-version-min=10.13",
     ]
     cmd += ENABLED_MODULES
-    cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
+
+    if add_av1:
+        cmd += ENABLE_AV1
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -327,8 +338,6 @@ def compile_ffmpeg_android(arch: str) -> None:
         f"--extra-ldflags={arch_flags}",
     ]
     cmd += ENABLED_MODULES
-    # TODO: Implement a way to add AV1 support for Android.
-    # cmd += ENABLE_AV1
     cmd += DISABLED_MODULES
 
     if arch == ARCH_ARMV7A:
@@ -538,7 +547,7 @@ def main():
         clean_scons = False
 
     if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
-        compile_ffmpeg(platform, arch)
+        compile_ffmpeg(platform, arch, _print_options("Add AV1 support?", ["yes", "no"]) == 1)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
