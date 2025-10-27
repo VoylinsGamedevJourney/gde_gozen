@@ -9,24 +9,22 @@ For the people who need extra help, feel free to watch [this video](https://yout
 The build process needs to be done through the terminal. There is no other way of compiling it 
 Install python 3, scons, and git! You will also need to initialize the submodules of the git repo with `git submodule update --init --recursive`. Updating the submodules can be done with `git submodule update --recursive --remote`.
 
-You'll also need aom installed. If you don't care for AV1 support, you can delete the lines containing `libaom`.
+For AV1 support you'll need aom installed on your machine.
 
 ### Building
 To start compiling the GDExtension, run `python3 build.py`. You'll need to select the options you want and to select for which platform and architecture you want to build GDE GoZen for. The building does take some time as you will need to compile both FFmpeg and the GDExtension. However, the build.py script makes everything very straightforward. Do remember though that you will need to say yes to compiling FFmpeg, without FFmpeg this won't work.
 
 #### For building on Windows
 For Window builds you will need WSL installed, without this you won't be able to compile FFmpeg or the GDExtension.
-If you are building for Windows on WSL, you will need to compile lib aom with mingw on your WSL install first to have AV1 support. 
-
-If you don't need AV1 support, you can delete the lines containing `libaom` from the `build.py` file.
+If you are building for Windows on WSL and you need AV1 support, you will need to compile lib aom with mingw on your WSL install first. 
 
 #### For Windows builds
-I recommend compiling on a Linux system since it'll go a lot smoother, just be certain to install mingw and if you want AV1 support you should compile lib aom with mingw. Some distro's such as Arch Linux can install lib aom with mingw through the AUR which speeds things up.
+I recommend compiling on a Linux system since it'll go a lot smoother, just be certain to install mingw. If you want AV1 support you should compile lib aom with mingw. Some distro's such as Arch Linux can install lib aom with mingw through the AUR which speeds things up.
 
 #### For MacOS builds
 Due to MacOS being made by Apple, you will need an MacOS device for making the compiling work. There isn't much I can do about this sadly enough and compiled builds may also need their library files to be approved by the user before the GDExtension becomes accepted/usable on the MacOS system.
 
-For compiling you will need aom and pkg-config installed through brew.
+For compiling GDE GoZen with AV1 support, you will need to install aom and pkg-config through brew.
 
 #### For Web builds
 Web builds are only partially working. There is no audio support, no AV1 support, no access to system files due to Godot web builds running in a sandbox, and performance is a lower compared to the other platform support. When compiling for Web you will need to follow the instructions which are in the comments in the `build.py` file.

@@ -25,7 +25,9 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Regular updates;
 
 ### Note
-Web build is possible, but has no audio support. There is also no AV1 support, no access to system files due to Godot web builds running in a sandbox, and performance is a lower compared to the other platform support. Due to these issues, the official builds don't have web support and for that you'd better use the Godot build in Theora video playback instead.
+Web build is possible, but has no audio support, no access to system files due to Godot web builds running in a sandbox, and performance is a lower compared to the other platform support. Due to these issues, the official builds don't have web support and for that you'd better use the Godot build in Theora video playback instead.
+
+AV1 support is available when manually building, but take in mind that for MacOS, users will need to install AOM through brew to be able to use your project. That's why the official builds don't have AV1 support enabled by default, for the other builds (Windows + Linux) this saves some space and makes the application smaller.
 
 ## How to use?
 Before you can use GDE GoZen in your project, you will need to compile the GDExtension. You will **need** the debug build for your current operating system, and the necessary compiled (debug and/or release) builds for the platforms you want to support.
