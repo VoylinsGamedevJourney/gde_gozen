@@ -111,46 +111,46 @@ windows.release.arm64 = {
 }
 
 macos.debug.arm64 = {
-	"bin/macos/debug/libavcodec.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libavcodec.60.dylib": "Contents/Frameworks",
-	"bin/macos/debug/libavcodec.60.31.102.dylib": "Contents/Frameworks",
+	"bin/macos/debug/lib/libavcodec.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavcodec.60.dylib": "Contents/Frameworks",
+	"bin/macos/debug/lib/libavcodec.60.31.102.dylib": "Contents/Frameworks",
 
-    "bin/macos/debug/libavformat.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libavformat.60.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libavformat.60.16.100.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavformat.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavformat.60.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavformat.60.16.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/debug/libavutil.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libavutil.58.dylib": "Contents/Frameworks",
-	"bin/macos/debug/libavutil.58.29.100.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavutil.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libavutil.58.dylib": "Contents/Frameworks",
+	"bin/macos/debug/lib/libavutil.58.29.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/debug/libswresample.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libswresample.4.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libswresample.4.12.100.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libswresample.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libswresample.4.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libswresample.4.12.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/debug/libswscale.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libswscale.7.dylib": "Contents/Frameworks",
-    "bin/macos/debug/libswscale.7.5.100.dylib": "Contents/Frameworks"
+    "bin/macos/debug/lib/libswscale.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libswscale.7.dylib": "Contents/Frameworks",
+    "bin/macos/debug/lib/libswscale.7.5.100.dylib": "Contents/Frameworks"
 }
 macos.release.arm64 = {
-	"bin/macos/release/libavcodec.dylib": "Contents/Frameworks",
-    "bin/macos/release/libavcodec.60.dylib": "Contents/Frameworks",
-	"bin/macos/release/libavcodec.60.31.102.dylib": "Contents/Frameworks",
+	"bin/macos/release/lib/libavcodec.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavcodec.60.dylib": "Contents/Frameworks",
+	"bin/macos/release/lib/libavcodec.60.31.102.dylib": "Contents/Frameworks",
 
-    "bin/macos/release/libavformat.dylib": "Contents/Frameworks",
-    "bin/macos/release/libavformat.60.dylib": "Contents/Frameworks",
-    "bin/macos/release/libavformat.60.16.100.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavformat.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavformat.60.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavformat.60.16.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/release/libavutil.dylib": "Contents/Frameworks",
-    "bin/macos/release/libavutil.58.dylib": "Contents/Frameworks",
-	"bin/macos/release/libavutil.58.29.100.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavutil.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libavutil.58.dylib": "Contents/Frameworks",
+	"bin/macos/release/lib/libavutil.58.29.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/release/libswresample.dylib": "Contents/Frameworks",
-    "bin/macos/release/libswresample.4.dylib": "Contents/Frameworks",
-    "bin/macos/release/libswresample.4.12.100.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libswresample.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libswresample.4.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libswresample.4.12.100.dylib": "Contents/Frameworks",
 
-    "bin/macos/release/libswscale.dylib": "Contents/Frameworks",
-    "bin/macos/release/libswscale.7.dylib": "Contents/Frameworks",
-    "bin/macos/release/libswscale.7.5.100.dylib": "Contents/Frameworks"
+    "bin/macos/release/lib/libswscale.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libswscale.7.dylib": "Contents/Frameworks",
+    "bin/macos/release/lib/libswscale.7.5.100.dylib": "Contents/Frameworks"
 }
 
 web.debug.wasm32 = {
