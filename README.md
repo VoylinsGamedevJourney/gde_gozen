@@ -37,6 +37,8 @@ Before you can use GDE GoZen in your project, you will need to compile the GDExt
 
 For more info about the compiling, head over to [the COMPILE_INFO manual](./COMPILE_INFO.md). For more info on how to use GDE GoZen, go to [the GDE GoZen manual](./test_room/addons/gde_gozen/README.md) which is included in the addon folder. The addon script has a lot of info as well on how to use the VideoPlayback node which comes with the addon.
 
+At this moment there's a limit of 2GB for the audio data, so video's over a couple of hours will not work!
+
 ### Download compiled version
 If compiling the addon for your system and all the operating systems which you want to support, they are also available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). Source code will always be available for free and it will stay open source, so you can compile everything yourself.
 

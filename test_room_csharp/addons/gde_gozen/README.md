@@ -7,6 +7,10 @@ Since version 8.0 it's possible to add and play videos from your project directl
 ## Exporting your project
 When exporting your projects, take in mind to bundle your executables with the FFmpeg library files which should be present in your exported projects folder. Also, add `*.mp4` and other extension names of your video files to the resources which need to get exported, otherwise your video files might not be included in your final export.
 
+## Size limit
+
+At this moment there's a limit of 2GB for the audio data, so video's over a couple of hours will not work!
+
 ## Help needed?
 You can go to the [GitHub repo](https://github.com/VoylinsGamedevJourney/gde_gozen/issues) to report problems, or visit out [Discord server](discord.gg/BdbUf7VKYC) for help/advice.
 
