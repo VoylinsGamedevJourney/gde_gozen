@@ -110,7 +110,7 @@ def get_ndk_host_tag() -> str:
             sys.exit(2)
 
 
-def compile_ffmpeg(platform: str, arch: str, add_av1: bool) -> None:
+def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False) -> None:
     if os.path.exists("./ffmpeg/ffbuild/config.mak"):
         print("Cleaning FFmpeg...")
         subprocess.run(["make", "distclean"], cwd="./ffmpeg/")
@@ -131,9 +131,11 @@ def compile_ffmpeg(platform: str, arch: str, add_av1: bool) -> None:
 def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Linux ...")
     path: str = f"./test_room/addons/gde_gozen/bin/linux_{arch}"
+    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/linux_{arch}"
     os.environ["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig"
 
     os.makedirs(path, exist_ok=True)
+    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
@@ -168,6 +170,7 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
 
     copy_linux_dependencies(path, arch, add_av1)
+    copy_linux_dependencies(path_csharp, arch, add_av1)
 
 
 def copy_linux_dependencies(path: str, arch: str, add_av1: bool = False):
@@ -196,10 +199,12 @@ def copy_linux_dependencies(path: str, arch: str, add_av1: bool = False):
 def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Windows ...")
     path: str = f"./test_room/addons/gde_gozen/bin/windows_{arch}"
+    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/windows_{arch}"
     os.environ["PKG_CONFIG_LIBDIR"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
     os.environ["PKG_CONFIG_PATH"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
 
     os.makedirs(path, exist_ok=True)
+    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
@@ -231,18 +236,23 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Copying lib files ...")
     for file in glob.glob("ffmpeg/bin/bin/*.dll"):
         shutil.copy2(file, path)
+        shutil.copy2(file, path_csharp)
 
     # Somehow some distro"s put the dll"s in bin, and others in lib.
     if os.path.exists("/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll"):
         subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path], check=True)
+        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path_csharp], check=True)
 
         if add_av1:
             subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path], check=True)
+            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path_csharp], check=True)
     else:
         subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path], check=True)
+        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path_csharp], check=True)
 
         if add_av1:
             subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path], check=True)
+            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path_csharp], check=True)
 
     print("Compiling FFmpeg for Windows finished!")
 
@@ -251,9 +261,13 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for MacOS ...")
     path_debug: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
     path_release: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
+    path_debug_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
+    path_release_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
 
     os.makedirs(path_debug, exist_ok=True)
     os.makedirs(path_release, exist_ok=True)
+    os.makedirs(path_debug_csharp, exist_ok=True)
+    os.makedirs(path_release_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
@@ -282,6 +296,8 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     for file in glob.glob("./ffmpeg/bin/lib/*.dylib"):
         shutil.copy2(file, path_debug)
         shutil.copy2(file, path_release)
+        shutil.copy2(file, path_debug_csharp)
+        shutil.copy2(file, path_release_csharp)
 
     print("Compiling FFmpeg for MacOS finished!")
 
@@ -289,6 +305,7 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
 def compile_ffmpeg_android(arch: str) -> None:
     print("Configuring FFmpeg for Android ...")
     path: str = "./test_room/addons/gde_gozen/bin/android_"
+    path_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/android_"
     ndk: str = os.getenv("ANDROID_NDK_ROOT")
 
     if not ndk:
@@ -306,11 +323,13 @@ def compile_ffmpeg_android(arch: str) -> None:
 
     if arch == ARCH_ARM64:
         path += "arm64"
+        path_csharp += "arm64"
         target_arch = "aarch64-linux-android"
         arch_flags = "-march=armv8-a"
         ffmpeg_arch = "aarch64"
     else:  # armv7a
         path += "arm32"
+        path_csharp += "arm32"
         target_arch = "armv7a-linux-androideabi"
         arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
         ffmpeg_arch = "arm"
@@ -353,13 +372,17 @@ def compile_ffmpeg_android(arch: str) -> None:
 
     print("Copying lib files ...")
     os.makedirs(path, exist_ok=True)
+    os.makedirs(path_csharp, exist_ok=True)
+
     for file in glob.glob("ffmpeg/bin/lib/*.so*"):
         shutil.copy2(file, path)
+        shutil.copy2(file, path_csharp)
 
     print("Compiling FFmpeg for Android finished!")
 
 
 def compile_ffmpeg_web() -> None:
+    # NOTE: No C# support yet for web builds.
     print("Install/activate emsdk ...")
     subprocess.run(["emsdk/emsdk", "install", "3.1.64"], check=True)
     subprocess.run(["emsdk/emsdk", "activate", "3.1.64"], check=True)
@@ -467,6 +490,10 @@ def macos_fix(arch) -> None:
     release_binary: str = f"./test_room/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
     debug_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
     release_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
+    debug_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
+    release_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
+    debug_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
+    release_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
 
     print("Updating @loader_path for MacOS builds")
 
@@ -474,17 +501,31 @@ def macos_fix(arch) -> None:
         for file in os.listdir(debug_bin_folder):
             print("Fixing file ", file)
             subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary], check=True)
-        print("Fixing folder ", debug_binary)
+
+        for file in os.listdir(debug_bin_folder_csharp):
+            print("Fixing file ", file)
+            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary_csharp], check=True)
+
+        print("Fixing folder ", debug_binary, " & ", debug_binary_csharp)
+
         subprocess.run(["otool", "-L", debug_binary], cwd="./")
+        subprocess.run(["otool", "-L", debug_binary_csharp], cwd="./")
     else:
         print("No debug folder found for MacOS!")
 
-    if os.path.exists(release_binary):
+    if os.path.exists(release_binary) and os.path.exists(release_binary_csharp):
         for file in os.listdir(release_bin_folder):
             print("Fixing file ", file)
             subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary], check=True)
-        print("Fixing folder ", release_binary)
+
+        for file in os.listdir(release_bin_folder_csharp):
+            print("Fixing file ", file)
+            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary_csharp], check=True)
+
+        print("Fixing folder ", release_binary, " & ", release_binary_csharp)
+
         subprocess.run(["otool", "-L", release_binary], cwd="./")
+        subprocess.run(["otool", "-L", release_binary_csharp], cwd="./")
     else:
         print("No release folder found for MacOS!")
 

@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version'
         type: string
-        default: '8.1'
+        default: '8.4'
 
 run-name: 'Build GoZen Release: v${{ inputs.version }} by @${{ github.actor }}'
 
@@ -98,5 +98,69 @@ jobs:
         with:
           name: GDE_GoZen_test_room_v${{ inputs.version }}
           path: test_room/
+          retention-days: 7
+
+  build-csharp-addon:
+    needs: [build-linux, build-windows, build-macos, build-android]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Linux bin x86_64
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_linux_x86_64_csharp
+
+      - name: Linux bin arm64
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_linux_arm64_csharp
+
+      - name: Windows bin
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_windows_csharp
+
+      - name: MacOS bin
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_macos_csharp
+
+      - name: Android bin arm32
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_android_armv7a_csharp
+
+      - name: Android bin arm64
+        uses: actions/download-artifact@v4
+        with:
+          path: test_room_csharp/addons/gde_gozen/bin/
+          name: bin_android_armv8_csharp
+
+      - name: Finalizing
+        run: |
+          cp LICENSE test_room_csharp/addons/gde_gozen/
+          sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room_csharp/addons/gde_gozen/plugin.cfg
+
+      - name: Upload addon
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_v${{ inputs.version }}_csharp
+          path: test_room_csharp/addons/
+          retention-days: 7
+
+      - name: Upload test_room
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_test_room_v${{ inputs.version }}_csharp
+          path: test_room_csharp/
           retention-days: 7
 
