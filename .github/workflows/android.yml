@@ -96,11 +96,21 @@ jobs:
           ANDROID_SDK: ${{ env.ANDROID_SDK }}
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
+      - name: Updating C#
+        run: python -c 'import build; build.update_csharp_bins()'
+
       - name: Uploading Android bin
         uses: actions/upload-artifact@v4
         with:
           name: bin_android_armv8
           path: test_room/addons/gde_gozen/bin
+          retention-days: 5
+
+      - name: Uploading Android bin C#
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin_android_armv8_csharp
+          path: test_room_csharp/addons/gde_gozen/bin
           retention-days: 5
 
 
@@ -174,10 +184,20 @@ jobs:
           ANDROID_SDK: ${{ env.ANDROID_SDK }}
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
+      - name: Updating C#
+        run: python -c 'import build; build.update_csharp_bins()'
+
       - name: Uploading Android bin
         uses: actions/upload-artifact@v4
         with:
           name: bin_android_armv7a
           path: test_room/addons/gde_gozen/bin
+          retention-days: 5
+
+      - name: Uploading Android bin C#
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin_android_armv7a_csharp
+          path: test_room_csharp/addons/gde_gozen/bin
           retention-days: 5
 

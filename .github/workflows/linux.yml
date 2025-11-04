@@ -37,11 +37,21 @@ jobs:
       - name: Build Linux release x86_64
         run: scons -j4 target=template_release platform=linux arch=x86_64
 
+      - name: Updating C#
+        run: python -c 'import build; build.update_csharp_bins()'
+
       - name: Upload addon
         uses: actions/upload-artifact@v4
         with:
           name: bin_linux_x86_64
           path: test_room/addons/gde_gozen/bin
+          retention-days: 5
+
+      - name: Upload addon C#
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin_linux_x86_64_csharp
+          path: test_room_csharp/addons/gde_gozen/bin
           retention-days: 5
 
   build-arm64:
@@ -79,10 +89,20 @@ jobs:
       - name: Build Linux release arm64
         run: scons -j4 target=template_release platform=linux arch=arm64
 
+      - name: Updating C#
+        run: python -c 'import build; build.update_csharp_bins()'
+
       - name: Uploading Linux bin
         uses: actions/upload-artifact@v4
         with:
           name: bin_linux_arm64
           path: test_room/addons/gde_gozen/bin
+          retention-days: 1
+
+      - name: Uploading Linux bin C#
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin_linux_arm64_csharp
+          path: test_room_csharp/addons/gde_gozen/bin
           retention-days: 1
 

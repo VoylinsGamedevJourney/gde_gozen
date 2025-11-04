@@ -481,7 +481,18 @@ def compile_ffmpeg_web() -> None:
     print("Compiling FFmpeg for Web finished!")
 
 
-def macos_fix(arch) -> None:
+def update_csharp_bins():
+    for root, _, files in os.walk("test_room"):
+        for file in files:
+            if file.startswith('libgozen'):
+                rel_path = os.path.relpath(root, "test_room")
+                dst_dir = os.path.join("test_room_csharp", rel_path)
+
+                os.makedirs(dst_dir, exist_ok=True)
+                shutil.copy2(os.path.join(root, file), os.path.join(dst_dir, file))
+
+
+def macos_fix(arch: str) -> None:
     # This is a fix for the MacOS builds to get the libraries to properly connect to
     # the gdextension library. Without it, the FFmpeg libraries can"t be found.
     print("Running fix for MacOS builds ...")
@@ -490,6 +501,7 @@ def macos_fix(arch) -> None:
     release_binary: str = f"./test_room/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
     debug_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
     release_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
+
     debug_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
     release_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
     debug_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
@@ -497,7 +509,7 @@ def macos_fix(arch) -> None:
 
     print("Updating @loader_path for MacOS builds")
 
-    if os.path.exists(debug_binary):
+    if os.path.exists(debug_binary) and os.path.exists(debug_binary_csharp):
         for file in os.listdir(debug_bin_folder):
             print("Fixing file ", file)
             subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary], check=True)
@@ -609,6 +621,8 @@ def main():
         subprocess.run(clean_cmd, cwd="./", env=env)
 
     subprocess.run(cmd, cwd="./", env=env)
+
+    update_csharp_bins()
 
     if platform == OS_MACOS:
         macos_fix(arch)
