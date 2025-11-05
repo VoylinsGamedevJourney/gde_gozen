@@ -35,13 +35,6 @@ private:
 public:
 	static PackedByteArray get_audio_data(String file_path);
 
-	static PackedByteArray combine_data(PackedByteArray audio_one,
-										PackedByteArray audio_two);
-
-	static PackedByteArray change_db(PackedByteArray audio_data, float db);
-	static PackedByteArray change_to_mono(PackedByteArray audio_data,
-										  bool left);
-
 protected:
 	static void _bind_methods();
 };

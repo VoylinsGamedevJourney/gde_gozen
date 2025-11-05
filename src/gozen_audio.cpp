@@ -3,6 +3,7 @@
 
 PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 								  AVStream *&stream, bool wav) {
+	av_log_set_level(AV_LOG_DEBUG);
 	const int TARGET_SAMPLE_RATE = 44100;
 	const AVSampleFormat TARGET_FORMAT = AV_SAMPLE_FMT_S16;
 	const AVChannelLayout TARGET_LAYOUT = AV_CHANNEL_LAYOUT_STEREO;
@@ -122,7 +123,6 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 		}
 
 		size_t byte_size = av_decoded_frame->nb_samples * bytes_per_samples * 2;
-
 		if (audio_size + byte_size > audio_data.size()) {
 			_log("Audio buffer overflow");
 			_log("Size needed is " + String::num_int64(audio_size + byte_size));
@@ -161,9 +161,9 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path) {
 	PackedByteArray data = PackedByteArray();
 	PackedByteArray file_buffer; // For `res://` videos.
 	UniqueAVIOContext avio_ctx;
+	BufferData buffer_data;
 
 	if (file_path.begins_with("res://") || file_path.begins_with("user://")) {
-		BufferData buffer_data;
 		if (!(format_ctx = avformat_alloc_context())) {
 			_log_err("Failed to allocate AVFormatContext");
 			return data;
@@ -181,9 +181,9 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path) {
 		buffer_data.size = file_buffer.size();
 		buffer_data.offset = 0;
 
-		unsigned char *avio_ctx_buffer = (unsigned char*)av_malloc(4096);
+		unsigned char *avio_ctx_buffer = (unsigned char*)av_malloc(FFmpeg::AVIO_CTX_BUFFER_SIZE);
 		avio_ctx = make_unique_ffmpeg<AVIOContext, AVIOContextDeleter>(
-			avio_alloc_context(avio_ctx_buffer, 4096, 0, &buffer_data, &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
+			avio_alloc_context(avio_ctx_buffer, FFmpeg::AVIO_CTX_BUFFER_SIZE, 0, &buffer_data, &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
 
 		if (!avio_ctx) {
 			av_free(avio_ctx_buffer);
@@ -227,58 +227,6 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path) {
 }
 
 
-PackedByteArray GoZenAudio::combine_data(PackedByteArray audio_one,
-									PackedByteArray audio_two) {
-	const int16_t *p_one = (const int16_t*)audio_one.ptr();
-	const int16_t *p_two = (const int16_t*)audio_two.ptr();
-
-	for (size_t i = 0; i < audio_one.size() / 2; i++)
-		((int16_t*)audio_one.ptrw())[i] = Math::clamp(
-				p_one[i] + p_one[i], -32768, 32767);
-
-	return audio_one;
-}
-
-
-PackedByteArray GoZenAudio::change_db(PackedByteArray audio_data, float db) {
-	static std::unordered_map<int, double> cache;
-	
-	const size_t sample_count = audio_data.size() / 2;
-	const int16_t *p_data = reinterpret_cast<const int16_t*>(audio_data.ptr());
-	int16_t *pw_data = reinterpret_cast<int16_t*>(audio_data.ptrw());
-
-	const auto search = cache.find(db);
-	double value;
-	
-	if (search == cache.end()) {
-		value = std::pow(10.0, db / 20.0);
-		cache[db] = value;
-	} else value = search->second;
-	
-	for (size_t i = 0; i < sample_count; i++)
-		pw_data[i] = Math::clamp((int32_t)(p_data[i] * value), -32768, 32767);
-
-	return audio_data;
-}
-
-
-PackedByteArray GoZenAudio::change_to_mono(PackedByteArray audio_data, bool left) {
-	const size_t sample_count = audio_data.size() / 2;
-	const int16_t *p_data = (const int16_t*)audio_data.ptr();
-	int16_t *pw_data = reinterpret_cast<int16_t*>(audio_data.ptrw());
-
-	if (left) {
-		for (size_t i = 0; i < sample_count; i += 2)
-			pw_data[i + 1] = p_data[i];
-	} else {
-		for (size_t i = 0; i < sample_count; i += 2)
-			pw_data[i] = p_data[i + 1];
-	}
-
-	return audio_data;
-}
-
-
 #define BIND_STATIC_METHOD_1(method_name, param1) \
 	ClassDB::bind_static_method("GoZenAudio", \
 		D_METHOD(#method_name, param1), &GoZenAudio::method_name)
@@ -290,9 +238,5 @@ PackedByteArray GoZenAudio::change_to_mono(PackedByteArray audio_data, bool left
 
 void GoZenAudio::_bind_methods() {
 	BIND_STATIC_METHOD_1(get_audio_data, "file_path");
-
-	BIND_STATIC_METHOD_2(combine_data, "audio_one", "audio_two");
-	BIND_STATIC_METHOD_2(change_db, "audio_data", "db");
-	BIND_STATIC_METHOD_2(change_to_mono, "audio_data", "left_channel");
 }
 

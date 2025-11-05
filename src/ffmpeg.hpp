@@ -38,6 +38,8 @@ using namespace godot;
 
 class FFmpeg {
   public:
+	const static int AVIO_CTX_BUFFER_SIZE = 4 * 1024 * 1024; // 4 MB
+
 	static inline int response = 0;
 	static inline bool eof = false;
 

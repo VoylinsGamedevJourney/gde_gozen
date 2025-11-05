@@ -356,6 +356,21 @@ def compile_ffmpeg_android(arch: str) -> None:
         "--extra-cflags=-fPIC",
         f"--extra-ldflags={arch_flags}",
     ]
+    cmd += [
+        "--enable-decoder=aac",
+        "--enable-decoder=aac_latm",
+        "--enable-decoder=mp3",
+        "--enable-decoder=mp3float",
+        "--enable-decoder=pcm_s16le",
+        "--enable-decoder=opus",
+        "--enable-decoder=vorbis",
+        "--enable-parser=aac",
+        "--enable-parser=aac_latm",
+        "--enable-parser=mpegaudio",
+        "--enable-parser=opus",
+        "--enable-parser=vorbis",
+    ]
+
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
 

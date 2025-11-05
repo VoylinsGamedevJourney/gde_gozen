@@ -23,7 +23,7 @@ int FFmpeg::get_frame(AVFormatContext* a_format_ctx, AVCodecContext* a_codec_ctx
 					  AVPacket* a_packet) {
 	eof = false;
 
-    av_frame_unref(a_frame);
+	av_frame_unref(a_frame);
 	while ((response = avcodec_receive_frame(a_codec_ctx, a_frame)) == AVERROR(EAGAIN) && !eof) {
 		do {
 			av_packet_unref(a_packet);
@@ -43,7 +43,6 @@ int FFmpeg::get_frame(AVFormatContext* a_format_ctx, AVCodecContext* a_codec_ctx
 				break;
 			}
 		}
-
 		av_frame_unref(a_frame);
 	}
 
