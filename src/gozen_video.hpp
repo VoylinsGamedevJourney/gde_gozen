@@ -1,22 +1,21 @@
 #pragma once
 
-#include <cstdint>
-#include <cmath>
-
-#include <godot_cpp/classes/audio_stream_wav.hpp>
-#include <godot_cpp/classes/control.hpp>
-#include <godot_cpp/classes/time.hpp>
-#include <godot_cpp/classes/os.hpp>
-#include <godot_cpp/classes/image_texture.hpp>
-#include <godot_cpp/classes/gd_extension_manager.hpp>
-#include <godot_cpp/classes/rendering_server.hpp>
-#include "godot_cpp/classes/file_access.hpp"
-#include <godot_cpp/variant/utility_functions.hpp>
-#include "godot_cpp/variant/packed_byte_array.hpp"
-
 #include "ffmpeg.hpp"
 #include "ffmpeg_helpers.hpp"
 #include "libavformat/avio.h"
+
+#include <cmath>
+#include <cstdint>
+#include <godot_cpp/classes/audio_stream_wav.hpp>
+#include <godot_cpp/classes/control.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/gd_extension_manager.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/variant/packed_byte_array.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 
 using namespace godot;
@@ -24,12 +23,12 @@ using namespace godot;
 class GoZenVideo : public Resource {
 	GDCLASS(GoZenVideo, Resource);
 
-private:
+  private:
 	// FFmpeg classes.
 	UniqueAVFormatCtxInput av_format_ctx;
 	UniqueAVCodecCtx av_codec_ctx;
 	UniqueAVIOContext avio_ctx;
-	AVStream *av_stream = nullptr;
+	AVStream* av_stream = nullptr;
 
 	UniqueAVPacket av_packet;
 	UniqueAVFrame av_frame;
@@ -46,7 +45,7 @@ private:
 
 	int8_t rotation = 0;
 	int8_t interlaced = 0; // 0 = no interlacing, 1 = interlaced top first, 2 interlaced bottom first.
-	
+
 	int64_t duration = 0;
 	int64_t frame_count = 0;
 
@@ -93,13 +92,10 @@ private:
 		return false;
 	}
 
-public:
+  public:
 	GoZenVideo() {}
 	~GoZenVideo() { close(); }
 
-	static Dictionary get_file_meta(String file_path);
-
-	// For `res://` videos.
 	int open(const String& video_path);
 	void close();
 
@@ -121,8 +117,14 @@ public:
 	inline int get_interlaced() const { return interlaced; }
 	inline float get_sar() const { return sar; }
 
-	inline void enable_debug() { av_log_set_level(AV_LOG_VERBOSE); debug = true; }
-	inline void disable_debug() { av_log_set_level(AV_LOG_INFO); debug = false; }
+	inline void enable_debug() {
+		av_log_set_level(AV_LOG_VERBOSE);
+		debug = true;
+	}
+	inline void disable_debug() {
+		av_log_set_level(AV_LOG_INFO);
+		debug = false;
+	}
 	inline bool get_debug_enabled() const { return debug; }
 
 	inline String get_pixel_format() const { return pixel_format; }
@@ -136,6 +138,6 @@ public:
 	inline Ref<Image> get_v_data() const { return v_data; }
 
 
-protected:
+  protected:
 	static void _bind_methods();
 };

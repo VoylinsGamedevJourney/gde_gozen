@@ -123,7 +123,7 @@ def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False) -> None:
     elif platform == OS_MACOS:
         compile_ffmpeg_macos(arch, add_av1)
     elif platform == OS_ANDROID:
-        compile_ffmpeg_android(arch, add_av1)
+        compile_ffmpeg_android(arch)
     elif platform == OS_WEB:
         compile_ffmpeg_web()
 
@@ -556,7 +556,7 @@ def main():
         subprocess.run([sys.executable, PATH_BUILD_WINDOWS], cwd="./", check=True)
         sys.exit(3)
 
-    if os.path.exists("./ffmpeg/.config"):
+    if os.path.exists("./ffmpeg/ffbuild/config.mak"):
         match _print_options("Init/Update submodules", ["no", "initialize", "update"]):
             case 2:
                 subprocess.run(["git", "submodule", "update",
@@ -595,16 +595,17 @@ def main():
     if _print_options("Select target", [TARGET_DEV, TARGET_RELEASE]) == 2:
         target = TARGET_RELEASE
 
-    clean_scons = True
-    if _print_options("Clean Scons?", ["yes", "no"]) == 2:
-        clean_scons = False
+    clean_scons = False
+    if _print_options("Clean Scons?", ["no", "yes"]) == 2:
+        clean_scons = True
 
-    if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
-        compile_ffmpeg(platform, arch, _print_options("Add AV1 support?", ["yes", "no"]) == 1)
+    if _print_options("(Re)compile ffmpeg?", ["no", "yes"]) == 2:
+        compile_ffmpeg(platform, arch, _print_options("Add AV1 support?", ["no", "yes"]) == 2)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
         arch = "arm32"
+
 
     cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
     env = os.environ.copy()

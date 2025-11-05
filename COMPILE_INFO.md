@@ -44,3 +44,6 @@ This error is most likely due to not having initialized the submodules. Check th
 
 > [!CAUTION]
 > At this moment only Linux, Windows, Web, MacOS, and Android are supported! Compiling on Windows, however, may come with some challenges and may not always work if you don't have the correct tools installed such as python, scons, git, ... Also, compiling on MacOS can only be done by using a MacOS system. Compiling Android comes with challenges of setting up your system correctly and is generally advised to do this on a Linux machine.
+
+> [!NOTE]
+> If you compile with AV1 support, you'll have to manually copy the libaom from the addons/bin/* folder to your exported project. This is due to the `gozen.gdextension` file being made without av1 support in mind. That's the file responsible for copying over the libaries on export.
