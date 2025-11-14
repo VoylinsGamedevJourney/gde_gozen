@@ -343,6 +343,11 @@ func get_video_framerate() -> float:
 	return _frame_rate
 
 
+## Getting the length of the video in seconds
+func get_video_length() -> int:
+	return _frame_count / _frame_rate
+
+
 ## Getting the rotation in degrees of the video
 func get_video_rotation() -> int:
 	return _rotation
