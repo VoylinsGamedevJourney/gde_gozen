@@ -322,11 +322,9 @@ func play() -> void:
 
 ## Pausing the video.
 func pause() -> void:
-	if video != null and !is_open():
-		return
 	is_playing = false
 	
-	if enable_audio:
+	if enable_audio and audio_player.stream != null:
 		audio_player.set_stream_paused(true)
 
 	playback_paused.emit()
