@@ -2,8 +2,6 @@ extends Control
 
 @onready var player: AudioStreamPlayer = $AudioStreamPlayer
 
-var stream: AudioStreamFFmpeg
-
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -13,10 +11,14 @@ func _ready() -> void:
 	
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
-	stream = AudioStreamFFmpeg.new()
-	if stream.open(a_files[0]) == 0:
-		player.stream = stream
+	var stream: AudioStreamWAV = AudioStreamWAV.new()
+	stream.mix_rate = 44100
+	stream.stereo = true
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
 
+	stream.data = GoZenAudio.get_audio_data(a_files[0])
+
+	player.stream = stream
 	print("Audio loaded")
 	player.play()
 
