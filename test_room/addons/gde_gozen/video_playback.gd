@@ -20,10 +20,12 @@ signal playback_ready ## Emitted when the node if fully setup and ready for play
 
 const PLAYBACK_SPEED_MIN: float = 0.25
 const PLAYBACK_SPEED_MAX: float = 4
+const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
+@export var audio_speed_to_sync: bool = false ## Enable/Disable a slight audio playback speed increase/reduction when syncing audio and video to avoid a hard cut.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
 @export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
 var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video playback speed, 0.5 = half the speed and 2 = double the speed.
@@ -289,6 +291,8 @@ func _process(delta: float) -> void:
 				seek_frame(0)
 				play()
 		else:
+			_sync_audio_video()
+
 			while _skips != 1:
 				next_frame(true)
 				_skips -= 1
@@ -328,6 +332,29 @@ func pause() -> void:
 		audio_player.set_stream_paused(true)
 
 	playback_paused.emit()
+
+
+## Ensures the audio playback is in sync with the video
+func _sync_audio_video():
+	if enable_audio and audio_player.stream.get_length() != 0:
+		var audio_offset = audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate
+
+		if abs(audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate) > AUDIO_OFFSET_THRESHOLD:
+			if debug: print("Audio Sync: time correction: ", audio_offset)
+			audio_player.seek((current_frame + 1) / _frame_rate)
+			audio_player.pitch_scale = playback_speed
+		elif audio_speed_to_sync:
+			if is_zero_approx(audio_player.pitch_scale - playback_speed):
+				if audio_offset > AUDIO_OFFSET_THRESHOLD / 2:
+					audio_player.pitch_scale = playback_speed * 0.99
+					if debug: print("Audio Sync: slow down")
+				elif audio_offset < -AUDIO_OFFSET_THRESHOLD / 2:
+					audio_player.pitch_scale = playback_speed * 1.01
+					if debug: print("Audio Sync: speed up")
+			else:
+				if not (audio_player.pitch_scale > playback_speed) != not (audio_offset < 0):
+					audio_player.pitch_scale = playback_speed
+					if debug: print("Audio Sync: back to normal")
 
 
 #------------------------------------------------ GETTERS
