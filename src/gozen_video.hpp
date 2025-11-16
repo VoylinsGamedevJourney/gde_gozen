@@ -16,6 +16,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 
 
 using namespace godot;
@@ -64,6 +65,12 @@ class GoZenVideo : public Resource {
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon.
 	bool full_color_range = true;
 
+	enum stream_type {
+		STREAM_VIDEO = 0,
+		STREAM_AUDIO = 1,
+		STREAM_SUBTITLE = 2
+	};
+
 	// Godot classes.
 	String path = "";
 	String pixel_format = "";
@@ -76,6 +83,10 @@ class GoZenVideo : public Resource {
 	Ref<Image> v_data;
 
 	PackedByteArray file_buffer; // For `res://` videos.
+
+	PackedInt32Array video_streams;
+	PackedInt32Array audio_streams;
+	PackedInt32Array subtitle_streams;
 
 	// Private functions.
 	void _copy_frame_data();
@@ -103,6 +114,9 @@ class GoZenVideo : public Resource {
 
 	int seek_frame(int frame_nr);
 	bool next_frame(bool skip = false);
+
+	PackedInt32Array get_streams(int stream_type);
+	Dictionary get_stream_metadata(int stream_index);
 
 	inline String get_path() const { return path; }
 

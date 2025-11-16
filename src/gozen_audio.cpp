@@ -155,7 +155,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext *&format_ctx,
 }
 
 
-PackedByteArray GoZenAudio::get_audio_data(String file_path) {
+PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 	av_log_set_level(AV_LOG_VERBOSE);
 	AVFormatContext *format_ctx = nullptr;
 	PackedByteArray data = PackedByteArray();
@@ -208,18 +208,42 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path) {
 		return data;
 	}
 
-	for (int i = 0; i < format_ctx->nb_streams; i++) {
-		AVCodecParameters *av_codec_params = format_ctx->streams[i]->codecpar;
-
-		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
-			format_ctx->streams[i]->discard = AVDISCARD_ALL;
-			continue;
-		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
-			data = _get_audio(format_ctx, format_ctx->streams[i],
-						file_path.get_extension().to_lower() == "wav");
-			break;
+	if (stream_index == -1) {
+		for (int i = 0; i < format_ctx->nb_streams; i++) {
+			AVCodecParameters *av_codec_params = format_ctx->streams[i]->codecpar;
+	
+			if (!avcodec_find_decoder(av_codec_params->codec_id)) {
+				format_ctx->streams[i]->discard = AVDISCARD_ALL;
+				continue;
+			} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+				stream_index = i;
+				break;
+			}
 		}
 	}
+
+	// Discard all non-audio streams.
+	for (int i = 0; i < format_ctx->nb_streams; i++) {
+		AVCodecParameters *av_codec_params = format_ctx->streams[i]->codecpar;
+		if (!avcodec_find_decoder(av_codec_params->codec_id) || av_codec_params->codec_type != AVMEDIA_TYPE_AUDIO) {
+			if (i != stream_index) {
+				format_ctx->streams[i]->discard = AVDISCARD_ALL;
+			}
+		}
+	}
+	
+	if (stream_index >= 0 && stream_index < format_ctx->nb_streams) {
+		AVCodecParameters *av_codec_params = format_ctx->streams[stream_index]->codecpar;
+
+		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+			data = _get_audio(format_ctx, format_ctx->streams[stream_index],
+						file_path.get_extension().to_lower() == "wav");
+		}
+	} else {
+		_log_err("Invalid stream index");
+		return data;
+	}
+
 
 	avformat_close_input(&format_ctx);
 	av_log_set_level(AV_LOG_INFO);
@@ -235,8 +259,12 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path) {
 	ClassDB::bind_static_method("GoZenAudio", \
 		D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name)
 
+#define BIND_STATIC_METHOD_2_OPTIONAL_1(method_name, param1, param2, default_val) \
+ClassDB::bind_static_method("GoZenAudio", \
+	D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name, DEFVAL(default_val))
+
 
 void GoZenAudio::_bind_methods() {
-	BIND_STATIC_METHOD_1(get_audio_data, "file_path");
+	BIND_STATIC_METHOD_2_OPTIONAL_1(get_audio_data, "file_path", "stream_index", -1);
 }
 

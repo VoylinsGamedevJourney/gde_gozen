@@ -5,6 +5,7 @@ extends Control
 ## To use this node, just add it anywhere and resize it to the desired size. Use the function [code]set_video_path(new_path)[/code] and the video will load. Take in mind that long video's can take a second or longer to load. If this is an issue you can preload the Video on startup of your project and set the video variable yourself, just remember to use the function [code]update_video()[/code] before the moment that you'd like to use it.
 
 enum COLOR_PROFILE { AUTO, BT470, BT601, BT709, BT2020, BT2100 }
+enum STREAM_TYPE { VIDEO = 0, AUDIO = 1, SUBTITLE = 2 }
 
 
 signal frame_changed(frame_nr: int) ## Emitted when the current frame has changed, for showing and skipped frames.
@@ -40,6 +41,10 @@ var audio_player: AudioStreamPlayer = AudioStreamPlayer.new() ## Audio player is
 
 var is_playing: bool = false ## Bool to check if the video is currently playing or not.
 var current_frame: int = 0: set = _set_current_frame ## Current frame number which the video playback is at.
+
+var video_streams: PackedInt32Array = [] ## List of video streams in the video file.
+var audio_streams: PackedInt32Array = [] ## List of audio streams in the video file.
+var subtitle_streams: PackedInt32Array = [] ## List of subtitle streams in the video file.
 
 var _time_elapsed: float = 0.
 var _frame_time: float = 0
@@ -157,6 +162,10 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
 	_frame_count = video.get_frame_count()
+
+	video_streams = video.get_streams(STREAM_TYPE.VIDEO)
+	audio_streams = video.get_streams(STREAM_TYPE.AUDIO)
+	subtitle_streams = video.get_streams(STREAM_TYPE.SUBTITLE)
 
 	if abs(_rotation) == 90:
 		image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_R8)
@@ -350,6 +359,23 @@ func get_video_length() -> int:
 func get_video_rotation() -> int:
 	return _rotation
 
+func get_stream_title(stream : int) -> String:
+	if not is_open():
+		printerr("Video is not open!")
+		return ""
+	var value = video.get_stream_metadata(stream).get("title")
+	if value == null:
+		return ""
+	return value
+
+func get_stream_language(stream : int) -> String:
+	if not is_open():
+		printerr("Video is not open!")
+		return ""
+	var value = video.get_stream_metadata(stream).get("language")
+	if value == null:
+		return ""
+	return value
 
 ## Checking to see if the video is open or not, trying to run functions without checking if open can crash your project.
 func is_open() -> bool:
@@ -397,6 +423,17 @@ func _set_pitch_adjust() -> void:
 	elif _audio_pitch_effect.pitch_scale != 1.0:
 		_audio_pitch_effect.pitch_scale = 1.0
 
+func set_audio_stream(stream : int) -> void:
+	if not is_open():
+		printerr("Video is not open!")
+		return
+	
+	if not stream in audio_streams:
+		printerr("Invalid audio stream!")
+		return
+
+	if enable_audio:
+		WorkerThreadPool.add_task(_open_audio.bind(stream)) # not the best to discard a task, but oh well
 
 
 #------------------------------------------------ MISC
@@ -405,13 +442,23 @@ func _open_video() -> void:
 		printerr("Error opening video!")
 
 
-func _open_audio() -> void:
-	var data: PackedByteArray = GoZenAudio.get_audio_data(path)
+func _open_audio(stream : int = -1) -> void:
+	var data: PackedByteArray = GoZenAudio.get_audio_data(path, stream)
 	if data.size() != 0:
 		audio_player.stream.data = data
 	else:
 		printerr("Audio data for video '%s' was 0!" % path)
 
+func _print_stream_info(streams : PackedInt32Array) -> void:
+	for i in range(len(streams)):
+		var title = video.get_stream_metadata(streams[i]).get("title")
+		var lang = video.get_stream_metadata(streams[i]).get("language")
+		if title == null or title == "":
+			title = "Track " + str(i + 1)
+		if lang == null:
+			print(title)
+		else:
+			print(title, " - ", lang)
 
 func _print_system_debug() -> void:
 	print_rich("[b]System info")
@@ -438,4 +485,10 @@ func _print_video_debug() -> void:
 	print("Interlaced flag: ", video.get_interlaced())
 	print("Using sws: ", video.is_using_sws())
 	print("Sar: ", video.get_sar())
-	
+
+	print("Video Tracks:")
+	_print_stream_info(video_streams)
+	print("Audio Tracks:")
+	_print_stream_info(audio_streams)
+	print("Subtitle Tracks:")
+	_print_stream_info(subtitle_streams)
