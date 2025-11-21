@@ -15,7 +15,7 @@ AudioStreamFFmpeg::~AudioStreamFFmpeg() {
 	av_format_ctx.reset();
 }
 
-int AudioStreamFFmpeg::open(const String& path) {
+int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	AVFormatContext* temp_format_ctx = nullptr;
 	file_path = path;
 
@@ -56,12 +56,31 @@ int AudioStreamFFmpeg::open(const String& path) {
 	if (avformat_find_stream_info(av_format_ctx.get(), NULL))
 		return _log_err("Couldn't find stream info");
 
-	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
-		AVCodecParameters* params = av_format_ctx->streams[i]->codecpar;
+	if (stream_index == -1) {
+		for (int i = 0; i < av_format_ctx->nb_streams; i++) {
+			AVCodecParameters* params = av_format_ctx->streams[i]->codecpar;
+	
+			if (params->codec_type == AVMEDIA_TYPE_AUDIO) {
+				av_stream = av_format_ctx->streams[i];
+				break;
+			}
+		}
+	} else if (stream_index >= 0 && stream_index < av_format_ctx->nb_streams) {
+		AVCodecParameters *av_codec_params = av_format_ctx->streams[stream_index]->codecpar;
 
-		if (params->codec_type == AVMEDIA_TYPE_AUDIO) {
-			av_stream = av_format_ctx->streams[i];
-			break;
+		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+			av_stream = av_format_ctx->streams[stream_index];
+		}
+	} else
+		return _log_err("Invalid stream index");
+
+	// Discard all non-audio streams.
+	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
+		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
+		if (!avcodec_find_decoder(av_codec_params->codec_id) || av_codec_params->codec_type != AVMEDIA_TYPE_AUDIO) {
+			if (i != stream_index) {
+				av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
+			}
 		}
 	}
 
@@ -307,4 +326,4 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	return true;
 }
 
-void AudioStreamFFmpeg::_bind_methods() { ClassDB::bind_method(D_METHOD("open", "path"), &AudioStreamFFmpeg::open); }
+void AudioStreamFFmpeg::_bind_methods() { ClassDB::bind_method(D_METHOD("open", "path", "stream_index"), &AudioStreamFFmpeg::open, DEFVAL(-1)); }

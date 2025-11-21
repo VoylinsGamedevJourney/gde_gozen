@@ -82,6 +82,24 @@ int GoZenVideo::open(const String& video_path) {
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 	}
 
+	// Get all streams.
+	video_streams = PackedInt32Array();
+	audio_streams = PackedInt32Array();
+	subtitle_streams = PackedInt32Array();
+	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
+		AVCodecParameters* av_codec_params = av_format_ctx->streams[i]->codecpar;
+
+		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
+		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO &&
+				   !(av_format_ctx->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+			video_streams.append(i);
+		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+			audio_streams.append(i);
+		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+			subtitle_streams.append(i);
+		}
+	}
+
 	// Setup Decoder codec context.
 	const AVCodec* av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
 	if (!av_codec) {
@@ -347,6 +365,46 @@ bool GoZenVideo::next_frame(bool skip) {
 	return true;
 }
 
+PackedInt32Array GoZenVideo::get_streams(int stream_type) {
+	if (!loaded) {
+		_log_err("file is not open");
+		return PackedInt32Array();
+	}
+
+	switch (stream_type) {
+		case STREAM_VIDEO:
+			return video_streams;
+		case STREAM_AUDIO:
+			return audio_streams;
+		case STREAM_SUBTITLE:
+			return subtitle_streams;
+	}
+	
+	_log_err("invalid stream type requested");
+	return PackedInt32Array();
+}
+
+Dictionary GoZenVideo::get_stream_metadata(int stream_index) {
+	if (!loaded) {
+		_log_err("file is not open");
+		return Dictionary();
+	}
+
+	if (stream_index < 0 || stream_index >= av_format_ctx->nb_streams) {
+		_log_err("invalid stream index");
+		return Dictionary();
+	}
+
+	Dictionary dict = Dictionary();
+
+	AVDictionaryEntry *entry = nullptr;
+	while (entry = av_dict_get(av_format_ctx->streams[stream_index]->metadata, "", entry, AV_DICT_IGNORE_SUFFIX)) {
+		dict[entry->key] = entry->value;
+	}
+
+	return dict;
+}
+
 void GoZenVideo::_copy_frame_data() {
 	if (av_frame->data[0] == nullptr) {
 		_log_err("Frame is empty!");
@@ -414,6 +472,10 @@ void GoZenVideo::_bind_methods() {
 
 	BIND_METHOD(is_full_color_range);
 	BIND_METHOD(is_using_sws);
+
+	BIND_METHOD_1(get_streams, "stream_type");
+	BIND_METHOD_1(get_stream_metadata, "stream_index");
+
 
 	BIND_METHOD(get_y_data);
 	BIND_METHOD(get_u_data);

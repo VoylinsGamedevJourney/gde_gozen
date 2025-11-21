@@ -33,7 +33,7 @@ private:
 	}
 
 public:
-	static PackedByteArray get_audio_data(String file_path);
+	static PackedByteArray get_audio_data(String file_path, int stream_index = -1);
 
 protected:
 	static void _bind_methods();

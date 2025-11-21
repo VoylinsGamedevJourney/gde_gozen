@@ -44,7 +44,7 @@ class AudioStreamFFmpeg : public AudioStream {
 	AudioStreamFFmpeg() = default;
 	~AudioStreamFFmpeg();
 
-	int open(const String& path);
+	int open(const String& path, int stream_index = -1);
 	void close();
 	inline bool is_open() const { return loaded; }
 

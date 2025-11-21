@@ -17,6 +17,7 @@ const VIDEO_EXTENSIONS: PackedStringArray = [
 @onready var max_frame_value: Label = %MaxFrameValue
 @onready var fps_value: Label = %FPSValue
 @onready var speed_spin_box: SpinBox = %SpeedSpinBox
+@onready var audio_track_option_button: OptionButton = %AudioTrackOption
 
 @onready var loading_screen: Panel = $LoadingPanel
 
@@ -81,6 +82,17 @@ func after_video_open() -> void:
 		max_frame_value.text = str(video_playback.get_video_frame_count())
 		fps_value.text = str(video_playback.get_video_framerate()).left(5)
 		loading_screen.visible = false
+		
+		audio_track_option_button.clear()
+		for i in range(len(video_playback.audio_streams)):
+			var title := video_playback.get_stream_title(video_playback.audio_streams[i])
+			var lang := video_playback.get_stream_language(video_playback.audio_streams[i])
+			if title == "":
+				title = "Track " + str(i + 1)
+			if lang == "":
+				audio_track_option_button.add_item(title)
+			else:
+				audio_track_option_button.add_item(title + " - " + lang)
 
 
 func _on_play_pause_button_pressed() -> void:
@@ -133,3 +145,7 @@ func _on_load_video_button_pressed() -> void:
 func _connect(from_signal: Signal, target_func: Callable) -> void:
 	if from_signal.connect(target_func):
 		printerr("Couldn't connect function '", target_func.get_method(), "' to '", from_signal.get_name(), "'!")
+
+
+func _on_audio_track_option_item_selected(index: int) -> void:
+	video_playback.set_audio_stream(video_playback.audio_streams[index])
