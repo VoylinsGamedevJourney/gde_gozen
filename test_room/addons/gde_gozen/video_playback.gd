@@ -131,9 +131,11 @@ func set_video_path(new_path: String) -> void:
 	else:
 		video.disable_debug()
 
-	_threads.append(WorkerThreadPool.add_task(_open_video))
+	if _threads.append(WorkerThreadPool.add_task(_open_video)):
+		push_error("Something went wrong appending thread to _threads!")
 	if enable_audio:
-		_threads.append(WorkerThreadPool.add_task(_open_audio))
+		if _threads.append(WorkerThreadPool.add_task(_open_audio)):
+			push_error("Something went wrong appending thread to _threads!")
 
 
 func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
@@ -170,6 +172,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 	if debug:
 		_print_video_debug()
 
+	@warning_ignore("UNSAFE_METHOD_ACCESS")
 	video_texture.texture.set_image(image)
 	if video.is_full_color_range():
 		if video.get_interlaced() == 0:
@@ -300,7 +303,11 @@ func _process(delta: float) -> void:
 	elif !_threads.is_empty():
 		for i: int in _threads:
 			if WorkerThreadPool.is_task_completed(i):
-				WorkerThreadPool.wait_for_task_completion(i)
+				var error: int = WorkerThreadPool.wait_for_task_completion(i)
+
+				if error != OK:
+					printerr("Something went wrong waiting for task completion! %s" % error)
+
 				_threads.remove_at(_threads.find(i))
 
 			if _threads.is_empty():
@@ -370,7 +377,7 @@ func get_video_framerate() -> float:
 
 ## Getting the length of the video in seconds
 func get_video_length() -> int:
-	return _frame_count / _frame_rate
+	return int(_frame_count / _frame_rate)
 
 
 ## Getting the rotation in degrees of the video
@@ -435,6 +442,7 @@ func _open_video() -> void:
 func _open_audio() -> void:
 	var data: PackedByteArray = GoZenAudio.get_audio_data(path)
 	if data.size() != 0:
+		@warning_ignore("UNSAFE_PROPERTY_ACCESS")
 		audio_player.stream.data = data
 	else:
 		printerr("Audio data for video '%s' was 0!" % path)
