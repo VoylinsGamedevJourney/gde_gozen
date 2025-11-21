@@ -153,7 +153,9 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 			found_target = true;
 
 			av_decoded_frame->format = AV_SAMPLE_FMT_S16;
-			av_decoded_frame->ch_layout = audio_stream_ffmpeg->ch_layout;
+			av_decoded_frame->ch_layout =
+				audio_stream_ffmpeg->ch_layout.nb_channels <= 2 ?
+				audio_stream_ffmpeg->ch_layout : (AVChannelLayout) AV_CHANNEL_LAYOUT_STEREO;
 			av_decoded_frame->sample_rate = av_frame->sample_rate;
 			av_decoded_frame->nb_samples =
 				swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame->nb_samples);
@@ -254,7 +256,9 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	}
 
 	av_decoded_frame.get()->format = AV_SAMPLE_FMT_S16;
-	av_decoded_frame.get()->ch_layout = audio_stream_ffmpeg->ch_layout;
+	av_decoded_frame->ch_layout =
+		audio_stream_ffmpeg->ch_layout.nb_channels <= 2 ?
+		audio_stream_ffmpeg->ch_layout : (AVChannelLayout) AV_CHANNEL_LAYOUT_STEREO;
 	av_decoded_frame.get()->sample_rate = av_frame.get()->sample_rate;
 	av_decoded_frame.get()->nb_samples =
 		swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame.get()->nb_samples);
