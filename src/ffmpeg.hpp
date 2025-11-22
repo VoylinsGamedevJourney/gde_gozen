@@ -43,12 +43,12 @@ class FFmpeg {
 	static inline int response = 0;
 	static inline bool eof = false;
 
-	static void print_av_error(const char* a_message, int a_error);
+	static void print_av_error(const char* message, int error);
 
-	static void enable_multithreading(AVCodecContext* a_codec_ctx, const AVCodec* a_codec);
-	static int get_frame(AVFormatContext* a_format_ctx, AVCodecContext* a_codec_ctx, int a_stream_id, AVFrame* a_frame,
-						 AVPacket* a_packet);
-	static enum AVPixelFormat get_hw_format(const enum AVPixelFormat* a_pix_fmt, enum AVPixelFormat* a_hw_pix_fmt);
+	static void enable_multithreading(AVCodecContext* codec_ctx, const AVCodec* codec);
+	static int get_frame(AVFormatContext* format_ctx, AVCodecContext* codec_ctx, int stream_id, AVFrame* frame,
+						 AVPacket* packet);
+	static enum AVPixelFormat get_hw_format(const enum AVPixelFormat* pix_fmt, enum AVPixelFormat* hw_pix_fmt);
 
 	static int read_buffer_packet(void* opaque, uint8_t* buffer, int buffer_size);
 	static int64_t seek_buffer(void* opaque, int64_t offset, int where);
