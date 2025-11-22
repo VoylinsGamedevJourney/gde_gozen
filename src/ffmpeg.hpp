@@ -40,9 +40,6 @@ class FFmpeg {
   public:
 	const static int AVIO_CTX_BUFFER_SIZE = 4 * 1024 * 1024; // 4 MB
 
-	static inline int response = 0;
-	static inline bool eof = false;
-
 	static void print_av_error(const char* message, int error);
 
 	static void enable_multithreading(AVCodecContext* codec_ctx, const AVCodec* codec);

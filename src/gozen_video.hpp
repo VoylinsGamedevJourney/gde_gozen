@@ -2,7 +2,6 @@
 
 #include "ffmpeg.hpp"
 #include "ffmpeg_helpers.hpp"
-#include "libavformat/avio.h"
 
 #include <cmath>
 #include <cstdint>
@@ -14,9 +13,9 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <godot_cpp/variant/dictionary.hpp>
 
 
 using namespace godot;
@@ -41,7 +40,7 @@ class GoZenVideo : public Resource {
 	BufferData buffer_data;
 
 	// Default variable types.
-	int response = 0;
+	int current_frame = 0;
 	int padding = 0;
 
 	int8_t rotation = 0;
@@ -65,11 +64,9 @@ class GoZenVideo : public Resource {
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon.
 	bool full_color_range = true;
 
-	enum stream_type {
-		STREAM_VIDEO = 0,
-		STREAM_AUDIO = 1,
-		STREAM_SUBTITLE = 2
-	};
+	int sws_flag = SWS_BILINEAR;
+
+	enum stream_type { STREAM_VIDEO = 0, STREAM_AUDIO = 1, STREAM_SUBTITLE = 2 };
 
 	// Godot classes.
 	String path = "";
@@ -118,18 +115,38 @@ class GoZenVideo : public Resource {
 	PackedInt32Array get_streams(int stream_type);
 	Dictionary get_stream_metadata(int stream_index);
 
+	inline void set_sws_flag_bilinear() { sws_flag = SWS_BILINEAR; }
+	inline void set_sws_flag_bicubic() { sws_flag = SWS_BICUBIC; }
+
+	inline Ref<Image> get_y_data() const { return y_data; }
+	inline Ref<Image> get_u_data() const { return u_data; }
+	inline Ref<Image> get_v_data() const { return v_data; }
+
+	// Metadata getters
 	inline String get_path() const { return path; }
 
-	inline float get_framerate() const { return framerate; }
-	inline int get_frame_count() const { return std::round(frame_count); };
 	inline Vector2i get_resolution() const { return resolution; }
 	inline Vector2i get_actual_resolution() const { return actual_resolution; }
+
 	inline int get_width() const { return resolution.x; }
 	inline int get_height() const { return resolution.y; }
+	inline int get_actual_width() const { return actual_resolution.x; }
+	inline int get_actual_height() const { return actual_resolution.y; }
+
 	inline int get_padding() const { return padding; }
 	inline int get_rotation() const { return rotation; }
 	inline int get_interlaced() const { return interlaced; }
+	inline int get_frame_count() const { return std::round(frame_count); };
+	inline int get_current_frame() const { return current_frame; }
+
 	inline float get_sar() const { return sar; }
+	inline float get_framerate() const { return framerate; }
+
+	inline String get_pixel_format() const { return pixel_format; }
+	inline String get_color_profile() const { return av_color_primaries_name(color_profile); }
+
+	inline bool is_full_color_range() const { return full_color_range; }
+	inline bool is_using_sws() const { return using_sws; }
 
 	inline void enable_debug() {
 		av_log_set_level(AV_LOG_VERBOSE);
@@ -140,17 +157,6 @@ class GoZenVideo : public Resource {
 		debug = false;
 	}
 	inline bool get_debug_enabled() const { return debug; }
-
-	inline String get_pixel_format() const { return pixel_format; }
-	inline String get_color_profile() const { return av_color_primaries_name(color_profile); }
-
-	inline bool is_full_color_range() const { return full_color_range; }
-	inline bool is_using_sws() const { return using_sws; }
-
-	inline Ref<Image> get_y_data() const { return y_data; }
-	inline Ref<Image> get_u_data() const { return u_data; }
-	inline Ref<Image> get_v_data() const { return v_data; }
-
 
   protected:
 	static void _bind_methods();

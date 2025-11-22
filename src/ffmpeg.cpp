@@ -22,7 +22,8 @@ void FFmpeg::enable_multithreading(AVCodecContext* codec_ctx, const AVCodec* cod
 
 int FFmpeg::get_frame(AVFormatContext* format_ctx, AVCodecContext* codec_ctx, int stream_id, AVFrame* frame,
 					  AVPacket* packet) {
-	eof = false;
+	int response = 0;
+	bool eof = false;
 
 	av_frame_unref(frame);
 	while ((response = avcodec_receive_frame(codec_ctx, frame)) == AVERROR(EAGAIN) && !eof) {

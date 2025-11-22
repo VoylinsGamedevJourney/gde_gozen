@@ -131,8 +131,10 @@ int GoZenVideo::open(const String& video_path) {
 		return _log_err("Couldn't open codec");
 	}
 
+	// Adjust resolution according to the aspect ratio.
 	sar = av_q2d(av_stream->codecpar->sample_aspect_ratio);
 	actual_resolution = resolution;
+
 	if (sar > 1.0)
 		resolution.x *= sar;
 	else if (sar != 0.0 && sar != 1.0)
@@ -150,6 +152,7 @@ int GoZenVideo::open(const String& video_path) {
 	av_packet = make_unique_avpacket();
 	av_frame = make_unique_avframe();
 	av_sws_frame = make_unique_avframe();
+
 	if (!av_packet || !av_frame || !av_sws_frame) {
 		close();
 		return _log_err("Couldn't alloc packed/frames");
@@ -157,12 +160,15 @@ int GoZenVideo::open(const String& video_path) {
 
 	avcodec_flush_buffers(av_codec_ctx.get());
 	bool duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
+
 	if (duration_from_bitrate) {
 		close();
 		return _log_err("Invalid video");
 	}
 
+	int response = 0;
 	int attempts = 0;
+
 	while (true) {
 		response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(), av_stream->index, av_frame.get(),
 									 av_packet.get());
@@ -218,7 +224,7 @@ int GoZenVideo::open(const String& video_path) {
 			framerate = guessed_rate;
 	}
 
-	// - Make sure we have a valid framerate after all checks..
+	// - Make sure we have a valid framerate after all checks.
 	if (framerate <= 0) {
 		close();
 		return _log_err("Invalid framerate (could not be determined)");
@@ -238,7 +244,7 @@ int GoZenVideo::open(const String& video_path) {
 		using_sws = true;
 		sws_ctx = make_unique_ffmpeg<SwsContext, SwsCtxDeleter>(
 			sws_getContext(resolution.x, resolution.y, av_codec_ctx->pix_fmt, resolution.x, resolution.y,
-						   AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL));
+						   AV_PIX_FMT_YUV420P, sws_flag, NULL, NULL, NULL));
 
 		// We will use av_hw_frame to convert the frame data to as we won't use it anyway without hw decoding.
 		av_sws_frame = make_unique_avframe();
@@ -263,15 +269,15 @@ int GoZenVideo::open(const String& video_path) {
 				duration =
 					std::ceil(static_cast<double>(duration) * av_q2d(temp_rational) / av_q2d(av_stream->time_base));
 		}
+
 		av_stream->duration = duration;
 	}
 
 	if (av_stream->nb_frames > 0)
 		frame_count = av_stream->nb_frames;
-	else {
+	else
 		frame_count = static_cast<int>(
 			std::round((static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate));
-	}
 
 	if (av_packet)
 		av_packet_unref(av_packet.get());
@@ -279,7 +285,7 @@ int GoZenVideo::open(const String& video_path) {
 		av_frame_unref(av_frame.get());
 
 	loaded = true;
-	response = OK;
+	seek_frame(0);
 
 	return OK;
 }
@@ -287,7 +293,7 @@ int GoZenVideo::open(const String& video_path) {
 void GoZenVideo::close() {
 	_log("Closing video file on path: " + path);
 	loaded = false;
-	response = OK;
+	current_frame = -1;
 
 	av_packet.reset();
 	av_frame.reset();
@@ -306,11 +312,13 @@ int GoZenVideo::seek_frame(int frame_nr) {
 	if (!loaded)
 		return _log_err("Video is not open");
 
+	int response = 0;
+	int attempts = 0;
+
 	// Video seeking.
 	if ((response = _seek_frame(frame_nr)) < 0)
 		return _log_err("Couldn't seek video");
 
-	int attempts = 0;
 	while (true) {
 		if ((response = FFmpeg::get_frame(av_format_ctx.get(), av_codec_ctx.get(), av_stream->index, av_frame.get(),
 										  av_packet.get()))) {
@@ -352,6 +360,8 @@ int GoZenVideo::seek_frame(int frame_nr) {
 		}
 	}
 
+	current_frame = frame_nr;
+
 	av_frame_unref(av_frame.get());
 	av_packet_unref(av_packet.get());
 
@@ -366,6 +376,8 @@ bool GoZenVideo::next_frame(bool skip) {
 
 	if (!skip)
 		_copy_frame_data();
+
+	current_frame++;
 
 	av_frame_unref(av_frame.get());
 	av_packet_unref(av_packet.get());
@@ -450,36 +462,47 @@ int GoZenVideo::_seek_frame(int frame_nr) {
 
 #define BIND_METHOD(method_name) ClassDB::bind_method(D_METHOD(#method_name), &GoZenVideo::method_name)
 
-#define BIND_METHOD_1(method_name, param1)                                                                             \
-	ClassDB::bind_method(D_METHOD(#method_name, param1), &GoZenVideo::method_name)
+#define BIND_METHOD_ARGS(method_name, ...)                                                                             \
+	ClassDB::bind_method(D_METHOD(#method_name, __VA_ARGS__), &GoZenVideo::method_name)
 
 
 void GoZenVideo::_bind_methods() {
-	BIND_METHOD_1(open, "video_path");
+	BIND_METHOD_ARGS(open, "video_path");
 
 	BIND_METHOD(is_open);
 
-	BIND_METHOD_1(seek_frame, "frame_nr");
-	BIND_METHOD_1(next_frame, "skip");
+	BIND_METHOD_ARGS(seek_frame, "frame_nr");
+	BIND_METHOD_ARGS(next_frame, "skip");
 
-	BIND_METHOD(get_framerate);
+	BIND_METHOD_ARGS(get_streams, "stream_type");
+	BIND_METHOD_ARGS(get_stream_metadata, "stream_index");
 
+	BIND_METHOD(set_sws_flag_bilinear);
+	BIND_METHOD(set_sws_flag_bicubic);
+
+	BIND_METHOD(get_y_data);
+	BIND_METHOD(get_u_data);
+	BIND_METHOD(get_v_data);
+
+	// Metadata getters
 	BIND_METHOD(get_path);
 
 	BIND_METHOD(get_resolution);
 	BIND_METHOD(get_actual_resolution);
+
 	BIND_METHOD(get_width);
 	BIND_METHOD(get_height);
+	BIND_METHOD(get_actual_width);
+	BIND_METHOD(get_actual_height);
+
 	BIND_METHOD(get_padding);
 	BIND_METHOD(get_rotation);
 	BIND_METHOD(get_interlaced);
-
 	BIND_METHOD(get_frame_count);
-	BIND_METHOD(get_sar);
+	BIND_METHOD(get_current_frame);
 
-	BIND_METHOD(enable_debug);
-	BIND_METHOD(disable_debug);
-	BIND_METHOD(get_debug_enabled);
+	BIND_METHOD(get_sar);
+	BIND_METHOD(get_framerate);
 
 	BIND_METHOD(get_pixel_format);
 	BIND_METHOD(get_color_profile);
@@ -487,11 +510,7 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(is_full_color_range);
 	BIND_METHOD(is_using_sws);
 
-	BIND_METHOD_1(get_streams, "stream_type");
-	BIND_METHOD_1(get_stream_metadata, "stream_index");
-
-
-	BIND_METHOD(get_y_data);
-	BIND_METHOD(get_u_data);
-	BIND_METHOD(get_v_data);
+	BIND_METHOD(enable_debug);
+	BIND_METHOD(disable_debug);
+	BIND_METHOD(get_debug_enabled);
 }

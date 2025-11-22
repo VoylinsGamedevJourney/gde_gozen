@@ -1,8 +1,7 @@
 #include "gozen_audio.hpp"
 
 
-PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& stream, bool wav) {
-	av_log_set_level(AV_LOG_DEBUG);
+PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& stream) {
 	const int TARGET_SAMPLE_RATE = 44100;
 	const AVSampleFormat TARGET_FORMAT = AV_SAMPLE_FMT_S16;
 	const AVChannelLayout TARGET_LAYOUT = AV_CHANNEL_LAYOUT_STEREO;
@@ -223,10 +222,8 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 	if (stream_index >= 0 && stream_index < format_ctx->nb_streams) {
 		AVCodecParameters* av_codec_params = format_ctx->streams[stream_index]->codecpar;
 
-		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
-			data = _get_audio(format_ctx, format_ctx->streams[stream_index],
-							  file_path.get_extension().to_lower() == "wav");
-		}
+		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
+			data = _get_audio(format_ctx, format_ctx->streams[stream_index]);
 	} else {
 		_log_err("Invalid stream index");
 		return data;

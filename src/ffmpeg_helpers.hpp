@@ -1,13 +1,12 @@
 #pragma once
 
-#include "libavformat/avio.h"
-
 #include <cstdint>
 #include <memory>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavformat/avio.h>
 #include <libavutil/frame.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
@@ -105,9 +104,7 @@ std::unique_ptr<T_FFmpeg, T_Deleter> make_unique_ffmpeg(T_FFmpeg* ptr) {
 }
 
 
-inline UniqueAVFrame make_unique_avframe() {
-	return make_unique_ffmpeg<AVFrame, AVFrameDeleter>(av_frame_alloc());
-}
+inline UniqueAVFrame make_unique_avframe() { return make_unique_ffmpeg<AVFrame, AVFrameDeleter>(av_frame_alloc()); }
 
 
 inline UniqueAVPacket make_unique_avpacket() {
