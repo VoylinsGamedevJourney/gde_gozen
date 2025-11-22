@@ -115,6 +115,11 @@ class GoZenVideo : public Resource {
 	PackedInt32Array get_streams(int stream_type);
 	Dictionary get_stream_metadata(int stream_index);
 
+	int get_chapter_count();
+	float get_chapter_start(int chapter_index);
+	float get_chapter_end(int chapter_index);
+	Dictionary get_chapter_metadata(int chapter_index);
+
 	inline void set_sws_flag_bilinear() { sws_flag = SWS_BILINEAR; }
 	inline void set_sws_flag_bicubic() { sws_flag = SWS_BICUBIC; }
 
