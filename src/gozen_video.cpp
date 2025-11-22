@@ -420,7 +420,7 @@ Dictionary GoZenVideo::get_stream_metadata(int stream_index) {
 
 void GoZenVideo::_copy_frame_data() {
 	if (av_frame->data[0] == nullptr) {
-		_log_err("Frame is empty!");
+		_log("Frame is empty");
 		return;
 	}
 

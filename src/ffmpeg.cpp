@@ -63,33 +63,43 @@ enum AVPixelFormat FFmpeg::get_hw_format(const enum AVPixelFormat* a_pix_fmt, en
 // For `res://` videos.
 int FFmpeg::read_buffer_packet(void* opaque, uint8_t* buffer, int buffer_size) {
 	BufferData* buffer_data = (BufferData*)opaque;
-	buffer_size = FFMIN(buffer_size, buffer_data->size - buffer_data->offset);
+	size_t remaining = buffer_data->size - buffer_data->offset;
 
-	if (buffer_size < 0)
-		return 0;
+	if (remaining == 0)
+		return AVERROR_EOF;
 
-	memcpy(buffer, buffer_data->ptr + buffer_data->offset, buffer_size);
-	buffer_data->offset += buffer_size;
-	return buffer_size;
+	// Change buffer size if not enough data remaining.
+	size_t new_size = (remaining < (size_t)buffer_size ? remaining : (size_t)buffer_size);
+
+	memcpy(buffer, buffer_data->ptr + buffer_data->offset, new_size);
+	buffer_data->offset += new_size;
+	return (int)new_size;
 }
 
 // For `res://` videos.
 int64_t FFmpeg::seek_buffer(void* opaque, int64_t offset, int where) {
 	BufferData* buffer_data = (BufferData*)opaque;
+	int64_t new_offset = 0;
 
 	switch (where) {
-	case SEEK_SET:
-		buffer_data->offset = offset;
+	case SEEK_SET: // 0
+		new_offset = offset;
 		break;
-	case SEEK_CUR:
-		buffer_data->offset += offset;
+	case SEEK_CUR: // 1
+		new_offset = buffer_data->offset + offset;
 		break;
-	case SEEK_END:
-		buffer_data->offset = buffer_data->size + offset;
+	case SEEK_END: // 2
+		new_offset = buffer_data->size + offset;
 		break;
-	case AVSEEK_SIZE:
+	case AVSEEK_SIZE: // 1
 		return buffer_data->size;
+	default: // Error
+		return -1;
 	}
 
+	if (new_offset < 0)
+		return -1;
+
+	buffer_data->offset = new_offset;
 	return buffer_data->offset;
 }

@@ -502,7 +502,7 @@ func _print_stream_info(streams: PackedInt32Array) -> void:
 		if language != "":
 			title += " - %s" % language
 
-		print(title)
+		print("- %s" % title)
 
 
 func _print_system_debug() -> void:
@@ -532,19 +532,19 @@ func _print_video_debug() -> void:
 	print("Sar: ", video.get_sar())
 
 	if video_streams.size() != 0:
-		print("Video streams:")
+		print_rich("Video streams: [i](%s)" % video_streams.size())
 		_print_stream_info(video_streams)
 	else:
 		print("No video streams found.")
 
 	if audio_streams.size() != 0:
-		print("Audio streams:")
+		print_rich("Audio streams: [i](%s)" % audio_streams.size())
 		_print_stream_info(audio_streams)
 	else:
 		print("No audio streams found.")
 
 	if subtitle_streams.size() != 0:
-		print("Subtitle streams:")
+		print_rich("Subtitle streams: [i](%s)" % subtitle_streams.size())
 		_print_stream_info(subtitle_streams)
 	else:
 		print("No subtitle streams found.")
