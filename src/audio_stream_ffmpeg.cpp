@@ -59,28 +59,26 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	if (stream_index == -1) {
 		for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 			AVCodecParameters* params = av_format_ctx->streams[i]->codecpar;
-	
+
 			if (params->codec_type == AVMEDIA_TYPE_AUDIO) {
 				av_stream = av_format_ctx->streams[i];
 				break;
 			}
 		}
 	} else if (stream_index >= 0 && stream_index < av_format_ctx->nb_streams) {
-		AVCodecParameters *av_codec_params = av_format_ctx->streams[stream_index]->codecpar;
+		AVCodecParameters* av_codec_params = av_format_ctx->streams[stream_index]->codecpar;
 
-		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
 			av_stream = av_format_ctx->streams[stream_index];
-		}
 	} else
 		return _log_err("Invalid stream index");
 
 	// Discard all non-audio streams.
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
-		AVCodecParameters *av_codec_params = av_format_ctx->streams[i]->codecpar;
+		AVCodecParameters* av_codec_params = av_format_ctx->streams[i]->codecpar;
 		if (!avcodec_find_decoder(av_codec_params->codec_id) || av_codec_params->codec_type != AVMEDIA_TYPE_AUDIO) {
-			if (i != stream_index) {
+			if (i != stream_index)
 				av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
-			}
 		}
 	}
 
@@ -172,9 +170,9 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 			found_target = true;
 
 			av_decoded_frame->format = AV_SAMPLE_FMT_S16;
-			av_decoded_frame->ch_layout =
-				audio_stream_ffmpeg->ch_layout.nb_channels <= 2 ?
-				audio_stream_ffmpeg->ch_layout : (AVChannelLayout) AV_CHANNEL_LAYOUT_STEREO;
+			av_decoded_frame->ch_layout = audio_stream_ffmpeg->ch_layout.nb_channels <= 2
+											  ? audio_stream_ffmpeg->ch_layout
+											  : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 			av_decoded_frame->sample_rate = av_frame->sample_rate;
 			av_decoded_frame->nb_samples =
 				swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame->nb_samples);
@@ -229,9 +227,8 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 }
 
 int32_t AudioStreamFFmpegPlayback::_mix_resampled(AudioFrame* p_buffer, int32_t p_frames) {
-	if (!audio_stream_ffmpeg->loaded) {
+	if (!audio_stream_ffmpeg->loaded)
 		return 0;
-	}
 
 	while (buffer_fill < p_frames)
 		if (!fill_buffer())
@@ -275,9 +272,9 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	}
 
 	av_decoded_frame.get()->format = AV_SAMPLE_FMT_S16;
-	av_decoded_frame->ch_layout =
-		audio_stream_ffmpeg->ch_layout.nb_channels <= 2 ?
-		audio_stream_ffmpeg->ch_layout : (AVChannelLayout) AV_CHANNEL_LAYOUT_STEREO;
+	av_decoded_frame->ch_layout = audio_stream_ffmpeg->ch_layout.nb_channels <= 2
+									  ? audio_stream_ffmpeg->ch_layout
+									  : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 	av_decoded_frame.get()->sample_rate = av_frame.get()->sample_rate;
 	av_decoded_frame.get()->nb_samples =
 		swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame.get()->nb_samples);
@@ -326,4 +323,6 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	return true;
 }
 
-void AudioStreamFFmpeg::_bind_methods() { ClassDB::bind_method(D_METHOD("open", "path", "stream_index"), &AudioStreamFFmpeg::open, DEFVAL(-1)); }
+void AudioStreamFFmpeg::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("open", "path", "stream_index"), &AudioStreamFFmpeg::open, DEFVAL(-1));
+}

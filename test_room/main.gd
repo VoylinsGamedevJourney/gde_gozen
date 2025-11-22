@@ -84,9 +84,11 @@ func after_video_open() -> void:
 		loading_screen.visible = false
 		
 		audio_track_option_button.clear()
-		for i in range(len(video_playback.audio_streams)):
-			var title := video_playback.get_stream_title(video_playback.audio_streams[i])
-			var lang := video_playback.get_stream_language(video_playback.audio_streams[i])
+
+		for i: int in range(len(video_playback.audio_streams)):
+			var title: String = video_playback.get_stream_title(video_playback.audio_streams[i])
+			var lang: String = video_playback.get_stream_language(video_playback.audio_streams[i])
+
 			if title == "":
 				title = "Track " + str(i + 1)
 			if lang == "":

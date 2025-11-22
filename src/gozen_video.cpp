@@ -28,8 +28,9 @@ int GoZenVideo::open(const String& video_path) {
 		buffer_data.offset = 0;
 
 		unsigned char* avio_ctx_buffer = (unsigned char*)av_malloc(FFmpeg::AVIO_CTX_BUFFER_SIZE);
-		avio_ctx = make_unique_ffmpeg<AVIOContext, AVIOContextDeleter>(avio_alloc_context(
-			avio_ctx_buffer, FFmpeg::AVIO_CTX_BUFFER_SIZE, 0, &buffer_data, &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
+		avio_ctx = make_unique_ffmpeg<AVIOContext, AVIOContextDeleter>(
+			avio_alloc_context(avio_ctx_buffer, FFmpeg::AVIO_CTX_BUFFER_SIZE, 0, &buffer_data,
+							   &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
 
 		if (!avio_ctx) {
 			close();
@@ -86,18 +87,20 @@ int GoZenVideo::open(const String& video_path) {
 	video_streams = PackedInt32Array();
 	audio_streams = PackedInt32Array();
 	subtitle_streams = PackedInt32Array();
+
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters* av_codec_params = av_format_ctx->streams[i]->codecpar;
 
-		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
-		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO &&
-				   !(av_format_ctx->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
+		if (!avcodec_find_decoder(av_codec_params->codec_id))
+			continue;
+
+		if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO &&
+			!(av_format_ctx->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC))
 			video_streams.append(i);
-		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO) {
+		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
 			audio_streams.append(i);
-		} else if (av_codec_params->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+		else if (av_codec_params->codec_type == AVMEDIA_TYPE_SUBTITLE)
 			subtitle_streams.append(i);
-		}
 	}
 
 	// Setup Decoder codec context.
@@ -193,6 +196,7 @@ int GoZenVideo::open(const String& video_path) {
 	// - Average framerate.
 	if (av_stream->avg_frame_rate.num > 0 && av_stream->avg_frame_rate.den > 0) {
 		double avg_rate = av_q2d(av_stream->avg_frame_rate);
+
 		if (avg_rate > 0.1)
 			framerate = avg_rate;
 	}
@@ -200,6 +204,7 @@ int GoZenVideo::open(const String& video_path) {
 	// - Real framerate (not always correct).
 	if (framerate <= 0.1 && av_stream->r_frame_rate.num > 0 && av_stream->r_frame_rate.den > 0) {
 		double r_rate = av_q2d(av_stream->r_frame_rate);
+
 		if (r_rate > 0.1)
 			framerate = r_rate;
 	}
@@ -261,9 +266,9 @@ int GoZenVideo::open(const String& video_path) {
 		av_stream->duration = duration;
 	}
 
-	if (av_stream->nb_frames > 0) {
+	if (av_stream->nb_frames > 0)
 		frame_count = av_stream->nb_frames;
-	} else {
+	else {
 		frame_count = static_cast<int>(
 			std::round((static_cast<double>(duration) / static_cast<double>(AV_TIME_BASE)) * framerate));
 	}
@@ -332,8 +337,11 @@ int GoZenVideo::seek_frame(int frame_nr) {
 		}
 
 		// Get frame pts.
-		current_pts =
-			av_frame->best_effort_timestamp == AV_NOPTS_VALUE ? av_frame->pts : av_frame->best_effort_timestamp;
+		if (av_frame->best_effort_timestamp == AV_NOPTS_VALUE)
+			current_pts = av_frame->pts;
+		else
+			current_pts = av_frame->best_effort_timestamp;
+
 		if (current_pts == AV_NOPTS_VALUE)
 			continue;
 
@@ -372,14 +380,14 @@ PackedInt32Array GoZenVideo::get_streams(int stream_type) {
 	}
 
 	switch (stream_type) {
-		case STREAM_VIDEO:
-			return video_streams;
-		case STREAM_AUDIO:
-			return audio_streams;
-		case STREAM_SUBTITLE:
-			return subtitle_streams;
+	case STREAM_VIDEO:
+		return video_streams;
+	case STREAM_AUDIO:
+		return audio_streams;
+	case STREAM_SUBTITLE:
+		return subtitle_streams;
 	}
-	
+
 	_log_err("invalid stream type requested");
 	return PackedInt32Array();
 }
@@ -397,10 +405,15 @@ Dictionary GoZenVideo::get_stream_metadata(int stream_index) {
 
 	Dictionary dict = Dictionary();
 
-	AVDictionaryEntry *entry = nullptr;
-	while (entry = av_dict_get(av_format_ctx->streams[stream_index]->metadata, "", entry, AV_DICT_IGNORE_SUFFIX)) {
+	AVDictionaryEntry* entry = nullptr;
+	while ((entry = av_dict_get(av_format_ctx->streams[stream_index]->metadata, "", entry, AV_DICT_IGNORE_SUFFIX))) {
 		dict[entry->key] = entry->value;
 	}
+
+	if (!dict.has("title"))
+		dict.set("title", "");
+	if (!dict.has("language"))
+		dict.set("language", "");
 
 	return dict;
 }
@@ -439,6 +452,7 @@ int GoZenVideo::_seek_frame(int frame_nr) {
 
 #define BIND_METHOD_1(method_name, param1)                                                                             \
 	ClassDB::bind_method(D_METHOD(#method_name, param1), &GoZenVideo::method_name)
+
 
 void GoZenVideo::_bind_methods() {
 	BIND_METHOD_1(open, "video_path");

@@ -129,8 +129,8 @@ func set_video_path(new_path: String) -> void:
 		new_path = ResourceUID.get_id_path(ResourceUID.text_to_id(new_path))
 
 	path = new_path
-
 	video = GoZenVideo.new()
+
 	if debug:
 		video.enable_debug()
 	else:
@@ -143,6 +143,7 @@ func set_video_path(new_path: String) -> void:
 			push_error("Something went wrong appending thread to _threads!")
 
 
+## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
 func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
 	if video != null:
 		close()
@@ -281,12 +282,12 @@ func close() -> void:
 #------------------------------------------------ PLAYBACK HANDLING
 func _process(delta: float) -> void:
 	if is_playing:
+		_skips = 0
 		_time_elapsed += delta
 
 		if _time_elapsed < _frame_time:
 			return
 
-		_skips = 0
 		while _time_elapsed >= _frame_time:
 			_time_elapsed -= _frame_time
 			current_frame += 1
@@ -299,6 +300,7 @@ func _process(delta: float) -> void:
 				audio_player.set_stream_paused(true)
 
 			video_ended.emit()
+
 			if loop:
 				seek_frame(0)
 				play()
@@ -393,23 +395,24 @@ func get_video_length() -> int:
 func get_video_rotation() -> int:
 	return _rotation
 
-func get_stream_title(stream : int) -> String:
-	if not is_open():
-		printerr("Video is not open!")
-		return ""
-	var value = video.get_stream_metadata(stream).get("title")
-	if value == null:
-		return ""
-	return value
 
-func get_stream_language(stream : int) -> String:
+## Getting the title of a stream.
+func get_stream_title(stream: int) -> String:
 	if not is_open():
 		printerr("Video is not open!")
 		return ""
-	var value = video.get_stream_metadata(stream).get("language")
-	if value == null:
+
+	return video.get_stream_metadata(stream).get("title")
+
+
+## Getting the language of a stream.
+func get_stream_language(stream: int) -> String:
+	if not is_open():
+		printerr("Video is not open!")
 		return ""
-	return value
+
+	return video.get_stream_metadata(stream).get("language")
+
 
 ## Checking to see if the video is open or not, trying to run functions without checking if open can crash your project.
 func is_open() -> bool:
@@ -421,6 +424,7 @@ func _get_img_tex(image_data: PackedByteArray, width: int, height: int, r8: bool
 	var image: Image = Image.create_from_data(width, height, false, format, image_data)
 
 	return ImageTexture.create_from_image(image)
+
 
 #------------------------------------------------ SETTERS
 func _set_current_frame(new_current_frame: int) -> void:
@@ -457,7 +461,8 @@ func _set_pitch_adjust() -> void:
 	elif _audio_pitch_effect.pitch_scale != 1.0:
 		_audio_pitch_effect.pitch_scale = 1.0
 
-func set_audio_stream(stream : int) -> void:
+
+func set_audio_stream(stream: int) -> void:
 	if not is_open():
 		printerr("Video is not open!")
 		return
@@ -467,6 +472,7 @@ func set_audio_stream(stream : int) -> void:
 		return
 
 	if enable_audio:
+		@warning_ignore("return_value_discarded")
 		WorkerThreadPool.add_task(_open_audio.bind(stream)) # not the best to discard a task, but oh well
 
 
@@ -476,7 +482,7 @@ func _open_video() -> void:
 		printerr("Error opening video!")
 
 
-func _open_audio(stream : int = -1) -> void:
+func _open_audio(stream: int = -1) -> void:
 	var data: PackedByteArray = GoZenAudio.get_audio_data(path, stream)
 	if data.size() != 0:
 		@warning_ignore("UNSAFE_PROPERTY_ACCESS")
@@ -484,16 +490,20 @@ func _open_audio(stream : int = -1) -> void:
 	else:
 		printerr("Audio data for video '%s' was 0!" % path)
 
-func _print_stream_info(streams : PackedInt32Array) -> void:
-	for i in range(len(streams)):
-		var title = video.get_stream_metadata(streams[i]).get("title")
-		var lang = video.get_stream_metadata(streams[i]).get("language")
-		if title == null or title == "":
+
+func _print_stream_info(streams: PackedInt32Array) -> void:
+	for i: int in range(len(streams)):
+		var metadata: Dictionary = video.get_stream_metadata(streams[i])
+		var title: String = metadata.get("title")
+		var language: String = metadata.get("language")
+
+		if title == "":
 			title = "Track " + str(i + 1)
-		if lang == null:
-			print(title)
-		else:
-			print(title, " - ", lang)
+		if language != "":
+			title += " - %s" % language
+
+		print(title)
+
 
 func _print_system_debug() -> void:
 	print_rich("[b]System info")
@@ -521,9 +531,20 @@ func _print_video_debug() -> void:
 	print("Using sws: ", video.is_using_sws())
 	print("Sar: ", video.get_sar())
 
-	print("Video Tracks:")
-	_print_stream_info(video_streams)
-	print("Audio Tracks:")
-	_print_stream_info(audio_streams)
-	print("Subtitle Tracks:")
-	_print_stream_info(subtitle_streams)
+	if video_streams.size() != 0:
+		print("Video streams:")
+		_print_stream_info(video_streams)
+	else:
+		print("No video streams found.")
+
+	if audio_streams.size() != 0:
+		print("Audio streams:")
+		_print_stream_info(audio_streams)
+	else:
+		print("No audio streams found.")
+
+	if subtitle_streams.size() != 0:
+		print("Subtitle streams:")
+		_print_stream_info(subtitle_streams)
+	else:
+		print("No subtitle streams found.")
