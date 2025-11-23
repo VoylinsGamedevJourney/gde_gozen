@@ -501,10 +501,10 @@ func set_audio_stream(stream: int) -> void:
 
 #------------------------------------------------ MISC
 ## Converts the given duration as seconds in a formatted string. (hh):mm:ss
-func duration_to_formatted_string(duration : float) -> String:
-	var hours: int = floori(duration / 3600.0)
-	var minutes: int = floori(duration / 60.0) % 60
-	var seconds: int = floori(duration) % 60
+func duration_to_formatted_string(duration_in_seconds: float) -> String:
+	var hours: int = floori(duration_in_seconds / 3600.0)
+	var minutes: int = floori(duration_in_seconds / 60.0) % 60
+	var seconds: int = floori(duration_in_seconds) % 60
 
 	if hours == 0:
 		return "%02d:%02d" % [minutes, seconds]

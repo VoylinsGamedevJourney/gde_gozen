@@ -1,4 +1,4 @@
-name: 3 | MacOS
+name: 3 | Compile MacOS
 
 on: 
   workflow_call:

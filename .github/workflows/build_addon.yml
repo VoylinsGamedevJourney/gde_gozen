@@ -11,33 +11,33 @@ on:
 run-name: 'Build GoZen Release: v${{ inputs.version }} by @${{ github.actor }}'
 
 jobs:
-  build-linux:
-    name: 'Build Linux'
-    uses: ./.github/workflows/linux.yml
+  compile-linux:
+    name: 'Compile Linux'
+    uses: ./.github/workflows/compile_linux.yml
     with:
-      version: ${{ inputs.version }}
+      version: v${{ inputs.version }}
 
-  build-windows:
-    name: 'Build Windows'
-    uses: ./.github/workflows/windows.yml
+  compile-windows:
+    name: 'Compile Windows'
+    uses: ./.github/workflows/compile_windows.yml
     with:
-      version: ${{ inputs.version }}
+      version: v${{ inputs.version }}
 
-  build-macos:
-    name: 'Build MacOs'
-    uses: ./.github/workflows/macos.yml
+  compile-macos:
+    name: 'Compile MacOs'
+    uses: ./.github/workflows/compile_macos.yml
     with:
-      version: ${{ inputs.version }}
+      version: v${{ inputs.version }}
 
-  build-android:
-    name: 'Build Android'
-    uses: ./.github/workflows/android.yml
+  compile-android:
+    name: 'Compile Android'
+    uses: ./.github/workflows/compile_android.yml
     with:
-      version: ${{ inputs.version }}
+      version: v${{ inputs.version }}
 
 
   build-addon:
-    needs: [build-linux, build-windows, build-macos, build-android]
+    needs: [compile-linux, compile-windows, compile-macos, compile-android]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout submodules
@@ -84,7 +84,7 @@ jobs:
       - name: Finalizing
         run: |
           cp LICENSE test_room/addons/gde_gozen/
-          sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
+          sed -i 's/^version="[^"]*"/version="v${{ inputs.version }}"/' test_room/addons/gde_gozen/plugin.cfg
 
       - name: Upload addon
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
           retention-days: 7
 
   build-csharp-addon:
-    needs: [build-linux, build-windows, build-macos, build-android]
+    needs: [compile-linux, compile-windows, compile-macos, compile-android]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout submodules
@@ -148,7 +148,7 @@ jobs:
       - name: Finalizing
         run: |
           cp LICENSE test_room_csharp/addons/gde_gozen/
-          sed -i 's/^version="[^"]*"/version="${{ inputs.version }}"/' test_room_csharp/addons/gde_gozen/plugin.cfg
+          sed -i 's/^version="[^"]*"/version="v${{ inputs.version }}"/' test_room_csharp/addons/gde_gozen/plugin.cfg
 
       - name: Upload addon
         uses: actions/upload-artifact@v4
