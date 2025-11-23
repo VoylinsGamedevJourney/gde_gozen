@@ -430,6 +430,66 @@ Dictionary GoZenVideo::get_stream_metadata(int stream_index) {
 	return dict;
 }
 
+int GoZenVideo::get_chapter_count() {
+	if (!loaded) {
+		_log_err("file is not open");
+		return 0;
+	}
+
+	return av_format_ctx->nb_chapters;
+}
+
+float GoZenVideo::get_chapter_start(int chapter_index) {
+	if (!loaded) {
+		_log_err("file is not open");
+		return -1.0f;
+	}
+
+	if (chapter_index < 0 || chapter_index >= av_format_ctx->nb_chapters) {
+		_log_err("invalid chapter index");
+		return -1.0f;
+	}
+
+	AVChapter* chapter = av_format_ctx->chapters[chapter_index];
+	return chapter->start * av_q2d(chapter->time_base);
+}
+
+float GoZenVideo::get_chapter_end(int chapter_index) {
+	if (!loaded) {
+		_log_err("file is not open");
+		return -1.0f;
+	}
+
+	if (chapter_index < 0 || chapter_index >= av_format_ctx->nb_chapters) {
+		_log_err("invalid chapter index");
+		return -1.0f;
+	}
+
+	AVChapter* chapter = av_format_ctx->chapters[chapter_index];
+	return chapter->end * av_q2d(chapter->time_base);
+}
+
+Dictionary GoZenVideo::get_chapter_metadata(int chapter_index) {
+	if (!loaded) {
+		_log_err("file is not open");
+		return Dictionary();
+	}
+
+	if (chapter_index < 0 || chapter_index >= av_format_ctx->nb_chapters) {
+		_log_err("invalid chapter index");
+		return Dictionary();
+	}
+
+	Dictionary dict = Dictionary();
+
+	AVDictionaryEntry* entry = nullptr;
+	while ((entry = av_dict_get(av_format_ctx->chapters[chapter_index]->metadata, "", entry, AV_DICT_IGNORE_SUFFIX))) {
+		dict[entry->key] = entry->value;
+	}
+
+	return dict;
+}
+
 void GoZenVideo::_copy_frame_data() {
 	if (av_frame->data[0] == nullptr) {
 		_log("Frame is empty");
@@ -476,6 +536,11 @@ void GoZenVideo::_bind_methods() {
 
 	BIND_METHOD_ARGS(get_streams, "stream_type");
 	BIND_METHOD_ARGS(get_stream_metadata, "stream_index");
+
+	BIND_METHOD(get_chapter_count);
+	BIND_METHOD_ARGS(get_chapter_start, "chapter_index");
+	BIND_METHOD_ARGS(get_chapter_end, "chapter_index");
+	BIND_METHOD_ARGS(get_chapter_metadata, "chapter_index");
 
 	BIND_METHOD(set_sws_flag_bilinear);
 	BIND_METHOD(set_sws_flag_bicubic);

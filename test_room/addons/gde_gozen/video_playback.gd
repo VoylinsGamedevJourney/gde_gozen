@@ -47,6 +47,7 @@ var current_frame: int = 0: set = _set_current_frame ## Current frame number whi
 var video_streams: PackedInt32Array = [] ## List of video streams in the video file.
 var audio_streams: PackedInt32Array = [] ## List of audio streams in the video file.
 var subtitle_streams: PackedInt32Array = [] ## List of subtitle streams in the video file.
+var chapters: Array[Chapter] = [] ## List of chapters in the video file.
 
 var _time_elapsed: float = 0.
 var _frame_time: float = 0
@@ -66,6 +67,17 @@ var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 var y_texture: ImageTexture;
 var u_texture: ImageTexture;
 var v_texture: ImageTexture;
+
+class Chapter:
+	var start: float ## Start of the chapter in seconds.
+	var end: float ## End of the chapter in seconds.
+	var title: String
+
+	@warning_ignore("SHADOWED_VARIABLE")
+	func _init(start: float, end: float, title: String) -> void:
+		self.start = start
+		self.end = end
+		self.title = title
 
 
 
@@ -171,6 +183,17 @@ func _update_video(new_video: GoZenVideo) -> void:
 	video_streams = video.get_streams(STREAM_TYPE.VIDEO)
 	audio_streams = video.get_streams(STREAM_TYPE.AUDIO)
 	subtitle_streams = video.get_streams(STREAM_TYPE.SUBTITLE)
+	
+	chapters.clear()
+	for i: int in range(video.get_chapter_count()):
+		@warning_ignore("UNSAFE_CALL_ARGUMENT")
+		var chapter: Chapter = Chapter.new(
+			video.get_chapter_start(i),
+			video.get_chapter_end(i),
+			video.get_chapter_metadata(i).get("title", "")
+		)
+		chapters.append(chapter)
+		
 
 	if abs(_rotation) == 90:
 		image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_R8)
@@ -477,6 +500,17 @@ func set_audio_stream(stream: int) -> void:
 
 
 #------------------------------------------------ MISC
+## Converts the given duration as seconds in a formatted string. (hh):mm:ss
+func duration_to_formatted_string(duration : float) -> String:
+	var hours: int = floori(duration / 3600.0)
+	var minutes: int = floori(duration / 60.0) % 60
+	var seconds: int = floori(duration) % 60
+
+	if hours == 0:
+		return "%02d:%02d" % [minutes, seconds]
+	return "%02d:%02d:%02d" % [hours, minutes, seconds]
+
+
 func _open_video() -> void:
 	if video.open(path):
 		printerr("Error opening video!")
@@ -548,3 +582,17 @@ func _print_video_debug() -> void:
 		_print_stream_info(subtitle_streams)
 	else:
 		print("No subtitle streams found.")
+	
+	if chapters.size() != 0:
+		print_rich("Chapters: [i](%s)" % chapters.size())
+		for i: int in range(chapters.size()):
+			var title: String = chapters[i].title
+			if title == "":
+				title = "Chapter " + str(i + 1)
+			print("- %s-%s - %s" % [
+				duration_to_formatted_string(chapters[i].start),
+				duration_to_formatted_string(chapters[i].end),
+				title
+			])
+	else:
+		print("No chapters found.")
