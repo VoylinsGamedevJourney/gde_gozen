@@ -1,0 +1,59 @@
+name: Compile GDE GoZen Core
+description: Compiles FFmpeg and the GDExtension.
+inputs:
+  platform:
+    required: true
+    description: linux, windows, macos, android
+  arch:
+    required: true
+    description: x86_64, arm64, arm32, ...
+  ffmpeg_arch_arg:
+    required: true
+    description: Override if script expects different arch name (for example - armv7a for android).
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set python path
+      shell: bash
+      run: echo "PYTHONPATH=$PYTHONPATH:." >> $GITHUB_ENV
+
+    - name: Compile FFmpeg
+      shell: bash
+      run: |
+        ARCH_ARG="${{ inputs.arch }}"
+        if [ ! -z "${{ inputs.ffmpeg_arch_arg }}" ]; then
+          ARCH_ARG="${{ inputs.ffmpeg_arch_arg }}"
+        fi
+
+        python3 -c "import build; build.compile_ffmpeg_${{ inputs.platform }}('$ARCH_ARG')"
+
+    - name: Build debug
+      shell: bash
+      run: scons -j4 target=template_debug platform=${{ inputs.platform }} arch=${{ inputs.arch }}
+
+    - name: Build release
+      shell: bash
+      run: scons -j4 target=template_release platform=${{ inputs.platform }} arch=${{ inputs.arch }}
+
+    - name: MacOS fix (RPath)
+      if: inputs.platform == 'macos'
+      shell: bash
+      run: python3 -c "import build; build.macos_fix('${{ inputs.arch }}')"
+
+    - name: Upload artifact (GDScript)
+      uses: actions/upload-artifact@v4
+      with:
+        name: bin_${{ inputs.platform }}_${{ inputs.arch }}
+        path: test_room/addons/gde_gozen/bin
+        retention-days: 1
+        if-no-files-found: error
+
+    - name: Upload artifact (C#)
+      uses: actions/upload-artifact@v4
+      with:
+        name: bin_${{ inputs.platform }}_${{ inputs.arch }}_csharp
+        path: test_room_csharp/addons/gde_gozen/bin
+        retention-days: 1
+        if-no-files-found: error
+

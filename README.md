@@ -1,10 +1,6 @@
 # GDE GoZen
 
 [![Discord](https://img.shields.io/discord/1120566516899926068?label=Discord&logo=discord&logoColor=white)](https://discord.gg/BdbUf7VKYC)
-[![Linux](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_linux.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_linux.yml)
-[![Windows](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_windows.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_windows.yml)
-[![Android](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_android.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_android.yml)
-[![MacOS](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_macos.yml/badge.svg)](https://github.com/VoylinsGamedevJourney/gde_gozen/actions/workflows/compile_macos.yml)
 [![License: LGPL v2](https://img.shields.io/badge/License-LGPL_v2-blue.svg)](https://www.gnu.org/licenses/lgpl-2.0)
 
 <img src="./assets/icon.svg" alt="GoZen Logo" width="200"/>

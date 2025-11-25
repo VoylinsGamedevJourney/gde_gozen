@@ -1,0 +1,217 @@
+name: Build GDE GoZen
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        type: string
+        default: '9.0'
+
+run-name: 'Build GDE GoZen: v${{ inputs.version }}'
+
+jobs:
+  build-native: # Normal ubuntu runner.
+    name: ${{ matrix.platform }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+            arch: x86_64
+            packages: yasm scons build-essential diffutils
+          - os: ubuntu-22.04
+            platform: linux
+            arch: arm64
+            packages: yasm scons build-essential diffutils gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+            setup_cmd: |
+              sudo dpkg --add-architecture arm64
+              sudo sed -i 's/^deb/deb [arch=amd64]/g' /etc/apt/sources.list
+              
+              # Add ARM64 ports
+              echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+              echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+              echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list4
+          - os: macos-latest
+            platform: macos
+            arch: arm64
+            packages: yasm scons diffutils make
+            setup_cmd: brew update
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          if [ "${{ matrix.platform }}" == "linux" ]; then
+            ${{ matrix.setup_cmd }}
+            sudo apt-get update
+            sudo apt-get install -y ${{ matrix.packages }}
+          else
+            ${{ matrix.setup_cmd }}
+            brew install ${{ matrix.packages }}
+          fi
+
+      - name: Compile
+        uses: ./.github/actions/compile-core
+        with:
+          platform: ${{ matrix.platform }}
+          arch: ${{ matrix.arch }}
+
+  build-container: # Arch Linux container.
+    name: ${{ matrix.platform }} (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            arch: x86_64
+            extra_packages: mingw-w64 wine ninja fakeroot debugedit
+          - platform: android
+            arch: arm64
+            ffmpeg_arg: arm64
+            extra_packages: jdk17-openjdk cmake unzip libtool
+          - platform: android
+            arch: arm32
+            ffmpeg_arg: armv7a
+            extra_packages: jdk17-openjdk cmake unzip libtool
+
+    env:
+      ANDROID_SDK_ROOT: /opt/android-sdk
+      ANDROID_HOME: /opt/android-sdk
+      NDK_VERSION: '23.2.8568313'
+      ANDROID_BUILD_TOOLS: '34.0.0'
+      ANDROID_PLATFORM: '34'
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk
+
+    steps:
+      - name: Install Base Dependencies
+        run: |
+          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg ${{ matrix.extra_packages }}
+
+      - name: Setup Android SDK
+        if: matrix.platform == 'android'
+        run: |
+          echo "ANDROID_HOME=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> $GITHUB_ENV
+          echo "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "${ANDROID_SDK_ROOT}/platform-tools" >> $GITHUB_PATH
+          echo "${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> $GITHUB_PATH
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+          
+          # Download tools.
+          CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          wget -q "${CMDLINE_TOOLS_URL}" -O cmdline-tools.zip
+          mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+          unzip -q cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools/temp"
+          mv "${ANDROID_SDK_ROOT}/cmdline-tools/temp/cmdline-tools/"* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/"
+          
+          # Install SDK/NDK.
+          mkdir -p ${ANDROID_SDK_ROOT}/licenses/
+          yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;${NDK_VERSION}" "platform-tools" "platforms;android-${ANDROID_PLATFORM}" "build-tools;${ANDROID_BUILD_TOOLS}" --sdk_root=${ANDROID_SDK_ROOT}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Compile
+        uses: ./.github/actions/compile-core
+        with:
+          platform: ${{ matrix.platform }}
+          arch: ${{ matrix.arch }}
+          ffmpeg_arch_arg: ${{ matrix.ffmpeg_arg }}
+
+  package-addon:
+    needs: [build-native, build-container]
+    runs-on: ubuntu-22.04
+    name: Package & Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize & finalize
+        run: |
+          VERSION="v${{ inputs.version }}"
+
+          # GDScript folders.
+          mkdir -p test_room/addons/gde_gozen/bin
+          mkdir -p test_room/addons/gde_gozen/bin/macos/debug/lib
+          mkdir -p test_room/addons/gde_gozen/bin/macos/release/lib
+
+          # C# folders.
+          mkdir -p test_room_csharp/addons/gde_gozen/bin
+          mkdir -p test_room_csharp/addons/gde_gozen/bin/macos/debug/lib
+          mkdir -p test_room_csharp/addons/gde_gozen/bin/macos/release/lib
+          
+          # Linux.
+          cp -r artifacts/bin_linux_x86_64/* test_room/addons/gde_gozen/bin/linux_x86_64/
+          cp -r artifacts/bin_linux_arm64/* test_room/addons/gde_gozen/bin/linux_arm64/
+          # Windows.
+          cp -r artifacts/bin_windows_x86_64/* test_room/addons/gde_gozen/bin/windows_x86_64/
+          # MacOS.
+          cp -r artifacts/bin_macos_arm64/* test_room/addons/gde_gozen/bin/macos/
+          # Android.
+          cp -r artifacts/bin_android_arm64/* test_room/addons/gde_gozen/bin/android_arm64/
+          cp -r artifacts/bin_android_arm32/* test_room/addons/gde_gozen/bin/android_arm32/
+
+          # Linux (C#).
+          cp -r artifacts/bin_linux_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/linux_x86_64/
+          cp -r artifacts/bin_linux_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/linux_arm64/
+          # Windows (C#).
+          cp -r artifacts/bin_windows_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/windows_x86_64/
+          # MacOS (C#).
+          cp -r artifacts/bin_macos_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/macos/
+          # Android (C#).
+          cp -r artifacts/bin_android_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/android_arm64/
+          cp -r artifacts/bin_android_arm32_csharp/* test_room_csharp/addons/gde_gozen/bin/android_arm32/
+
+          # Copy license and config.
+          cp LICENSE test_room/addons/gde_gozen/
+          cp LICENSE test_room_csharp/addons/gde_gozen/
+          sed -i 's/^version="[^"]*"/version="'$VERSION'"/' test_room/addons/gde_gozen/plugin.cfg
+          sed -i 's/^version="[^"]*"/version="'$VERSION'"/' test_room_csharp/addons/gde_gozen/plugin.cfg
+
+      - name: Upload artifact (GDScript)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_v${{ inputs.version }}
+          path: test_room/addons/
+          retention-days: 7
+
+      - name: Upload artifact (C#)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_v${{ inputs.version }}_csharp
+          path: test_room_csharp/addons/
+          retention-days: 7
+
+      - name: Upload artifact (GDScript Test Room)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_test_room_v${{ inputs.version }}
+          path: test_room/
+          retention-days: 7
+
+      - name: Upload artifact (C# Test Room)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GDE_GoZen_test_room_v${{ inputs.version }}_csharp
+          path: test_room_csharp/
+          retention-days: 7

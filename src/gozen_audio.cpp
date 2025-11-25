@@ -235,16 +235,8 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 	return data;
 }
 
-
-#define BIND_STATIC_METHOD_1(method_name, param1)                                                                      \
-	ClassDB::bind_static_method("GoZenAudio", D_METHOD(#method_name, param1), &GoZenAudio::method_name)
-
-#define BIND_STATIC_METHOD_2(method_name, param1, param2)                                                              \
-	ClassDB::bind_static_method("GoZenAudio", D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name)
-
 #define BIND_STATIC_METHOD_2_OPTIONAL_1(method_name, param1, param2, default_val)                                      \
 	ClassDB::bind_static_method("GoZenAudio", D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name,        \
 								DEFVAL(default_val))
-
 
 void GoZenAudio::_bind_methods() { BIND_STATIC_METHOD_2_OPTIONAL_1(get_audio_data, "file_path", "stream_index", -1); }
