@@ -47,6 +47,7 @@ Supporting can be done through contributions to the project and through donation
 ## Projects using GDE GoZen
 ### Games
 - [vergissmeinnicht](https://ciaokokao.itch.io/vergissmeinnicht);
+- [Hypnotic Typing Prototype](https://mat383.com/blog/hypnotic-typing-prototype/);
 
 ### Projects
 - [GoZen - video editor](https://github.com/VoylinsGamedevJourney/GoZen)
