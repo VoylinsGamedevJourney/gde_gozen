@@ -95,8 +95,9 @@ int GoZenVideo::open(const String& video_path) {
 			continue;
 
 		if (av_codec_params->codec_type == AVMEDIA_TYPE_VIDEO &&
-			!(av_format_ctx->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC))
+			!(av_format_ctx->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
 			video_streams.append(i);
+		}
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
 			audio_streams.append(i);
 		else if (av_codec_params->codec_type == AVMEDIA_TYPE_SUBTITLE)
@@ -104,7 +105,17 @@ int GoZenVideo::open(const String& video_path) {
 	}
 
 	// Setup Decoder codec context.
-	const AVCodec* av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
+	// CRITICAL: For VP9, force libvpx-vp9 decoder to support alpha channel
+	// The native vp9 decoder does NOT support alpha and will silently discard it
+	const AVCodec* av_codec = nullptr;
+	if (av_stream->codecpar->codec_id == AV_CODEC_ID_VP9) {
+		av_codec = avcodec_find_decoder_by_name("libvpx-vp9");
+	}
+
+	if (!av_codec) {
+		av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
+	}
+
 	if (!av_codec) {
 		close();
 		return _log_err("Couldn't find decoder");
@@ -235,16 +246,33 @@ int GoZenVideo::open(const String& video_path) {
 	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks.
 
 	// Preparing the data images.
-	if (av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P) {
+	// VP9 with alpha reports as YUV420P but has 4 planes - check for this
+	bool has_4_planes = (av_frame->data[3] != nullptr && av_frame->linesize[3] > 0);
+
+	if ((av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P) && !has_4_planes) {
 		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
 		u_data = Image::create_empty(av_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
 		padding = av_frame->linesize[0] - resolution.x;
+		has_alpha = false;
+	} else if (av_frame->format == AV_PIX_FMT_YUVA420P || ((av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P) && has_4_planes)) {
+		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(av_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
+		v_data = Image::create_empty(av_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
+		a_data = Image::create_empty(av_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
+		padding = av_frame->linesize[0] - resolution.x;
+		has_alpha = true;
 	} else {
 		using_sws = true;
+		const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(av_codec_ctx->pix_fmt);
+		bool codec_has_alpha = desc && (desc->flags & AV_PIX_FMT_FLAG_ALPHA);
+
+		AVPixelFormat target_format = codec_has_alpha ? AV_PIX_FMT_YUVA420P : AV_PIX_FMT_YUV420P;
+		has_alpha = (target_format == AV_PIX_FMT_YUVA420P);
+
 		sws_ctx = make_unique_ffmpeg<SwsContext, SwsCtxDeleter>(
 			sws_getContext(resolution.x, resolution.y, av_codec_ctx->pix_fmt, resolution.x, resolution.y,
-						   AV_PIX_FMT_YUV420P, sws_flag, NULL, NULL, NULL));
+						   target_format, sws_flag, NULL, NULL, NULL));
 
 		// We will use av_hw_frame to convert the frame data to as we won't use it anyway without hw decoding.
 		av_sws_frame = make_unique_avframe();
@@ -253,6 +281,11 @@ int GoZenVideo::open(const String& video_path) {
 		y_data = Image::create_empty(av_sws_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
 		u_data = Image::create_empty(av_sws_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_sws_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
+
+		if (has_alpha) { // NEW
+			a_data = Image::create_empty(av_sws_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
+		}
+
 		padding = av_sws_frame->linesize[0] - resolution.x;
 
 		av_frame_unref(av_sws_frame.get());
@@ -503,11 +536,19 @@ void GoZenVideo::_copy_frame_data() {
 		memcpy(u_data->ptrw(), av_sws_frame->data[1], u_data->get_size().x * u_data->get_size().y);
 		memcpy(v_data->ptrw(), av_sws_frame->data[2], v_data->get_size().x * v_data->get_size().y);
 
+		if (has_alpha) { // NEW
+			memcpy(a_data->ptrw(), av_sws_frame->data[3], a_data->get_size().x * a_data->get_size().y);
+		}
+
 		av_frame_unref(av_sws_frame.get());
 	} else {
 		memcpy(y_data->ptrw(), av_frame->data[0], y_data->get_size().x * y_data->get_size().y);
 		memcpy(u_data->ptrw(), av_frame->data[1], u_data->get_size().x * u_data->get_size().y);
 		memcpy(v_data->ptrw(), av_frame->data[2], v_data->get_size().x * v_data->get_size().y);
+
+		if (has_alpha) {
+			memcpy(a_data->ptrw(), av_frame->data[3], a_data->get_size().x * a_data->get_size().y);
+		}
 	}
 }
 
@@ -548,6 +589,8 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(get_y_data);
 	BIND_METHOD(get_u_data);
 	BIND_METHOD(get_v_data);
+	BIND_METHOD(get_a_data); // NEW
+	BIND_METHOD(has_alpha_channel); // NEW
 
 	// Metadata getters
 	BIND_METHOD(get_path);

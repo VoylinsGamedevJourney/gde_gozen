@@ -63,6 +63,7 @@ class GoZenVideo : public Resource {
 	bool debug = false;
 	bool using_sws = false; // This is set for when the pixel format is foreign and not directly supported by the addon.
 	bool full_color_range = true;
+	bool has_alpha = false; // NEW: Track if video contains alpha channel
 
 	int sws_flag = SWS_BILINEAR;
 
@@ -78,6 +79,7 @@ class GoZenVideo : public Resource {
 	Ref<Image> y_data;
 	Ref<Image> u_data;
 	Ref<Image> v_data;
+	Ref<Image> a_data; // NEW: Alpha plane data
 
 	PackedByteArray file_buffer; // For `res://` videos.
 
@@ -126,6 +128,8 @@ class GoZenVideo : public Resource {
 	inline Ref<Image> get_y_data() const { return y_data; }
 	inline Ref<Image> get_u_data() const { return u_data; }
 	inline Ref<Image> get_v_data() const { return v_data; }
+	inline Ref<Image> get_a_data() const { return a_data; } // NEW
+	inline bool has_alpha_channel() const { return has_alpha; } // NEW
 
 	// Metadata getters
 	inline String get_path() const { return path; }
@@ -158,7 +162,7 @@ class GoZenVideo : public Resource {
 		debug = true;
 	}
 	inline void disable_debug() {
-		av_log_set_level(AV_LOG_INFO);
+		av_log_set_level(AV_LOG_WARNING);
 		debug = false;
 	}
 	inline bool get_debug_enabled() const { return debug; }

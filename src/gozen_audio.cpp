@@ -231,7 +231,7 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 
 
 	avformat_close_input(&format_ctx);
-	av_log_set_level(AV_LOG_INFO);
+	av_log_set_level(AV_LOG_WARNING);
 	return data;
 }
 

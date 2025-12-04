@@ -4,6 +4,8 @@ shader_type canvas_item;
 uniform sampler2D y_data;
 uniform sampler2D u_data;
 uniform sampler2D v_data;
+uniform sampler2D a_data; // NEW: Alpha plane texture
+uniform bool has_alpha = false; // NEW: Flag to indicate if alpha channel is present
 
 uniform vec2 resolution;
 uniform vec4 color_profile;
@@ -43,7 +45,10 @@ void fragment() {
 	float R = Y + color_profile.x * V;
 	float G = Y - color_profile.y * U - color_profile.z * V;
 	float B = Y + color_profile.w * U;
-	
-	COLOR = vec4(R, G, B, 1.0);
+
+	// NEW: Sample alpha channel only if present, otherwise use 1.0 (fully opaque)
+	float A = has_alpha ? texture(a_data, y_uv).r : 1.0;
+
+	COLOR = vec4(R, G, B, A);
 }
 

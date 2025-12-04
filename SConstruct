@@ -59,7 +59,7 @@ elif "windows" in platform:
 
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/bin"])
+        LIBPATH=["ffmpeg/bin/lib"])
 elif "macos" in platform:
     # MacOS can only be build on a MacOS machine!
     macos_base_path = f"{libpath}/{target}"

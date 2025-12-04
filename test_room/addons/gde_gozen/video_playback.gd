@@ -67,6 +67,7 @@ var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 var y_texture: ImageTexture;
 var u_texture: ImageTexture;
 var v_texture: ImageTexture;
+var a_texture: ImageTexture; # NEW
 
 class Chapter:
 	var start: float ## Start of the chapter in seconds.
@@ -235,9 +236,17 @@ func _update_video(new_video: GoZenVideo) -> void:
 		u_texture = ImageTexture.create_from_image(video.get_u_data())
 		v_texture = ImageTexture.create_from_image(video.get_v_data())
 
+		# NEW: Initialize alpha texture if video has alpha channel
+		if video.has_alpha_channel():
+			a_texture = ImageTexture.create_from_image(video.get_a_data())
+
 	_shader_material.set_shader_parameter("y_data", y_texture)
 	_shader_material.set_shader_parameter("u_data", u_texture)
 	_shader_material.set_shader_parameter("v_data", v_texture)
+
+	# NEW: Set alpha parameter if available
+	if video.has_alpha_channel() and a_texture:
+		_shader_material.set_shader_parameter("a_data", a_texture)
 
 	seek_frame(current_frame)
 
@@ -300,6 +309,7 @@ func close() -> void:
 		y_texture = null
 		u_texture = null
 		v_texture = null
+		a_texture = null # NEW
 
 
 #------------------------------------------------ PLAYBACK HANDLING
@@ -459,6 +469,10 @@ func _set_frame_image() -> void:
 	y_texture.update(video.get_y_data())
 	u_texture.update(video.get_u_data())
 	v_texture.update(video.get_v_data())
+
+	# NEW: Update alpha texture if present
+	if video.has_alpha_channel() and a_texture:
+		a_texture.update(video.get_a_data())
 
 
 func set_playback_speed(new_playback_value: float) -> void:
