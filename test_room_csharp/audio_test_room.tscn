@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ds3xtdcbgtvw5"]
 
-[ext_resource type="Script" uid="uid://cpoyi8qd1b60i" path="res://audio_test_room.gd" id="1_dqjus"]
+[ext_resource type="Script" uid="uid://cpoyi8qd1b60i" path="res://audio_test_room.gd" id="1_ulwb8"]
 
 [node name="AudioTestRoom" type="Control"]
 layout_mode = 3
@@ -9,7 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_dqjus")
+script = ExtResource("1_ulwb8")
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
 autoplay = true
