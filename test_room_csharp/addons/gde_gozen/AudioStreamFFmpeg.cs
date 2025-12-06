@@ -15,9 +15,7 @@ public partial class AudioStreamFFmpeg : AudioStream
         _backer = hndl;
     }
 
-    public int Open(string path, int streamIndex = -1) => _backer.AsGodotObject().Call("open", path, streamIndex).AsInt32();
-    public override AudioStreamPlayback _InstantiatePlayback()
-    {
-        return _backer.AsGodotObject().Call("_instantiate_playback").As<AudioStreamPlayback>();
-    }
+    public Error Open(string path, int streamIndex = -1) => _backer.AsGodotObject().Call("open", path, streamIndex).As<Error>();
+
+    public override AudioStreamPlayback _InstantiatePlayback() => _backer.AsGodotObject().Call("__instantiate_playback").As<AudioStreamPlayback>();
 }
