@@ -2,7 +2,7 @@
 
 #include "gozen_video.hpp"
 #include "gozen_audio.hpp"
-//#include "audio_stream_ffmpeg.hpp"
+#include "audio_stream_ffmpeg.hpp"
 
 #include <gdextension_interface.h>
 #include <godot_cpp/core/class_db.hpp>
