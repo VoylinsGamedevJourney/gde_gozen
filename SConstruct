@@ -62,6 +62,11 @@ elif "macos" in platform:
     macos_base_path = f"{libpath}/{target}"
     libpath = f"{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}"
 
+    if arch == "x86_64":
+        env.Append(CCFLAGS=["-arch", "x86_64"], LINKFLAGS=["-arch", "x86_64"])
+    elif arch == "arm64":
+        env.Append(CCFLAGS=["-arch", "arm64"], LINKFLAGS=["-arch", "arm64"])
+
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=[

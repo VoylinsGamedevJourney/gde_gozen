@@ -568,7 +568,10 @@ def main():
             platform = OS_WINDOWS
         case 3:
             platform = OS_MACOS
-            arch = ARCH_ARM64
+            if _print_options(title_arch, [ARCH_ARM64, ARCH_X86_64]) == 2:
+                arch = ARCH_X86_64
+            else:
+                arch = ARCH_ARM64
         case 4:
             platform = OS_ANDROID
 
