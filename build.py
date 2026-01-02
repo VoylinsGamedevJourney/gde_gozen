@@ -321,7 +321,10 @@ def compile_ffmpeg_android(arch: str) -> None:
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--disable-asm",
+        "--enable-pic",
         f"--arch={ffmpeg_arch}",
         "--target-os=android",
         "--enable-pic",
@@ -332,8 +335,7 @@ def compile_ffmpeg_android(arch: str) -> None:
         f"--strip={strip_tool}",
         "--extra-cflags=-fPIC",
         f"--extra-ldflags={arch_flags}",
-    ]
-    cmd += [
+        # Adding decoders
         "--enable-decoder=aac",
         "--enable-decoder=aac_latm",
         "--enable-decoder=mp3",
@@ -341,6 +343,7 @@ def compile_ffmpeg_android(arch: str) -> None:
         "--enable-decoder=pcm_s16le",
         "--enable-decoder=opus",
         "--enable-decoder=vorbis",
+        # Adding parsers
         "--enable-parser=aac",
         "--enable-parser=aac_latm",
         "--enable-parser=mpegaudio",
@@ -365,14 +368,6 @@ def compile_ffmpeg_android(arch: str) -> None:
     if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
         print("Error: FFmpeg failed!")
         sys.exit(1)
-
-    print("Copying lib files ...")
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
-
-    for file in glob.glob("ffmpeg/bin/lib/*.so*"):
-        shutil.copy2(file, path)
-        shutil.copy2(file, path_csharp)
 
     print("Compiling FFmpeg for Android finished!")
 

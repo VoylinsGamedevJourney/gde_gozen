@@ -99,6 +99,7 @@ elif "android" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
+    env.Append(LIBS=["z", "m", "log"])
 elif "web" in platform:
     web_bin_path = libpath
     web_include_path = f"{web_bin_path}/include"

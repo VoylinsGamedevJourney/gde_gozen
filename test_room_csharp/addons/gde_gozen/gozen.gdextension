@@ -70,37 +70,3 @@ macos.release.arm64 = {
     "bin/macos/release/lib/libswscale.7.dylib": "Contents/Frameworks",
     "bin/macos/release/lib/libswscale.7.5.100.dylib": "Contents/Frameworks"
 }
-
-android.debug.arm64 = {
-	"bin/android_arm64/libavcodec.so": "",
-	"bin/android_arm64/libavformat.so": "",
-	"bin/android_arm64/libavutil.so": "",
-
-	"bin/android_arm64/libswresample.so": "",
-	"bin/android_arm64/libswscale.so": "",
-}
-android.release.arm64 = {
-	"bin/android_arm64/libavcodec.so": "",
-	"bin/android_arm64/libavformat.so": "",
-	"bin/android_arm64/libavutil.so": "",
-
-	"bin/android_arm64/libswresample.so": "",
-	"bin/android_arm64/libswscale.so": "",
-}
-android.debug.arm32 = {
-	"bin/android_arm32/libavcodec.so": "",
-	"bin/android_arm32/libavformat.so": "",
-	"bin/android_arm32/libavutil.so": "",
-
-	"bin/android_arm32/libswresample.so": "",
-	"bin/android_arm32/libswscale.so": "",
-}
-android.release.arm32 = {
-	"bin/android_arm32/libavcodec.so": "",
-	"bin/android_arm32/libavformat.so": "",
-	"bin/android_arm32/libavutil.so": "",
-
-	"bin/android_arm32/libswresample.so": "",
-	"bin/android_arm32/libswscale.so": "",
-}
-
