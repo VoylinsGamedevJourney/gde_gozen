@@ -106,6 +106,7 @@ elif "web" in platform:
             "-sUSE_PTHREADS=1",
             "-sSHARED_MEMORY=1",
             "-sALLOW_MEMORY_GROWTH=1",
+            "-sSIDE_MODULE=1",
         ]
     )
 else:
