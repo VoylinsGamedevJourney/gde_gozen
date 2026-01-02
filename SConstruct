@@ -4,10 +4,10 @@ import platform as os_platform
 
 
 LIBS_COMMON = [
-    "avcodec",
     "avformat",
-    "swresample",
+    "avcodec",
     "swscale",
+    "swresample",
     "avutil"]
 LOCATION = "test_room/addons/gde_gozen/bin"
 
@@ -45,6 +45,7 @@ if "linux" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
+    env.Append(LIBS=["m", "z", "bz2", "lzma", "pthread", "dl"])
 elif "windows" in platform:
     libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
     if os_platform.system().lower() == "windows":

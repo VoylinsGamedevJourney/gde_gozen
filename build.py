@@ -57,6 +57,13 @@ ENABLE_AV1 = [
 ]
 
 DISABLED_MODULES = [
+    # Hardware decoders
+    "--disable-vaapi",
+    "--disable-vdpau",
+    "--disable-cuda",
+    "--disable-cuvid",
+    "--disable-nvenc",
+    # Others
     "--disable-muxers",
     "--disable-encoders",
     "--disable-postproc",
@@ -140,14 +147,16 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--target-os=linux",
         "--quiet",
-        "--enable-pic",
         "--enable-pthreads",
         "--extra-cflags=-fPIC",
-        "--extra-ldflags=-fPIC",
+        # TODO: Remove this line if safe "--extra-ldflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -168,32 +177,6 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     print("Compiling FFmpeg for Linux ...")
     subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
     subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
-
-    copy_linux_dependencies(path, arch, add_av1)
-    copy_linux_dependencies(path_csharp, arch, add_av1)
-
-
-def copy_linux_dependencies(path: str, arch: str, add_av1: bool = False):
-    print("Copying lib files ...")
-    for file in glob.glob("ffmpeg/bin/lib/*.so.*"):
-        if file.count(".") == 2:
-            shutil.copy2(file, path)
-
-    if add_av1:
-        # AOM lib.
-        for file in glob.glob("/usr/lib/libaom.so*"):
-            if file.count(".") == 2:
-                shutil.copy2(file, path)
-        # AOM lib for Ubuntu.
-        if arch == ARCH_X86_64:
-            for file in glob.glob("/usr/lib/x86_64*/libaom.so*", recursive=True):
-                if file.count(".") == 2:
-                    shutil.copy2(file, path)
-        else:
-            for file in glob.glob("/usr/lib/aarch64*/libaom.so*", recursive=True):
-                shutil.copy2(file, path)
-
-    print("Compiling FFmpeg for Linux finished!")
 
 
 def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
@@ -620,7 +603,6 @@ def main():
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
         arch = "arm32"
-
 
     cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
     env = os.environ.copy()
