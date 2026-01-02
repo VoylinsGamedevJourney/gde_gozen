@@ -28,76 +28,6 @@ android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.andro
 
 [dependencies]
 
-linux.debug.x86_64 = {
-    "bin/linux_x86_64/libavcodec.so.60": "",
-    "bin/linux_x86_64/libavformat.so.60": "",
-    "bin/linux_x86_64/libavutil.so.58": "",
-    "bin/linux_x86_64/libswresample.so.4": "",
-    "bin/linux_x86_64/libswscale.so.7": "",
-}
-linux.release.x86_64 = {
-    "bin/linux_x86_64/libavcodec.so.60": "",
-    "bin/linux_x86_64/libavformat.so.60": "",
-    "bin/linux_x86_64/libavutil.so.58": "",
-    "bin/linux_x86_64/libswresample.so.4": "",
-    "bin/linux_x86_64/libswscale.so.7": "",
-}
-linux.debug.arm64 = {
-    "bin/linux_arm64/libavcodec.so.60": "",
-    "bin/linux_arm64/libavformat.so.60": "",
-    "bin/linux_arm64/libavutil.so.58": "",
-    "bin/linux_arm64/libswresample.so.4": "",
-    "bin/linux_arm64/libswscale.so.7": "",
-}
-linux.release.arm64 = {
-    "bin/linux_arm64/libavcodec.so.60": "",
-    "bin/linux_arm64/libavformat.so.60": "",
-    "bin/linux_arm64/libavutil.so.58": "",
-    "bin/linux_arm64/libswresample.so.4": "",
-    "bin/linux_arm64/libswscale.so.7": "",
-}
-
-windows.debug.x86_64 = {
-    "bin/windows_x86_64/avcodec-60.dll": "",
-    "bin/windows_x86_64/avformat-60.dll": "",
-	"bin/windows_x86_64/avutil-58.dll": "",
-
-	"bin/windows_x86_64/swresample-4.dll": "",
-	"bin/windows_x86_64/swscale-7.dll": "",
-
-	"bin/windows_x86_64/libwinpthread-1.dll": "",
-}
-windows.release.x86_64 = {
-    "bin/windows_x86_64/avcodec-60.dll": "",
-    "bin/windows_x86_64/avformat-60.dll": "",
-    "bin/windows_x86_64/avutil-58.dll": "",
-
-	"bin/windows_x86_64/swresample-4.dll": "",
-	"bin/windows_x86_64/swscale-7.dll": "",
-
-	"bin/windows_x86_64/libwinpthread-1.dll": "",
-}
-windows.debug.arm64 = {
-    "bin/windows_arm64/avcodec-60.dll": "",
-    "bin/windows_arm64/avformat-60.dll": "",
-	"bin/windows_arm64/avutil-58.dll": "",
-
-	"bin/windows_arm64/swresample-4.dll": "",
-	"bin/windows_arm64/swscale-7.dll": "",
-
-	"bin/windows_arm64/libwinpthread-1.dll": "",
-}
-windows.release.arm64 = {
-    "bin/windows_arm64/avcodec-60.dll": "",
-    "bin/windows_arm64/avformat-60.dll": "",
-    "bin/windows_arm64/avutil-58.dll": "",
-
-	"bin/windows_arm64/swresample-4.dll": "",
-	"bin/windows_arm64/swscale-7.dll": "",
-
-	"bin/windows_arm64/libwinpthread-1.dll": "",
-}
-
 macos.debug.arm64 = {
 	"bin/macos/debug/lib/libavcodec.dylib": "Contents/Frameworks",
     "bin/macos/debug/lib/libavcodec.60.dylib": "Contents/Frameworks",
@@ -139,12 +69,6 @@ macos.release.arm64 = {
     "bin/macos/release/lib/libswscale.dylib": "Contents/Frameworks",
     "bin/macos/release/lib/libswscale.7.dylib": "Contents/Frameworks",
     "bin/macos/release/lib/libswscale.7.5.100.dylib": "Contents/Frameworks"
-}
-
-web.debug.wasm32 = {
-}
-
-web.release.wasm32 = {
 }
 
 android.debug.arm64 = {

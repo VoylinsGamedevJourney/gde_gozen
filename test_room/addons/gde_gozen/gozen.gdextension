@@ -71,12 +71,6 @@ macos.release.arm64 = {
     "bin/macos/release/lib/libswscale.7.5.100.dylib": "Contents/Frameworks"
 }
 
-web.debug.wasm32 = {
-}
-
-web.release.wasm32 = {
-}
-
 android.debug.arm64 = {
 	"bin/android_arm64/libavcodec.so": "",
 	"bin/android_arm64/libavformat.so": "",
