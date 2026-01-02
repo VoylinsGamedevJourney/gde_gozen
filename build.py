@@ -232,15 +232,6 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
 
 def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for MacOS ...")
-    path_debug: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
-    path_release: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
-    path_debug_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
-    path_release_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
-
-    os.makedirs(path_debug, exist_ok=True)
-    os.makedirs(path_release, exist_ok=True)
-    os.makedirs(path_debug_csharp, exist_ok=True)
-    os.makedirs(path_release_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
@@ -278,8 +269,6 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
 
 def compile_ffmpeg_android(arch: str) -> None:
     print("Configuring FFmpeg for Android ...")
-    path: str = "./test_room/addons/gde_gozen/bin/android_"
-    path_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/android_"
     ndk: str = os.getenv("ANDROID_NDK_ROOT")
 
     if not ndk:
@@ -296,14 +285,10 @@ def compile_ffmpeg_android(arch: str) -> None:
     strip_tool: str = ""
 
     if arch == ARCH_ARM64:
-        path += "arm64"
-        path_csharp += "arm64"
         target_arch = "aarch64-linux-android"
         arch_flags = "-march=armv8-a"
         ffmpeg_arch = "aarch64"
     else:  # armv7a
-        path += "arm32"
-        path_csharp += "arm32"
         target_arch = "armv7a-linux-androideabi"
         arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
         ffmpeg_arch = "arm"
@@ -384,7 +369,7 @@ def compile_ffmpeg_web() -> None:
 
     print("Configuring FFmpeg for Web ...")
 
-    path: str = "./test_room/addons/gde_gozen/bin/web"
+    path: str = "./test_room/addons/gde_gozen/"
     target_include_dir: str = f"{path}/include"
     ffmpeg_bin_dir: str = "ffmpeg/bin"
     ffmpeg_lib_dir: str = f"{ffmpeg_bin_dir}/lib"
@@ -484,56 +469,6 @@ def update_csharp_bins():
                 shutil.copy2(os.path.join(root, file), os.path.join(dst_dir, file))
 
 
-def macos_fix(arch: str) -> None:
-    # This is a fix for the MacOS builds to get the libraries to properly connect to
-    # the gdextension library. Without it, the FFmpeg libraries can"t be found.
-    print("Running fix for MacOS builds ...")
-
-    debug_binary: str = f"./test_room/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
-    release_binary: str = f"./test_room/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
-    debug_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
-    release_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
-
-    debug_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
-    release_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
-    debug_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
-    release_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
-
-    print("Updating @loader_path for MacOS builds")
-
-    if os.path.exists(debug_binary) and os.path.exists(debug_binary_csharp):
-        for file in os.listdir(debug_bin_folder):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary], check=True)
-
-        for file in os.listdir(debug_bin_folder_csharp):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary_csharp], check=True)
-
-        print("Fixing folder ", debug_binary, " & ", debug_binary_csharp)
-
-        subprocess.run(["otool", "-L", debug_binary], cwd="./")
-        subprocess.run(["otool", "-L", debug_binary_csharp], cwd="./")
-    else:
-        print("No debug folder found for MacOS!")
-
-    if os.path.exists(release_binary) and os.path.exists(release_binary_csharp):
-        for file in os.listdir(release_bin_folder):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary], check=True)
-
-        for file in os.listdir(release_bin_folder_csharp):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary_csharp], check=True)
-
-        print("Fixing folder ", release_binary, " & ", release_binary_csharp)
-
-        subprocess.run(["otool", "-L", release_binary], cwd="./")
-        subprocess.run(["otool", "-L", release_binary_csharp], cwd="./")
-    else:
-        print("No release folder found for MacOS!")
-
-
 def main():
     print("v===================v")
     print("| GDE GoZen builder |")
@@ -616,11 +551,7 @@ def main():
         subprocess.run(clean_cmd, cwd="./", env=env)
 
     subprocess.run(cmd, cwd="./", env=env)
-
     update_csharp_bins()
-
-    if platform == OS_MACOS:
-        macos_fix(arch)
 
     print("")
     print("v=========================v")

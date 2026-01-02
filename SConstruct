@@ -25,12 +25,10 @@ jobs = ARGUMENTS.get("jobs", 4)
 platform = ARGUMENTS.get("platform", "linux")
 arch = ARGUMENTS.get("arch", "x86_64")
 target = ARGUMENTS.get("target", "template_debug").split("_")[-1]
-libpath = f"{LOCATION}/{platform}"
+libpath = f"{LOCATION}/libgozen{env_suffix}{env_shlibsuffix}"
 
 
 if "linux" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-
     if arch == "arm64":
         march_flags[arch] = "armv8-a"
         env["CC"] = "aarch64-linux-gnu-gcc"
@@ -47,8 +45,6 @@ if "linux" in platform:
         LIBS=LIBS_COMMON)
     env.Append(LIBS=["m", "z", "bz2", "lzma", "pthread", "dl"])
 elif "windows" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-
     env.Append(
         LINKFLAGS=["-static"],
         LIBS=LIBS_COMMON)
@@ -59,9 +55,6 @@ elif "windows" in platform:
     )
 elif "macos" in platform:
     # NOTE: MacOS can only be build on a MacOS machine!
-    macos_base_path = f"{libpath}/{target}"
-    libpath = f"{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}"
-
     if arch == "x86_64":
         env.Append(CCFLAGS=["-arch", "x86_64"], LINKFLAGS=["-arch", "x86_64"])
     elif arch == "arm64":
@@ -84,8 +77,6 @@ elif "macos" in platform:
     )
     env.Append(LIBS=["z", "bz2", "iconv", "m", "pthread"])
 elif "android" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-
     if arch == "arm64":
         env.Append(CCFLAGS=["-march=armv8-a"])
     elif arch == "armv7a":
@@ -102,7 +93,6 @@ elif "android" in platform:
 elif "web" in platform:
     web_bin_path = libpath
     web_include_path = f"{web_bin_path}/include"
-    libpath += f"/libgozen{env_suffix}{env_shlibsuffix}"
 
     env.Append(
         CPPPATH=[web_include_path],
