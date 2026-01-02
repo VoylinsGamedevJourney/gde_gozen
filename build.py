@@ -245,11 +245,15 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--quiet",
         "--extra-ldflags=-mmacosx-version-min=10.13",
         "--extra-cflags=-fPIC -mmacosx-version-min=10.13",
+        "--disable-lzma",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -268,13 +272,6 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
         print("Error: FFmpeg failed!")
         sys.exit(1)
-
-    print("Copying lib files ...")
-    for file in glob.glob("./ffmpeg/bin/lib/*.dylib"):
-        shutil.copy2(file, path_debug)
-        shutil.copy2(file, path_release)
-        shutil.copy2(file, path_debug_csharp)
-        shutil.copy2(file, path_release_csharp)
 
     print("Compiling FFmpeg for MacOS finished!")
 

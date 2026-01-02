@@ -58,22 +58,14 @@ elif "windows" in platform:
         LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
     )
 elif "macos" in platform:
-    # MacOS can only be build on a MacOS machine!
+    # NOTE: MacOS can only be build on a MacOS machine!
     macos_base_path = f"{libpath}/{target}"
-    macos_lib_path = f"{macos_base_path}/lib"
     libpath = f"{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}"
-    os.makedirs(macos_lib_path, exist_ok=True)
 
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=[
             "ffmpeg/bin/lib",
-            "ffmpeg/bin/include/libavcodec",
-            "ffmpeg/bin/include/libavformat",
-            "ffmpeg/bin/include/libavutil",
-            "ffmpeg/bin/include/libswresample",
-            "ffmpeg/bin/include/libswscale",
-            macos_lib_path,
             "/usr/local/lib"],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -82,8 +74,10 @@ elif "macos" in platform:
             "-framework", "CoreVideo",
             "-framework", "CoreMedia",
             "-framework", "AVFoundation",
-            "-rpath", "@loader_path/lib"]
+            "-framework", "Security",      # Often needed by static FFmpeg
+            "-framework", "AudioToolbox"]  # Often needed by static FFmpeg
     )
+    env.Append(LIBS=["z", "bz2", "iconv", "m", "pthread"])
 elif "android" in platform:
     libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
 
