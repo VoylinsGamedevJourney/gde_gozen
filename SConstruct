@@ -34,6 +34,8 @@ if "linux" in platform:
         env["CC"] = "aarch64-linux-gnu-gcc"
         env["CXX"] = "aarch64-linux-gnu-g++"
         env["LINK"] = "aarch64-linux-gnu-g++"
+    else:
+        env.Append(LIBS=["z", "bz2", "lzma"])
 
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
@@ -43,7 +45,7 @@ if "linux" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
-    env.Append(LIBS=["m", "z", "bz2", "lzma", "pthread", "dl"])
+    env.Append(LIBS=["m", "pthread", "dl"])
 elif "windows" in platform:
     env.Append(
         LINKFLAGS=["-static"],

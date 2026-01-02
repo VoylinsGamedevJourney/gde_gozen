@@ -137,12 +137,7 @@ def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False) -> None:
 
 def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Linux ...")
-    path: str = f"./test_room/addons/gde_gozen/bin/linux_{arch}"
-    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/linux_{arch}"
     os.environ["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig"
-
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
@@ -185,13 +180,8 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
 
 def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Windows ...")
-    path: str = f"./test_room/addons/gde_gozen/bin/windows_{arch}"
-    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/windows_{arch}"
     os.environ["PKG_CONFIG_LIBDIR"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
     os.environ["PKG_CONFIG_PATH"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
-
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
