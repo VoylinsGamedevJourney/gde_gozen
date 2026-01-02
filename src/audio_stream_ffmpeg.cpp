@@ -6,6 +6,8 @@ AudioStreamFFmpeg::~AudioStreamFFmpeg() {
 	if (!loaded)
 		return;
 
+	memdelete(mutex);
+
 	loaded = false;
 	av_stream = nullptr;
 	file_buffer.clear();
@@ -16,6 +18,8 @@ AudioStreamFFmpeg::~AudioStreamFFmpeg() {
 }
 
 int AudioStreamFFmpeg::open(const String& path, int stream_index) {
+	mutex = memnew(Mutex);
+	mutex->lock();
 	AVFormatContext* temp_format_ctx = nullptr;
 	file_path = path;
 
@@ -23,10 +27,12 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 		temp_format_ctx = avformat_alloc_context();
 		file_buffer = FileAccess::get_file_as_bytes(path);
 
-		if (!temp_format_ctx)
+		if (!temp_format_ctx) {
+			mutex->unlock();
 			return _log_err("Failed to allocate AVFormatContext");
-		else if (file_buffer.is_empty()) {
+		} else if (file_buffer.is_empty()) {
 			avformat_free_context(temp_format_ctx);
+			mutex->unlock();
 			return _log_err("Couldn't load file from res:// or user://");
 		}
 
@@ -42,19 +48,26 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 
 		if (!avio_ctx) {
 			av_free(avio_ctx_buffer);
+			mutex->unlock();
 			return _log_err("Failed to create avio_ctx");
 		}
 
 		temp_format_ctx->pb = avio_ctx.get();
 
-		if (avformat_open_input(&temp_format_ctx, nullptr, nullptr, nullptr) != 0)
+		if (avformat_open_input(&temp_format_ctx, nullptr, nullptr, nullptr) != 0) {
+			mutex->unlock();
 			return _log_err("Failed to open input from memory buffer");
-	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL))
+		}
+	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
+		mutex->unlock();
 		return _log_err("Couldn't open file");
+	}
 
 	av_format_ctx = make_unique_ffmpeg<AVFormatContext, AVFormatCtxInputDeleter>(temp_format_ctx);
-	if (avformat_find_stream_info(av_format_ctx.get(), NULL))
+	if (avformat_find_stream_info(av_format_ctx.get(), NULL)) {
+		mutex->unlock();
 		return _log_err("Couldn't find stream info");
+	}
 
 	if (stream_index == -1) {
 		for (int i = 0; i < av_format_ctx->nb_streams; i++) {
@@ -70,34 +83,45 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 
 		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
 			av_stream = av_format_ctx->streams[stream_index];
-	} else
+	} else {
+		mutex->unlock();
 		return _log_err("Invalid stream index");
+	}
 
 	// Discard all non-audio streams.
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
 		AVCodecParameters* av_codec_params = av_format_ctx->streams[i]->codecpar;
-		if (!avcodec_find_decoder(av_codec_params->codec_id) || av_codec_params->codec_type != AVMEDIA_TYPE_AUDIO) {
+		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
 			if (i != stream_index)
 				av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 		}
 	}
 
-	if (!av_stream)
+	if (!av_stream) {
+		mutex->unlock();
 		return _log_err("No audio stream found");
+	}
 
 	const AVCodec* codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
-	if (!codec)
+	if (!codec) {
+		mutex->unlock();
 		return _log_err("Couldn't find decoder");
+	}
 
 	av_codec_ctx = make_unique_ffmpeg<AVCodecContext, AVCodecCtxDeleter>(avcodec_alloc_context3(codec));
-	if (!av_codec_ctx)
+	if (!av_codec_ctx) {
+		mutex->unlock();
 		return _log_err("Couldn't allocate codec context");
-	else if (avcodec_parameters_to_context(av_codec_ctx.get(), av_stream->codecpar))
+	} else if (avcodec_parameters_to_context(av_codec_ctx.get(), av_stream->codecpar)) {
+		mutex->unlock();
 		return _log_err("Couldn't initialize codec context");
+	}
 
 	av_codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_S16;
-	if (avcodec_open2(av_codec_ctx.get(), codec, nullptr))
+	if (avcodec_open2(av_codec_ctx.get(), codec, nullptr)) {
+		mutex->unlock();
 		return _log_err("Couldn't open audio codec");
+	}
 
 	stereo = av_codec_ctx->ch_layout.nb_channels >= 2;
 	ch_layout = av_codec_ctx->ch_layout;
@@ -108,10 +132,13 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	int response = swr_alloc_set_opts2(&temp_swr_ctx, &ch_layout, AV_SAMPLE_FMT_S16, sample_rate,
 									   &av_codec_ctx->ch_layout, av_codec_ctx->sample_fmt, sample_rate, 0, nullptr);
 	swr_ctx = make_unique_ffmpeg<SwrContext, SwrCtxDeleter>(temp_swr_ctx);
-	if (response < 0 || swr_init(swr_ctx.get()) < 0)
+	if (response < 0 || swr_init(swr_ctx.get()) < 0) {
+		mutex->unlock();
 		return _log_err("Failed to initialize SWR");
+	}
 
 	loaded = true;
+	mutex->unlock();
 	return 0;
 }
 
@@ -140,6 +167,7 @@ bool AudioStreamFFmpegPlayback::_is_playing() const { return is_playing; }
 double AudioStreamFFmpegPlayback::_get_playback_position() const { return float(mixed) / float(mix_rate); }
 
 void AudioStreamFFmpegPlayback::_seek(double p_position) {
+	audio_stream_ffmpeg->mutex->lock();
 	int response = 0;
 	buffer_fill = 0;
 
@@ -150,6 +178,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 	if (int err = av_seek_frame(audio_stream_ffmpeg->av_format_ctx.get(), audio_stream_ffmpeg->av_stream->index,
 								target_ts, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME)) {
 		FFmpeg::print_av_error("audio_decoder: Error while seeking", err);
+		audio_stream_ffmpeg->mutex->unlock();
 		return;
 	}
 
@@ -160,6 +189,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 		if (FFmpeg::get_frame(audio_stream_ffmpeg->av_format_ctx.get(), audio_stream_ffmpeg->av_codec_ctx.get(),
 							  audio_stream_ffmpeg->av_stream->index, av_frame.get(), av_packet.get())) {
 			audio_stream_ffmpeg->_log("End of file during seek");
+		audio_stream_ffmpeg->mutex->unlock();
 			return;
 		}
 
@@ -181,6 +211,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 				FFmpeg::print_av_error("Couldn't create new frame for swr!", response);
 				av_frame_unref(av_frame.get());
 				av_frame_unref(av_decoded_frame.get());
+		audio_stream_ffmpeg->mutex->unlock();
 				return;
 			}
 
@@ -188,6 +219,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 				FFmpeg::print_av_error("Couldn't config the audio frame!", response);
 				av_frame_unref(av_frame.get());
 				av_frame_unref(av_decoded_frame.get());
+		audio_stream_ffmpeg->mutex->unlock();
 				return;
 			}
 
@@ -195,6 +227,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 				FFmpeg::print_av_error("Couldn't convert the audio frame!", response);
 				av_frame_unref(av_frame.get());
 				av_frame_unref(av_decoded_frame.get());
+		audio_stream_ffmpeg->mutex->unlock();
 				return;
 			}
 
@@ -224,6 +257,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 	}
 
 	fill_buffer();
+	audio_stream_ffmpeg->mutex->unlock();
 }
 
 int32_t AudioStreamFFmpegPlayback::_mix_resampled(AudioFrame* p_buffer, int32_t p_frames) {
@@ -260,14 +294,17 @@ int32_t AudioStreamFFmpegPlayback::_mix_resampled(AudioFrame* p_buffer, int32_t 
 }
 
 bool AudioStreamFFmpegPlayback::fill_buffer() {
+	audio_stream_ffmpeg->mutex->lock();
 	if (audio_stream_ffmpeg->file_path == "") {
 		UtilityFunctions::printerr("Can't fill buffer, path is null!");
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
 	if (FFmpeg::get_frame(audio_stream_ffmpeg->av_format_ctx.get(), audio_stream_ffmpeg->av_codec_ctx.get(),
 						  audio_stream_ffmpeg->av_stream->index, av_frame.get(), av_packet.get())) {
 		UtilityFunctions::print("End of file");
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
@@ -283,6 +320,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 		FFmpeg::print_av_error("Couldn't create new frame for swr!", resp);
 		av_frame_unref(av_frame.get());
 		av_frame_unref(av_decoded_frame.get());
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
@@ -290,6 +328,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 		FFmpeg::print_av_error("Couldn't config the audio frame!", resp);
 		av_frame_unref(av_frame.get());
 		av_frame_unref(av_decoded_frame.get());
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
@@ -297,6 +336,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 		FFmpeg::print_av_error("Couldn't convert the audio frame!", resp);
 		av_frame_unref(av_frame.get());
 		av_frame_unref(av_decoded_frame.get());
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
@@ -310,6 +350,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 		audio_stream_ffmpeg->_log_err("Buffer overflow prevented in fill_buffer!");
 		av_frame_unref(av_frame.get());
 		av_frame_unref(av_decoded_frame.get());
+	audio_stream_ffmpeg->mutex->unlock();
 		return false;
 	}
 
@@ -320,6 +361,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	av_frame_unref(av_frame.get());
 	av_frame_unref(av_decoded_frame.get());
 
+	audio_stream_ffmpeg->mutex->unlock();
 	return true;
 }
 

@@ -8,8 +8,8 @@ void initialize_gozen_library_init_module(ModuleInitializationLevel p_level) {
 	ClassDB::register_class<GoZenVideo>();
 	ClassDB::register_class<GoZenAudio>();
 
-	// ClassDB::register_class<AudioStreamFFmpeg>();
-	// ClassDB::register_class<AudioStreamFFmpegPlayback>();
+	ClassDB::register_class<AudioStreamFFmpeg>();
+	ClassDB::register_class<AudioStreamFFmpegPlayback>();
 }
 
 void uninitialize_gozen_library_init_module(ModuleInitializationLevel p_level) {

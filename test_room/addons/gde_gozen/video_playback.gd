@@ -26,7 +26,6 @@ const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
-@export var enable_stereo: bool = true ## Enable/Disable if you want stereo audio from your video. If set to false, the audio will be in mono channel (saving on ram usage). Needs to be enabled before loading in the video/setting the video path.
 @export var audio_speed_to_sync: bool = false ## Enable/Disable a slight audio playback speed increase/reduction when syncing audio and video to avoid a hard cut.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
 @export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
@@ -131,12 +130,7 @@ func set_video_path(new_path: String) -> void:
 	if !get_tree().root.is_node_ready():
 		await get_tree().root.ready
 
-	var stream: AudioStreamWAV = AudioStreamWAV.new()
-	stream.mix_rate = 44100
-	stream.stereo = enable_stereo
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-
-	audio_player.stream = stream
+	audio_player.stream = null # Cleaning up the stream just in case.
 
 	if new_path == "" or new_path.ends_with(".tscn"):
 		return
@@ -154,17 +148,16 @@ func set_video_path(new_path: String) -> void:
 	if _threads.append(WorkerThreadPool.add_task(_open_video)):
 		push_error("Something went wrong appending thread to _threads!")
 	if enable_audio:
-		if _threads.append(WorkerThreadPool.add_task(_open_audio)):
-			push_error("Something went wrong appending thread to _threads!")
+		_open_audio()
 
 
 ## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
-func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
+func update_video(video_instance: GoZenVideo) -> void:
 	if video != null:
 		close()
 
-	audio_player.stream = audio_stream
 	_update_video(video_instance)
+	_open_audio()
 
 
 ## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
@@ -373,7 +366,7 @@ func play() -> void:
 		return
 	is_playing = true
 
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if enable_audio:
 		audio_player.set_stream_paused(false)
 		audio_player.play((current_frame + 1) / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -393,7 +386,7 @@ func pause() -> void:
 
 ## Ensures the audio playback is in sync with the video
 func _sync_audio_video() -> void:
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if enable_audio:
 		var audio_offset: float = audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate
 
 		if abs(audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate) > AUDIO_OFFSET_THRESHOLD:
@@ -515,7 +508,7 @@ func set_audio_stream(stream: int) -> void:
 
 	if enable_audio:
 		@warning_ignore("return_value_discarded")
-		WorkerThreadPool.add_task(_open_audio.bind(stream)) # not the best to discard a task, but oh well
+		_open_audio(stream) # not the best to discard a task, but oh well
 
 
 #------------------------------------------------ MISC
@@ -535,13 +528,14 @@ func _open_video() -> void:
 		printerr("Error opening video!")
 
 
-func _open_audio(stream: int = -1) -> void:
-	var data: PackedByteArray = GoZenAudio.get_audio_data(path, stream, enable_stereo)
-	if data.size() != 0:
-		@warning_ignore("UNSAFE_PROPERTY_ACCESS")
-		audio_player.stream.data = data
-	else:
-		printerr("Audio data for video '%s' was 0!" % path)
+func _open_audio(stream_id: int = -1) -> void:
+	var stream: AudioStreamFFmpeg = AudioStreamFFmpeg.new()
+
+	if stream.open(path, stream_id) != OK:
+		printerr("Failed to open AudioStreamFFmpeg for: %s" % path)
+		return
+
+	audio_player.stream = stream
 
 
 func _print_stream_info(streams: PackedInt32Array) -> void:
