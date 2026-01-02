@@ -69,6 +69,7 @@ int GoZenVideo::open(const String& video_path) {
 
 			AVDictionaryEntry* rotate_tag = av_dict_get(av_stream->metadata, "rotate", nullptr, 0);
 			rotation = rotate_tag ? atoi(rotate_tag->value) : 0;
+
 			if (rotation == 0) { // Check modern rotation detecting.
 				for (int i = 0; i < av_stream->codecpar->nb_coded_side_data; ++i) {
 					const AVPacketSideData* side_data = &av_stream->codecpar->coded_side_data[i];
@@ -78,6 +79,8 @@ int GoZenVideo::open(const String& video_path) {
 				}
 			}
 
+			AVDictionaryEntry* alpha_tag = av_dict_get(av_stream->metadata, "alpha_mode", nullptr, 0);
+			has_alpha = (alpha_tag && atoi(alpha_tag->value) == 1);
 			continue;
 		}
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
@@ -139,9 +142,6 @@ int GoZenVideo::open(const String& video_path) {
 		resolution.x *= sar;
 	else if (sar != 0.0 && sar != 1.0)
 		resolution.x /= sar;
-
-	pixel_format = av_get_pix_fmt_name(av_codec_ctx->pix_fmt);
-	_log(String("Selected pixel format is: ") + pixel_format);
 
 	if (av_stream->start_time != AV_NOPTS_VALUE)
 		start_time_video = (int64_t)(av_stream->start_time * stream_time_base_video);
@@ -234,26 +234,47 @@ int GoZenVideo::open(const String& video_path) {
 	average_frame_duration = 10000000.0 / framerate; // eg. 1 sec / 25 fps = 400.000 ticks (40ms).
 	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks.
 
+	// Check for alpha layer.
+	has_alpha = (av_frame->format == AV_PIX_FMT_YUVA420P || av_frame->format == AV_PIX_FMT_YUVA444P ||
+				 av_frame->format == AV_PIX_FMT_ARGB || av_frame->format == AV_PIX_FMT_BGRA ||
+				 av_frame->format == AV_PIX_FMT_ABGR || av_frame->format == AV_PIX_FMT_RGBA || has_alpha);
+
+	pixel_format = av_get_pix_fmt_name((AVPixelFormat)av_frame->format);
+	_log(String("Selected pixel format is: ") + pixel_format);
+
 	// Preparing the data images.
-	if (av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P) {
+	bool is_natively_supported = (av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P ||
+								  av_frame->format == AV_PIX_FMT_YUVA420P);
+
+	if (is_natively_supported) {
+		padding = av_frame->linesize[0] - resolution.x;
 		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
 		u_data = Image::create_empty(av_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
-		padding = av_frame->linesize[0] - resolution.x;
+
+		if (has_alpha)
+			a_data = Image::create_empty(av_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
 	} else {
+		AVPixelFormat new_format = has_alpha ? AV_PIX_FMT_YUVA420P : AV_PIX_FMT_YUV420P;
+
 		using_sws = true;
 		sws_ctx = make_unique_ffmpeg<SwsContext, SwsCtxDeleter>(
-			sws_getContext(resolution.x, resolution.y, av_codec_ctx->pix_fmt, resolution.x, resolution.y,
-						   AV_PIX_FMT_YUV420P, sws_flag, NULL, NULL, NULL));
+			sws_getContext(resolution.x, resolution.y, (AVPixelFormat)av_frame->format, resolution.x, resolution.y,
+						   new_format, sws_flag, NULL, NULL, NULL));
 
 		// We will use av_hw_frame to convert the frame data to as we won't use it anyway without hw decoding.
 		av_sws_frame = make_unique_avframe();
 		sws_scale_frame(sws_ctx.get(), av_sws_frame.get(), av_frame.get());
 
+		// NOTE: It's possible that linesize is empty so we should switch to resolution.x and to resolution.x / 2.
+		// If that's the case, padding is automatically 0 due to how SWR works.
+		padding = av_sws_frame->linesize[0] - resolution.x;
 		y_data = Image::create_empty(av_sws_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
 		u_data = Image::create_empty(av_sws_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
 		v_data = Image::create_empty(av_sws_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
-		padding = av_sws_frame->linesize[0] - resolution.x;
+
+		if (has_alpha)
+			a_data = Image::create_empty(av_sws_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
 
 		av_frame_unref(av_sws_frame.get());
 	}
@@ -503,11 +524,17 @@ void GoZenVideo::_copy_frame_data() {
 		memcpy(u_data->ptrw(), av_sws_frame->data[1], u_data->get_size().x * u_data->get_size().y);
 		memcpy(v_data->ptrw(), av_sws_frame->data[2], v_data->get_size().x * v_data->get_size().y);
 
+		if (has_alpha)
+			memcpy(a_data->ptrw(), av_sws_frame->data[3], a_data->get_size().x * a_data->get_size().y);
+
 		av_frame_unref(av_sws_frame.get());
 	} else {
 		memcpy(y_data->ptrw(), av_frame->data[0], y_data->get_size().x * y_data->get_size().y);
 		memcpy(u_data->ptrw(), av_frame->data[1], u_data->get_size().x * u_data->get_size().y);
 		memcpy(v_data->ptrw(), av_frame->data[2], v_data->get_size().x * v_data->get_size().y);
+
+		if (has_alpha)
+			memcpy(a_data->ptrw(), av_frame->data[3], a_data->get_size().x * a_data->get_size().y);
 	}
 }
 
@@ -548,6 +575,7 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(get_y_data);
 	BIND_METHOD(get_u_data);
 	BIND_METHOD(get_v_data);
+	BIND_METHOD(get_a_data);
 
 	// Metadata getters
 	BIND_METHOD(get_path);
@@ -571,6 +599,8 @@ void GoZenVideo::_bind_methods() {
 
 	BIND_METHOD(get_pixel_format);
 	BIND_METHOD(get_color_profile);
+
+	BIND_METHOD(get_has_alpha);
 
 	BIND_METHOD(is_full_color_range);
 	BIND_METHOD(is_using_sws);

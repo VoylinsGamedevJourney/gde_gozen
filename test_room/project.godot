@@ -20,7 +20,6 @@ config/icon="res://icon.svg"
 
 settings/crash_handler/message="Please include this when reporting the bug to the project/game developer."
 settings/crash_handler/message.editor="Please include this when reporting the bug on: https://github.com/VoylinsGamedevJourney/gde_gozen"
-settings/stdout/verbose_stdout=true
 gdscript/warnings/exclude_addons=false
 gdscript/warnings/untyped_declaration=1
 gdscript/warnings/inferred_declaration=1
@@ -52,4 +51,4 @@ play_pause={
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
-environment/defaults/default_clear_color=Color(0.105469, 0.105469, 0.105469, 1)
+environment/defaults/default_clear_color=Color(0.13505512, 0.3331357, 0.37926653, 1)

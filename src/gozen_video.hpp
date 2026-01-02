@@ -78,6 +78,9 @@ class GoZenVideo : public Resource {
 	Ref<Image> y_data;
 	Ref<Image> u_data;
 	Ref<Image> v_data;
+	Ref<Image> a_data;
+
+	bool has_alpha = false;
 
 	PackedByteArray file_buffer; // For `res://` videos.
 
@@ -126,6 +129,7 @@ class GoZenVideo : public Resource {
 	inline Ref<Image> get_y_data() const { return y_data; }
 	inline Ref<Image> get_u_data() const { return u_data; }
 	inline Ref<Image> get_v_data() const { return v_data; }
+	inline Ref<Image> get_a_data() const { return a_data; }
 
 	// Metadata getters
 	inline String get_path() const { return path; }
@@ -149,6 +153,8 @@ class GoZenVideo : public Resource {
 
 	inline String get_pixel_format() const { return pixel_format; }
 	inline String get_color_profile() const { return av_color_primaries_name(color_profile); }
+
+	inline bool get_has_alpha() const { return has_alpha; }
 
 	inline bool is_full_color_range() const { return full_color_range; }
 	inline bool is_using_sws() const { return using_sws; }
