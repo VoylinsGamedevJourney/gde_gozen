@@ -56,7 +56,6 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
-debug = true
 
 [node name="BottomPanel" type="PanelContainer" parent="VBox"]
 layout_mode = 2
