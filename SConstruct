@@ -48,19 +48,15 @@ if "linux" in platform:
     env.Append(LIBS=["m", "z", "bz2", "lzma", "pthread", "dl"])
 elif "windows" in platform:
     libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-    if os_platform.system().lower() == "windows":
-        env.Append(LIBS=[
-            "avcodec.lib",
-            "avformat.lib",
-            "avutil.lib",
-            "swresample.lib",
-            "swscale.lib"])
-    else:
-        env.Append(LIBS=LIBS_COMMON)
 
     env.Append(
+        LINKFLAGS=["-static"],
+        LIBS=LIBS_COMMON)
+    env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/bin"])
+        LIBPATH=["ffmpeg/bin/lib"],
+        LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
+    )
 elif "macos" in platform:
     # MacOS can only be build on a MacOS machine!
     macos_base_path = f"{libpath}/{target}"

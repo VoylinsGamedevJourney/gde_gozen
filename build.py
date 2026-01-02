@@ -196,14 +196,17 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--target-os=mingw32",
         "--enable-cross-compile",
         f"--cross-prefix={arch}-w64-mingw32-",
         "--quiet",
         "--extra-libs=-lpthread",
-        "--extra-ldflags=-fpic",
+        "--extra-ldflags=-static",
         "--extra-cflags=-fPIC",
     ]
     cmd += ENABLED_MODULES

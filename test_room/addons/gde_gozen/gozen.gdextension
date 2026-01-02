@@ -28,47 +28,6 @@ android.release.arm32 = "res://addons/gde_gozen/bin/android_arm32/libgozen.andro
 
 [dependencies]
 
-windows.debug.x86_64 = {
-    "bin/windows_x86_64/avcodec-60.dll": "",
-    "bin/windows_x86_64/avformat-60.dll": "",
-	"bin/windows_x86_64/avutil-58.dll": "",
-
-	"bin/windows_x86_64/swresample-4.dll": "",
-	"bin/windows_x86_64/swscale-7.dll": "",
-
-	"bin/windows_x86_64/libwinpthread-1.dll": "",
-}
-windows.release.x86_64 = {
-    "bin/windows_x86_64/avcodec-60.dll": "",
-    "bin/windows_x86_64/avformat-60.dll": "",
-    "bin/windows_x86_64/avutil-58.dll": "",
-
-	"bin/windows_x86_64/swresample-4.dll": "",
-	"bin/windows_x86_64/swscale-7.dll": "",
-
-	"bin/windows_x86_64/libwinpthread-1.dll": "",
-}
-windows.debug.arm64 = {
-    "bin/windows_arm64/avcodec-60.dll": "",
-    "bin/windows_arm64/avformat-60.dll": "",
-	"bin/windows_arm64/avutil-58.dll": "",
-
-	"bin/windows_arm64/swresample-4.dll": "",
-	"bin/windows_arm64/swscale-7.dll": "",
-
-	"bin/windows_arm64/libwinpthread-1.dll": "",
-}
-windows.release.arm64 = {
-    "bin/windows_arm64/avcodec-60.dll": "",
-    "bin/windows_arm64/avformat-60.dll": "",
-    "bin/windows_arm64/avutil-58.dll": "",
-
-	"bin/windows_arm64/swresample-4.dll": "",
-	"bin/windows_arm64/swscale-7.dll": "",
-
-	"bin/windows_arm64/libwinpthread-1.dll": "",
-}
-
 macos.debug.arm64 = {
 	"bin/macos/debug/lib/libavcodec.dylib": "Contents/Frameworks",
     "bin/macos/debug/lib/libavcodec.60.dylib": "Contents/Frameworks",
