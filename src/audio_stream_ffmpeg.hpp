@@ -33,6 +33,7 @@ class AudioStreamFFmpeg : public AudioStream {
 	bool stereo = true;
 	int bytes_per_sample = 0;
 	int sample_rate = 44100;
+	double length = 0;
 
 	Mutex *mutex; // We need thread safety
 
@@ -52,7 +53,7 @@ class AudioStreamFFmpeg : public AudioStream {
 	void close();
 	inline bool is_open() const { return loaded; }
 
-	double _get_length() const override { return 0; }
+	double _get_length() const override { return length; }
 	bool _is_monophonic() const override { return !stereo; }
 
 	Ref<AudioStreamPlayback> _instantiate_playback() const override;
