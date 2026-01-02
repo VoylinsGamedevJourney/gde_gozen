@@ -175,8 +175,12 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Linux ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
 
 def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
@@ -213,29 +217,12 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Windows ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/")
-    subprocess.run(["make", "install"], cwd="./ffmpeg/")
-
-    print("Copying lib files ...")
-    for file in glob.glob("ffmpeg/bin/bin/*.dll"):
-        shutil.copy2(file, path)
-        shutil.copy2(file, path_csharp)
-
-    # Somehow some distro"s put the dll"s in bin, and others in lib.
-    if os.path.exists("/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll"):
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path_csharp], check=True)
-
-        if add_av1:
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path], check=True)
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path_csharp], check=True)
-    else:
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path_csharp], check=True)
-
-        if add_av1:
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path], check=True)
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path_csharp], check=True)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/").returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/").returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Windows finished!")
 
@@ -272,8 +259,12 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for MacOS ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Copying lib files ...")
     for file in glob.glob("./ffmpeg/bin/lib/*.dylib"):
@@ -365,8 +356,12 @@ def compile_ffmpeg_android(arch: str) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Android ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Copying lib files ...")
     os.makedirs(path, exist_ok=True)
@@ -464,8 +459,12 @@ def compile_ffmpeg_web() -> None:
         sys.exit(1)
 
     print("Compiling FFmpeg for Web (using emmake)...")
-    subprocess.run(["emmake", "make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["emmake", "make", "install"], cwd="./ffmpeg/", check=True)
+    if subprocess.run(["emmake", "make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["emmake", "make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Copying static lib files (.a) ...")
     for file in glob.glob(os.path.join(ffmpeg_lib_dir, "*.a")):
