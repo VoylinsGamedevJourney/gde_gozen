@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 using Godot.Collections;
 
@@ -102,7 +103,7 @@ public partial class VideoPlayback : Control
     private int _padding = 0;
     private float _frameRate = 0.0f;
     private int _frameCount = 0;
-    private bool _hasAlpha = 0;
+    private bool _hasAlpha = false;
 
     private Vector2I _resolution = Vector2I.Zero;
     private ShaderMaterial _shaderMaterial;
@@ -117,7 +118,7 @@ public partial class VideoPlayback : Control
 
     private AudioStreamWav _currentStream;
 
-    public class Chapter : GodotObject
+    public partial class Chapter : GodotObject
     {
         public float Start;
         public float End;
