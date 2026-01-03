@@ -54,7 +54,7 @@ public partial class GoZenVideo : Resource
     public string GetPixelFormat() => _gdHndl.AsGodotObject().Call("get_pixel_format").AsString();
     public string GetColorProfile() => _gdHndl.AsGodotObject().Call("get_color_profile").AsString();
 
-    public string GetHasAlpha() => _gdHndl.AsGodotObject().Call("get_has_alpha").AsString();
+    public bool GetHasAlpha() => _gdHndl.AsGodotObject().Call("get_has_alpha").AsBool();
     
     public bool IsFullColorRange() => _gdHndl.AsGodotObject().Call("is_full_color_range").AsBool();
     public bool IsUsingSws() => _gdHndl.AsGodotObject().Call("is_using_sws").AsBool();
