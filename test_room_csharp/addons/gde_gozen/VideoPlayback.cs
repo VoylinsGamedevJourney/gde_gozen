@@ -116,8 +116,6 @@ public partial class VideoPlayback : Control
     private ImageTexture _vTexture;
     private ImageTexture _aTexture;
 
-    private AudioStreamWav _currentStream;
-
     public partial class Chapter : GodotObject
     {
         public float Start;
@@ -180,13 +178,8 @@ public partial class VideoPlayback : Control
             await ToSignal(this, SignalName.Ready);
         if (!GetTree().Root.IsNodeReady())
             await ToSignal(GetTree().Root, SignalName.Ready);
-        
-        _currentStream = new AudioStreamWav();
-        _currentStream.MixRate = 44100;
-        _currentStream.Stereo = true;
-        _currentStream.Format = AudioStreamWav.FormatEnum.Format16Bits;
 
-        AudioStream.Stream = _currentStream;
+        AudioStream.Stream = null;
 
         if (newPath == "" || newPath.EndsWith(".tscn"))
             return;
@@ -207,7 +200,7 @@ public partial class VideoPlayback : Control
             _threads.Add(WorkerThreadPool.AddTask(Callable.From(() => OpenAudio())));
     }
 
-    public void UpdateVideo(GoZenVideo video, AudioStreamWav audioStream = null)
+    public void UpdateVideo(GoZenVideo video, AudioStream audioStream = null)
     {
         if (Video != null)
             Close();
@@ -671,12 +664,14 @@ public partial class VideoPlayback : Control
 
     private void OpenAudio(int stream = -1)
     {
-        var data = GoZenAudio.GetAudioData(Path, stream); // The GDScript passes 'stream' here, but GoZenAudio.cs GetAudioData currently only takes path.
-
-        if (data.Length != 0)
-            _currentStream.Data = data;
-        else
-            GD.PrintErr($"Audio data for video '{Path}' was 0!");
+        var asff = new AudioStreamFFmpeg();
+        asff.Open(Path, stream);
+        Callable.From(() =>
+        {
+            AudioStream.Stream = asff;
+            if (IsPlaying)
+                AudioStream.Play(CurrentFrame / _frameRate);
+        }).CallDeferred();
     }
 
     private void PrintStreamInfo(int[] streams)
