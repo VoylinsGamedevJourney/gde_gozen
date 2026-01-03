@@ -11,12 +11,10 @@ func _ready() -> void:
 	
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
-	var stream: AudioStreamWAV = AudioStreamWAV.new()
-	stream.mix_rate = 44100
-	stream.stereo = true
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	var stream: AudioStreamFFmpeg = AudioStreamFFmpeg.new()
 
-	stream.data = GoZenAudio.get_audio_data(a_files[0])
+	if stream.open(a_files[0]) != OK:
+		return print("Error opening file!")
 
 	player.stream = stream
 	print("Audio loaded")
