@@ -518,10 +518,10 @@ def main():
         target = TARGET_RELEASE
 
     clean_scons = False
-    if _print_options("Clean Scons?", ["no", "yes"]) == 2:
+    if _print_options("Clean Scons?", ["yes", "no"]) == 1:
         clean_scons = True
 
-    if _print_options("(Re)compile ffmpeg?", ["no", "yes"]) == 2:
+    if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
         av1_support = _print_options("Add AV1 support?", ["no", "yes"]) == 2
         compile_ffmpeg(platform, arch, av1_support)
 
