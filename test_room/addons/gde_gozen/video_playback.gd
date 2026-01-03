@@ -283,7 +283,7 @@ func seek_frame(new_frame_nr: int) -> void:
 	else:
 		_set_frame_image()
 
-	if enable_audio:
+	if enable_audio and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play(current_frame / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -328,7 +328,7 @@ func _process(delta: float) -> void:
 		if current_frame >= _frame_count:
 			is_playing = !is_playing
 
-			if enable_audio:
+			if enable_audio and audio_player.stream != null:
 				audio_player.set_stream_paused(true)
 
 			video_ended.emit()

@@ -88,6 +88,11 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 		return _log_err("Invalid stream index");
 	}
 
+	if (!av_stream) {
+		mutex->unlock();
+		return _log_err("No audio stream found");
+	}
+
 	// Getting the length (average).
 	if (av_stream->duration != AV_NOPTS_VALUE) {
 		length = av_stream->duration * av_q2d(av_stream->time_base);
@@ -136,8 +141,10 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	sample_rate = av_codec_ctx->sample_rate;
 	bytes_per_sample = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
 
+	AVChannelLayout out_ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+
 	SwrContext* temp_swr_ctx = nullptr;
-	int response = swr_alloc_set_opts2(&temp_swr_ctx, &ch_layout, AV_SAMPLE_FMT_S16, sample_rate,
+	int response = swr_alloc_set_opts2(&temp_swr_ctx, &out_ch_layout, AV_SAMPLE_FMT_S16, sample_rate,
 									   &av_codec_ctx->ch_layout, av_codec_ctx->sample_fmt, sample_rate, 0, nullptr);
 	swr_ctx = make_unique_ffmpeg<SwrContext, SwrCtxDeleter>(temp_swr_ctx);
 	if (response < 0 || swr_init(swr_ctx.get()) < 0) {
@@ -208,9 +215,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 			found_target = true;
 
 			av_decoded_frame->format = AV_SAMPLE_FMT_S16;
-			av_decoded_frame->ch_layout = audio_stream_ffmpeg->ch_layout.nb_channels <= 2
-											  ? audio_stream_ffmpeg->ch_layout
-											  : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+            av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 			av_decoded_frame->sample_rate = av_frame->sample_rate;
 			av_decoded_frame->nb_samples =
 				swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame->nb_samples);
@@ -240,8 +245,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 			}
 
 			size_t byte_size = av_decoded_frame->nb_samples * audio_stream_ffmpeg->bytes_per_sample;
-			if (audio_stream_ffmpeg->av_codec_ctx->ch_layout.nb_channels >= 2)
-				byte_size *= 2;
+			byte_size *= 2;
 
 			std::memcpy(buffer, av_decoded_frame->extended_data[0], byte_size);
 			buffer_fill = av_decoded_frame->nb_samples;
@@ -317,9 +321,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	}
 
 	av_decoded_frame.get()->format = AV_SAMPLE_FMT_S16;
-	av_decoded_frame->ch_layout = audio_stream_ffmpeg->ch_layout.nb_channels <= 2
-									  ? audio_stream_ffmpeg->ch_layout
-									  : (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+    av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 	av_decoded_frame.get()->sample_rate = av_frame.get()->sample_rate;
 	av_decoded_frame.get()->nb_samples =
 		swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame.get()->nb_samples);
@@ -350,8 +352,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 
 	int new_samples = av_decoded_frame.get()->nb_samples;
 	size_t byte_size = new_samples * audio_stream_ffmpeg->bytes_per_sample;
-	if (audio_stream_ffmpeg->av_codec_ctx.get()->ch_layout.nb_channels >= 2)
-		byte_size *= 2;
+	byte_size *= 2;
 
 	// Check if there is enough space in the buffer
 	if (buffer_fill + new_samples > buffer_len) {
