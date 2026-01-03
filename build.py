@@ -488,6 +488,8 @@ def main():
     title_arch: str = "Choose architecture"
     platform: str = OS_LINUX
     arch: str = ARCH_X86_64
+    av1_support: bool = False
+
     match _print_options("Select platform", [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
         case 2:
             platform = OS_WINDOWS
@@ -520,14 +522,16 @@ def main():
         clean_scons = True
 
     if _print_options("(Re)compile ffmpeg?", ["no", "yes"]) == 2:
-        compile_ffmpeg(platform, arch, _print_options("Add AV1 support?", ["no", "yes"]) == 2)
+        av1_support = _print_options("Add AV1 support?", ["no", "yes"]) == 2
+        compile_ffmpeg(platform, arch, av1_support)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
         arch = "arm32"
 
-    cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
     env = os.environ.copy()
+    cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}",
+           f"arch={arch}", f"av1={'yes' if av1_support else 'no'}"]
 
     if platform == OS_ANDROID:
         # We need to check if ANDROID_HOME is set to the sdk folder.
@@ -537,7 +541,9 @@ def main():
                 env["ANDROID_HOME"] = os.getenv("ANDROID_HOME", ANDROID_SDK_PATH)
 
     if clean_scons:
-        clean_cmd = ["scons", "--clean", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
+        clean_cmd = ["scons", "--clean", f"-j{THREADS}", f"target=template_{target}",
+                     f"platform={platform}", f"arch={arch}",
+                     f"av1={'yes' if av1_support else 'no'}"]
         subprocess.run(clean_cmd, cwd="./", env=env)
 
     subprocess.run(cmd, cwd="./", env=env)

@@ -27,6 +27,9 @@ arch = ARGUMENTS.get("arch", "x86_64")
 target = ARGUMENTS.get("target", "template_debug").split("_")[-1]
 libpath = f"{LOCATION}/libgozen{env_suffix}{env_shlibsuffix}"
 
+if ARGUMENTS.get("av1", "no") == "yes":
+    LIBS_COMMON.append("aom")
+
 
 if "linux" in platform:
     if arch == "arm64":
