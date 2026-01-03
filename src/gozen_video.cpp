@@ -78,9 +78,6 @@ int GoZenVideo::open(const String& video_path) {
 						rotation = av_display_rotation_get(reinterpret_cast<const int32_t*>(side_data->data));
 				}
 			}
-
-			AVDictionaryEntry* alpha_tag = av_dict_get(av_stream->metadata, "alpha_mode", nullptr, 0);
-			has_alpha = (alpha_tag && atoi(alpha_tag->value) == 1);
 			continue;
 		}
 		av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
@@ -237,7 +234,7 @@ int GoZenVideo::open(const String& video_path) {
 	// Check for alpha layer.
 	has_alpha = (av_frame->format == AV_PIX_FMT_YUVA420P || av_frame->format == AV_PIX_FMT_YUVA444P ||
 				 av_frame->format == AV_PIX_FMT_ARGB || av_frame->format == AV_PIX_FMT_BGRA ||
-				 av_frame->format == AV_PIX_FMT_ABGR || av_frame->format == AV_PIX_FMT_RGBA || has_alpha);
+				 av_frame->format == AV_PIX_FMT_ABGR || av_frame->format == AV_PIX_FMT_RGBA);
 
 	pixel_format = av_get_pix_fmt_name((AVPixelFormat)av_frame->format);
 	_log(String("Selected pixel format is: ") + pixel_format);
