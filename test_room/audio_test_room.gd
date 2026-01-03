@@ -19,4 +19,3 @@ func _on_audio_drop(a_files: PackedStringArray) -> void:
 	player.stream = stream
 	print("Audio loaded")
 	player.play()
-
