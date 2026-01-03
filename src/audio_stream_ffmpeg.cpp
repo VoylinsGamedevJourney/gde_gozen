@@ -97,8 +97,11 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 
 	// Discard all non-audio streams.
 	for (int i = 0; i < av_format_ctx->nb_streams; i++) {
-		if (i != stream_index) {
-			av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
+		AVCodecParameters* av_codec_params = av_format_ctx->streams[i]->codecpar;
+
+		if (!avcodec_find_decoder(av_codec_params->codec_id)) {
+			if (i != stream_index)
+				av_format_ctx->streams[i]->discard = AVDISCARD_ALL;
 		}
 	}
 
