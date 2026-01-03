@@ -1,15 +1,13 @@
 # GDE GoZen
 ## Adding the addon to your project
-The GDE GoZen addon is very straightforward, put this folder `gde_gozen` inside of a folder called addons inside of your Godot project. You may need to restart you project as the GDExtension which interacts with FFmpeg will probably complain about something not being fully loaded. After reloading you will have access to a new node called `VideoPlayback`. This node has a lot of documentation comments so if you press F1 inside of Godot and search for the node `VideoPlayback`, you'll find it's documentation and more notes on how to use it.
+Put this folder, `gde_gozen`, inside of a folder called `addons` inside of your Godot project and re-open your project. After reloading you will have access to a new node, `VideoPlayback`. This node has a lot of documentation comments so by pressing F1 inside Godot and search for the node `VideoPlayback`, you'll find it's documentation and more notes on how to use it.
 
-Since version 8.0 it's possible to add and play videos from your project directly. What you would need to adjust however is to add `mp4` and any other video extensions you might use to your Editor settings in `docks/filesystem/other_file_extensions` so they show up in your file explorer.
+## Videos in the file tree
+To see video files in your projects file tree, you need to add `mp4` and any other video extensions you might use to your Editor settings in `docks/filesystem/other_file_extensions`.
 
 ## Exporting your project
-When exporting your projects, take in mind to bundle your executables with the FFmpeg library files which should be present in your exported projects folder. Also, add `*.mp4` and other extension names of your video files to the resources which need to get exported, otherwise your video files might not be included in your final export.
-
-## Size limit
-
-At this moment there's a limit of 2GB for the audio data, so video's over a couple of hours will not work!
+1. When exporting, you'll have your executable and the GDE GoZen library file, these do need to be both shared for the application to work.
+2. Also, you will have to add `*.mp4` and other extension names of your video files to the resources which need to get exported for each platform you want to export for, otherwise your video files will not be included in your final export.
 
 ## Help needed?
 You can go to the [GitHub repo](https://github.com/VoylinsGamedevJourney/gde_gozen/issues) to report problems, or visit out [Discord server](discord.gg/BdbUf7VKYC) for help/advice.
