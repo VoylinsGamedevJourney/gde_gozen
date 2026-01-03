@@ -102,6 +102,7 @@ public partial class VideoPlayback : Control
     private int _padding = 0;
     private float _frameRate = 0.0f;
     private int _frameCount = 0;
+    private bool _hasAlpha = 0;
 
     private Vector2I _resolution = Vector2I.Zero;
     private ShaderMaterial _shaderMaterial;
@@ -112,6 +113,7 @@ public partial class VideoPlayback : Control
     private ImageTexture _yTexture;
     private ImageTexture _uTexture;
     private ImageTexture _vTexture;
+    private ImageTexture _aTexture;
 
     private AudioStreamWav _currentStream;
 
@@ -231,6 +233,7 @@ public partial class VideoPlayback : Control
         _frameRate = Video.GetFramerate();
         _resolution = Video.GetResolution();
         _frameCount = Video.GetFrameCount();
+        _hasAlpha = Video.GetHasAlpha();
 
         VideoStreams = Video.GetStreams((int)StreamType.Video);
         AudioStreams = Video.GetStreams((int)StreamType.Audio);
@@ -259,23 +262,31 @@ public partial class VideoPlayback : Control
             PrintVideoDebug();
 
         ((ImageTexture)VideoTexture.Texture).SetImage(image);
-        if (Video.IsFullColorRange())
+		if (_hasAlpha)
         {
-            if (Video.GetInterlaced() == 0)
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_full.gdshader");
+            if (Video.IsFullColorRange())
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_full.gdshader");
             else
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
-        }
-        else if (Video.GetInterlaced() == 0)
-        {
-            _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader");
-            _shaderMaterial.Shader = GD.Load<VisualShader>("res://addons/gde_gozen/shaders/yuv420p_standard.tres");
-            _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_standard.gdshader");
         }
         else
         {
-            _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
-            _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+            if (Video.IsFullColorRange())
+            {
+                if (Video.GetInterlaced() == 0)
+                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_full.gdshader");
+                else
+                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
+            }
+            else if (Video.GetInterlaced() == 0)
+            {
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader");
+            }
+            else
+            {
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader");
+                _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+            }
         }
 
         SetColorProfile();
@@ -292,11 +303,17 @@ public partial class VideoPlayback : Control
             _yTexture = ImageTexture.CreateFromImage(Video.GetYData());
             _uTexture = ImageTexture.CreateFromImage(Video.GetUData());
             _vTexture = ImageTexture.CreateFromImage(Video.GetVData());
+
+			if (_hasAlpha)
+				_aTexture = ImageTexture.CreateFromImage(Video.GetAData());
         }
         
         _shaderMaterial.SetShaderParameter("y_data", _yTexture);
         _shaderMaterial.SetShaderParameter("u_data", _uTexture);
         _shaderMaterial.SetShaderParameter("v_data", _vTexture);
+
+        if (_hasAlpha)
+            _shaderMaterial.SetShaderParameter("a_data", _aTexture);
 
         SeekFrame(CurrentFrame);
 
@@ -381,6 +398,7 @@ public partial class VideoPlayback : Control
             _yTexture = null;
             _uTexture = null;
             _vTexture = null;
+            _aTexture = null;
         }
     }
     #endregion
@@ -573,6 +591,9 @@ public partial class VideoPlayback : Control
         _yTexture.Update(Video.GetYData());
         _uTexture.Update(Video.GetUData());
         _vTexture.Update(Video.GetVData());
+
+		if (_hasAlpha)
+			_aTexture.Update(Video.GetAData());
     }
 
     public void SetPlaybackSpeed(float speed)
@@ -649,13 +670,7 @@ public partial class VideoPlayback : Control
 
     private void OpenAudio(int stream = -1)
     {
-        var data = GoZenAudio.GetAudioData(Path); // The GDScript passes 'stream' here, but GoZenAudio.cs GetAudioData currently only takes path.
-        // NOTE: GoZenAudio.cs GetAudioData wrapper needs to handle the stream index if supported by the C++ side.
-        // Assuming GoZenAudio.GetAudioData overload exists or needs to be used:
-        // Actually, GoZenAudio.cs GetAudioData only takes path in the current C# code provided.
-        // We will stick to Path for now, or update GoZenAudio.cs if the C++ supports it (which it does).
-        // Let's use ClassDB call to support the optional argument.
-        data = (byte[])ClassDB.ClassCallStatic("GoZenAudio", "get_audio_data", Variant.CreateFrom(Path), Variant.CreateFrom(stream));
+        var data = GoZenAudio.GetAudioData(Path, stream); // The GDScript passes 'stream' here, but GoZenAudio.cs GetAudioData currently only takes path.
 
         if (data.Length != 0)
             _currentStream.Data = data;
@@ -699,6 +714,7 @@ public partial class VideoPlayback : Control
         GD.Print("Actual resolution: ", Video.GetActualResolution());
         GD.Print("Pixel format: ", Video.GetPixelFormat());
         GD.Print("Color profile: ", Video.GetColorProfile());
+		GD.Print("Has alpha: ", Video.GetHasAlpha());
         GD.Print("Framerate: ", _frameRate);
         GD.Print("Duration (in frames): ", _frameCount);
         GD.Print("Padding: ", _padding);

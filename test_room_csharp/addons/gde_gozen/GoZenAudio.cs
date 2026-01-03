@@ -3,8 +3,8 @@ using System;
 
 public partial class GoZenAudio : Resource
 {
-    public static byte[] GetAudioData(string path) => ClassDB.ClassCallStatic("GoZenAudio", "get_audio_data", Variant.CreateFrom(path)).AsByteArray();
-
+	public static byte[] GetAudioData(string path, int streamIndex = -1, bool stereo = true) =>
+        ClassDB.ClassCallStatic("GoZenAudio", "get_audio_data", Variant.CreateFrom(path), Variant.CreateFrom(streamIndex), Variant.CreateFrom(stereo)).AsByteArray();
     public static byte[] CombineData(byte[] audio1, byte[] audio2) => ClassDB.ClassCallStatic("GoZenAudio",
         "combine_data", Variant.CreateFrom(audio1), Variant.CreateFrom(audio2)).AsByteArray();
     
