@@ -25,6 +25,16 @@ public partial class GoZenVideo : Resource
     public int SeekFrame(int frame_nr) => _gdHndl.AsGodotObject().Call("seek_frame", Variant.CreateFrom(frame_nr)).AsInt32();
     public bool NextFrame(bool skip = false) => _gdHndl.AsGodotObject().Call("next_frame", Variant.CreateFrom(skip)).AsBool();
     
+    // Stream info
+    public int[] GetStreams(int streamType) => _gdHndl.AsGodotObject().Call("get_streams", Variant.CreateFrom(streamType)).AsInt32Array();
+    public Dictionary GetStreamMetadata(int streamIndex) => _gdHndl.AsGodotObject().Call("get_stream_metadata", Variant.CreateFrom(streamIndex)).AsGodotDictionary();
+
+    // Chapter info
+    public int GetChapterCount() => _gdHndl.AsGodotObject().Call("get_chapter_count").AsInt32();
+    public float GetChapterStart(int chapterIndex) => _gdHndl.AsGodotObject().Call("get_chapter_start", Variant.CreateFrom(chapterIndex)).AsSingle();
+    public float GetChapterEnd(int chapterIndex) => _gdHndl.AsGodotObject().Call("get_chapter_end", Variant.CreateFrom(chapterIndex)).AsSingle();
+    public Dictionary GetChapterMetadata(int chapterIndex) => _gdHndl.AsGodotObject().Call("get_chapter_metadata", Variant.CreateFrom(chapterIndex)).AsGodotDictionary();
+
     public string GetPath() => _gdHndl.AsGodotObject().Call("get_path").AsString();
     public float GetFramerate() => _gdHndl.AsGodotObject().Call("get_framerate").AsSingle();
     public int GetFrameCount() => _gdHndl.AsGodotObject().Call("get_frame_count").AsInt32();
@@ -43,6 +53,8 @@ public partial class GoZenVideo : Resource
     
     public string GetPixelFormat() => _gdHndl.AsGodotObject().Call("get_pixel_format").AsString();
     public string GetColorProfile() => _gdHndl.AsGodotObject().Call("get_color_profile").AsString();
+
+    public string GetHasAlpha() => _gdHndl.AsGodotObject().Call("get_has_alpha").AsString();
     
     public bool IsFullColorRange() => _gdHndl.AsGodotObject().Call("is_full_color_range").AsBool();
     public bool IsUsingSws() => _gdHndl.AsGodotObject().Call("is_using_sws").AsBool();
@@ -50,4 +62,5 @@ public partial class GoZenVideo : Resource
     public Image GetYData() => _gdHndl.AsGodotObject().Call("get_y_data").As<Image>();
     public Image GetUData() => _gdHndl.AsGodotObject().Call("get_u_data").As<Image>();
     public Image GetVData() => _gdHndl.AsGodotObject().Call("get_v_data").As<Image>();
+    public Image GetAData() => _gdHndl.AsGodotObject().Call("get_a_data").As<Image>();
 }

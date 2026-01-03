@@ -57,6 +57,7 @@ var _rotation: int = 0
 var _padding: int = 0
 var _frame_rate: float = 0.
 var _frame_count: int = 0
+var _has_alpha: bool = false
 
 var _resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
@@ -67,6 +68,7 @@ var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 var y_texture: ImageTexture;
 var u_texture: ImageTexture;
 var v_texture: ImageTexture;
+var a_texture: ImageTexture;
 
 class Chapter:
 	var start: float ## Start of the chapter in seconds.
@@ -128,12 +130,7 @@ func set_video_path(new_path: String) -> void:
 	if !get_tree().root.is_node_ready():
 		await get_tree().root.ready
 
-	var stream: AudioStreamWAV = AudioStreamWAV.new()
-	stream.mix_rate = 44100
-	stream.stereo = true
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-
-	audio_player.stream = stream
+	audio_player.stream = null # Cleaning up the stream just in case.
 
 	if new_path == "" or new_path.ends_with(".tscn"):
 		return
@@ -151,17 +148,16 @@ func set_video_path(new_path: String) -> void:
 	if _threads.append(WorkerThreadPool.add_task(_open_video)):
 		push_error("Something went wrong appending thread to _threads!")
 	if enable_audio:
-		if _threads.append(WorkerThreadPool.add_task(_open_audio)):
-			push_error("Something went wrong appending thread to _threads!")
+		_open_audio()
 
 
 ## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
-func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
+func update_video(video_instance: GoZenVideo) -> void:
 	if video != null:
 		close()
 
-	audio_player.stream = audio_stream
 	_update_video(video_instance)
+	_open_audio()
 
 
 ## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
@@ -179,6 +175,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_frame_rate = video.get_framerate()
 	_resolution = video.get_resolution()
 	_frame_count = video.get_frame_count()
+	_has_alpha = video.get_has_alpha()
 
 	video_streams = video.get_streams(STREAM_TYPE.VIDEO)
 	audio_streams = video.get_streams(STREAM_TYPE.AUDIO)
@@ -207,18 +204,23 @@ func _update_video(new_video: GoZenVideo) -> void:
 
 	@warning_ignore("UNSAFE_METHOD_ACCESS")
 	video_texture.texture.set_image(image)
-	if video.is_full_color_range():
-		if video.get_interlaced() == 0:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
+
+	if _has_alpha:
+		if video.is_full_color_range():
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuva420p_full.gdshader")
 		else:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader")
-	elif video.get_interlaced() == 0:
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.tres")
-		_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuva420p_standard.gdshader")
 	else:
-		_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
-		_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
+		if video.is_full_color_range():
+			if video.get_interlaced() == 0:
+				_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
+			else:
+				_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader")
+		elif video.get_interlaced() == 0:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
+		else:
+			_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
+			_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
 
 	_set_color_profile()
 
@@ -230,14 +232,20 @@ func _update_video(new_video: GoZenVideo) -> void:
 	set_playback_speed(playback_speed)
 	current_frame = 0
 
-	if(!y_texture):
+	if !y_texture:
 		y_texture = ImageTexture.create_from_image(video.get_y_data())
 		u_texture = ImageTexture.create_from_image(video.get_u_data())
 		v_texture = ImageTexture.create_from_image(video.get_v_data())
 
+		if _has_alpha:
+			a_texture = ImageTexture.create_from_image(video.get_a_data())
+
 	_shader_material.set_shader_parameter("y_data", y_texture)
 	_shader_material.set_shader_parameter("u_data", u_texture)
 	_shader_material.set_shader_parameter("v_data", v_texture)
+
+	if _has_alpha:
+		_shader_material.set_shader_parameter("a_data", a_texture)
 
 	seek_frame(current_frame)
 
@@ -300,6 +308,7 @@ func close() -> void:
 		y_texture = null
 		u_texture = null
 		v_texture = null
+		a_texture = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING
@@ -460,6 +469,9 @@ func _set_frame_image() -> void:
 	u_texture.update(video.get_u_data())
 	v_texture.update(video.get_v_data())
 
+	if _has_alpha:
+		a_texture.update(video.get_a_data())
+
 
 func set_playback_speed(new_playback_value: float) -> void:
 	playback_speed = clampf(new_playback_value, 0.5, 2)
@@ -496,7 +508,7 @@ func set_audio_stream(stream: int) -> void:
 
 	if enable_audio:
 		@warning_ignore("return_value_discarded")
-		WorkerThreadPool.add_task(_open_audio.bind(stream)) # not the best to discard a task, but oh well
+		_open_audio(stream) # not the best to discard a task, but oh well
 
 
 #------------------------------------------------ MISC
@@ -516,13 +528,14 @@ func _open_video() -> void:
 		printerr("Error opening video!")
 
 
-func _open_audio(stream: int = -1) -> void:
-	var data: PackedByteArray = GoZenAudio.get_audio_data(path, stream)
-	if data.size() != 0:
-		@warning_ignore("UNSAFE_PROPERTY_ACCESS")
-		audio_player.stream.data = data
-	else:
-		printerr("Audio data for video '%s' was 0!" % path)
+func _open_audio(stream_id: int = -1) -> void:
+	var stream: AudioStreamFFmpeg = AudioStreamFFmpeg.new()
+
+	if stream.open(path, stream_id) != OK:
+		printerr("Failed to open AudioStreamFFmpeg for: %s" % path)
+		return
+
+	audio_player.stream = stream
 
 
 func _print_stream_info(streams: PackedInt32Array) -> void:
@@ -560,6 +573,7 @@ func _print_video_debug() -> void:
 	print("Duration (in frames): ", _frame_count)
 	print("Padding: ", _padding)
 	print("Rotation: ", _rotation)
+	print("Alpha: ", _has_alpha)
 	print("Full color range: ", video.is_full_color_range())
 	print("Interlaced flag: ", video.get_interlaced())
 	print("Using sws: ", video.is_using_sws())

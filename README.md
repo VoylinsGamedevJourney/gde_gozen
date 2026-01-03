@@ -16,6 +16,7 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Smooth video playback;
 - Video seeking;
 - Godot 4.3+ support;
+- C# Support (beta);
 - Cross-platform (Linux, Windows, MacOS, and Android);
 - Playback speed control;
 - Regular updates;

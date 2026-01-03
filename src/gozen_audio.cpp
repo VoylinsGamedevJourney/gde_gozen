@@ -1,10 +1,11 @@
 #include "gozen_audio.hpp"
 
 
-PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& stream) {
+PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& stream, bool stereo) {
 	const int TARGET_SAMPLE_RATE = 44100;
 	const AVSampleFormat TARGET_FORMAT = AV_SAMPLE_FMT_S16;
-	const AVChannelLayout TARGET_LAYOUT = AV_CHANNEL_LAYOUT_STEREO;
+	const AVChannelLayout TARGET_LAYOUT =
+		stereo ? (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO : (AVChannelLayout)AV_CHANNEL_LAYOUT_MONO;
 
 	UniqueAVCodecCtx codec_ctx;
 	UniqueSwrCtx swr_ctx;
@@ -72,7 +73,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& 
 																	  : ((double)format_ctx->duration / AV_TIME_BASE);
 
 	size_t estimated_total_samples = (size_t)(stream_duration_sec * TARGET_SAMPLE_RATE);
-	int64_t total_size = estimated_total_samples * bytes_per_samples * 2;
+	int64_t total_size = estimated_total_samples * bytes_per_samples * (stereo ? 2 : 1);
 
 	_log("Stream duration: " + String::num_int64(stream_duration_sec));
 	_log("Total size: " + String::num_int64(total_size));
@@ -110,7 +111,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& 
 			break;
 		}
 
-		size_t byte_size = av_decoded_frame->nb_samples * bytes_per_samples * 2;
+		size_t byte_size = av_decoded_frame->nb_samples * bytes_per_samples * (stereo ? 2 : 1);
 		if (audio_size + byte_size > audio_data.size()) {
 			_log("Audio buffer overflow");
 			_log("Size needed is " + String::num_int64(audio_size + byte_size));
@@ -141,7 +142,7 @@ PackedByteArray GoZenAudio::_get_audio(AVFormatContext*& format_ctx, AVStream*& 
 }
 
 
-PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
+PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index, bool stereo) {
 	av_log_set_level(AV_LOG_VERBOSE);
 	AVFormatContext* format_ctx = nullptr;
 	PackedByteArray data = PackedByteArray();
@@ -223,7 +224,7 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 		AVCodecParameters* av_codec_params = format_ctx->streams[stream_index]->codecpar;
 
 		if (av_codec_params->codec_type == AVMEDIA_TYPE_AUDIO)
-			data = _get_audio(format_ctx, format_ctx->streams[stream_index]);
+			data = _get_audio(format_ctx, format_ctx->streams[stream_index], stereo);
 	} else {
 		_log_err("Invalid stream index");
 		return data;
@@ -235,8 +236,7 @@ PackedByteArray GoZenAudio::get_audio_data(String file_path, int stream_index) {
 	return data;
 }
 
-#define BIND_STATIC_METHOD_2_OPTIONAL_1(method_name, param1, param2, default_val)                                      \
-	ClassDB::bind_static_method("GoZenAudio", D_METHOD(#method_name, param1, param2), &GoZenAudio::method_name,        \
-								DEFVAL(default_val))
-
-void GoZenAudio::_bind_methods() { BIND_STATIC_METHOD_2_OPTIONAL_1(get_audio_data, "file_path", "stream_index", -1); }
+void GoZenAudio::_bind_methods() {
+	ClassDB::bind_static_method("GoZenAudio", D_METHOD("get_audio_data", "file_path", "stream_index", "stereo"),
+								&GoZenAudio::get_audio_data, DEFVAL(-1), DEFVAL(true));
+}

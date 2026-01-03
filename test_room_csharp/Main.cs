@@ -21,6 +21,7 @@ public partial class Main : Control
     private Label _maxFrameValue;
     private Label _fpsValue;
     private SpinBox _speedSpinBox;
+    private OptionButton _audioTrackOption;
     private Panel _loadingScreen;
 
     private Array<Texture2D> _icons = new Array<Texture2D>();
@@ -38,6 +39,7 @@ public partial class Main : Control
         _maxFrameValue = GetNode<Label>("%MaxFrameValue");
         _fpsValue = GetNode<Label>("%FPSValue");
         _speedSpinBox = GetNode<SpinBox>("%SpeedSpinBox");
+        _audioTrackOption = GetNode<OptionButton>("%AudioTrackOption");
         _loadingScreen = GetNode<Panel>("LoadingPanel");
         
         _icons.Add(GD.Load<Texture2D>("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png"));
@@ -51,6 +53,8 @@ public partial class Main : Control
         GetWindow().FilesDropped += OnVideoDrop;
         _videoPlayback.VideoLoaded += OnAfterVideoOpen;
         _videoPlayback.FrameChanged += OnFrameChanged;
+
+        _audioTrackOption.ItemSelected += OnAudioTrackItemSelected;
 
         _loadingScreen.Visible = false;
         _speedSpinBox.Value = _videoPlayback.PlaybackSpeed;
@@ -108,6 +112,21 @@ public partial class Main : Control
             _maxFrameValue.Text = $"{_videoPlayback.GetVideoFrameCount()}";
             _fpsValue.Text = $"{_videoPlayback.GetVideoFramerate()}".Left(5);
             _loadingScreen.Visible = false;
+
+            _audioTrackOption.Clear();
+
+            for (int i = 0; i < _videoPlayback.AudioStreams.Length; i++)
+            {
+                string title = _videoPlayback.GetStreamTitle(_videoPlayback.AudioStreams[i]);
+                string lang = _videoPlayback.GetStreamLanguage(_videoPlayback.AudioStreams[i]);
+
+                if (string.IsNullOrEmpty(title))
+                    title = "Track " + (i + 1);
+                if (string.IsNullOrEmpty(lang))
+                    _audioTrackOption.AddItem(title);
+                else
+                    _audioTrackOption.AddItem(title + " - " + lang);
+            }
         }
     }
 
@@ -168,5 +187,10 @@ public partial class Main : Control
 
         AddChild(dialog);
         dialog.PopupCentered();
+    }
+
+    public void OnAudioTrackItemSelected(long index)
+    {
+        _videoPlayback.SetAudioStream(_videoPlayback.AudioStreams[index]);
     }
 }

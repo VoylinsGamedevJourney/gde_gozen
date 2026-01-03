@@ -57,6 +57,13 @@ ENABLE_AV1 = [
 ]
 
 DISABLED_MODULES = [
+    # Hardware decoders
+    "--disable-vaapi",
+    "--disable-vdpau",
+    "--disable-cuda",
+    "--disable-cuvid",
+    "--disable-nvenc",
+    # Others
     "--disable-muxers",
     "--disable-encoders",
     "--disable-postproc",
@@ -130,24 +137,21 @@ def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False) -> None:
 
 def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Linux ...")
-    path: str = f"./test_room/addons/gde_gozen/bin/linux_{arch}"
-    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/linux_{arch}"
     os.environ["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig"
-
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--target-os=linux",
         "--quiet",
-        "--enable-pic",
         "--enable-pthreads",
         "--extra-cflags=-fPIC",
-        "--extra-ldflags=-fPIC",
+        # TODO: Remove this line if safe "--extra-ldflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -166,57 +170,33 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Linux ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
-
-    copy_linux_dependencies(path, arch, add_av1)
-    copy_linux_dependencies(path_csharp, arch, add_av1)
-
-
-def copy_linux_dependencies(path: str, arch: str, add_av1: bool = False):
-    print("Copying lib files ...")
-    for file in glob.glob("ffmpeg/bin/lib/*.so.*"):
-        if file.count(".") == 2:
-            shutil.copy2(file, path)
-
-    if add_av1:
-        # AOM lib.
-        for file in glob.glob("/usr/lib/libaom.so*"):
-            if file.count(".") == 2:
-                shutil.copy2(file, path)
-        # AOM lib for Ubuntu.
-        if arch == ARCH_X86_64:
-            for file in glob.glob("/usr/lib/x86_64*/libaom.so*", recursive=True):
-                if file.count(".") == 2:
-                    shutil.copy2(file, path)
-        else:
-            for file in glob.glob("/usr/lib/aarch64*/libaom.so*", recursive=True):
-                shutil.copy2(file, path)
-
-    print("Compiling FFmpeg for Linux finished!")
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
 
 def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for Windows ...")
-    path: str = f"./test_room/addons/gde_gozen/bin/windows_{arch}"
-    path_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/windows_{arch}"
     os.environ["PKG_CONFIG_LIBDIR"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
     os.environ["PKG_CONFIG_PATH"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
-
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--target-os=mingw32",
         "--enable-cross-compile",
         f"--cross-prefix={arch}-w64-mingw32-",
         "--quiet",
         "--extra-libs=-lpthread",
-        "--extra-ldflags=-fpic",
+        "--extra-ldflags=-static",
         "--extra-cflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
@@ -230,53 +210,31 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Windows ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/")
-    subprocess.run(["make", "install"], cwd="./ffmpeg/")
-
-    print("Copying lib files ...")
-    for file in glob.glob("ffmpeg/bin/bin/*.dll"):
-        shutil.copy2(file, path)
-        shutil.copy2(file, path_csharp)
-
-    # Somehow some distro"s put the dll"s in bin, and others in lib.
-    if os.path.exists("/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll"):
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll", path_csharp], check=True)
-
-        if add_av1:
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path], check=True)
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/bin/libaom.dll", path_csharp], check=True)
-    else:
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path], check=True)
-        subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll", path_csharp], check=True)
-
-        if add_av1:
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path], check=True)
-            subprocess.run(["cp", "/usr/x86_64-w64-mingw32/lib/libaom.dll", path_csharp], check=True)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/").returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/").returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Windows finished!")
 
 
 def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     print("Configuring FFmpeg for MacOS ...")
-    path_debug: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
-    path_release: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
-    path_debug_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
-    path_release_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
-
-    os.makedirs(path_debug, exist_ok=True)
-    os.makedirs(path_release, exist_ok=True)
-    os.makedirs(path_debug_csharp, exist_ok=True)
-    os.makedirs(path_release_csharp, exist_ok=True)
 
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--enable-pic",
+        "--disable-asm",
         f"--arch={arch}",
         "--quiet",
         "--extra-ldflags=-mmacosx-version-min=10.13",
         "--extra-cflags=-fPIC -mmacosx-version-min=10.13",
+        "--disable-lzma",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -289,23 +247,18 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for MacOS ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
-
-    print("Copying lib files ...")
-    for file in glob.glob("./ffmpeg/bin/lib/*.dylib"):
-        shutil.copy2(file, path_debug)
-        shutil.copy2(file, path_release)
-        shutil.copy2(file, path_debug_csharp)
-        shutil.copy2(file, path_release_csharp)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for MacOS finished!")
 
 
 def compile_ffmpeg_android(arch: str) -> None:
     print("Configuring FFmpeg for Android ...")
-    path: str = "./test_room/addons/gde_gozen/bin/android_"
-    path_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/android_"
     ndk: str = os.getenv("ANDROID_NDK_ROOT")
 
     if not ndk:
@@ -322,14 +275,10 @@ def compile_ffmpeg_android(arch: str) -> None:
     strip_tool: str = ""
 
     if arch == ARCH_ARM64:
-        path += "arm64"
-        path_csharp += "arm64"
         target_arch = "aarch64-linux-android"
         arch_flags = "-march=armv8-a"
         ffmpeg_arch = "aarch64"
     else:  # armv7a
-        path += "arm32"
-        path_csharp += "arm32"
         target_arch = "armv7a-linux-androideabi"
         arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
         ffmpeg_arch = "arm"
@@ -344,7 +293,10 @@ def compile_ffmpeg_android(arch: str) -> None:
     cmd = [
         "./configure",
         "--prefix=./bin",
-        "--enable-shared",
+        "--disable-shared",
+        "--enable-static",
+        "--disable-asm",
+        "--enable-pic",
         f"--arch={ffmpeg_arch}",
         "--target-os=android",
         "--enable-pic",
@@ -355,8 +307,7 @@ def compile_ffmpeg_android(arch: str) -> None:
         f"--strip={strip_tool}",
         "--extra-cflags=-fPIC",
         f"--extra-ldflags={arch_flags}",
-    ]
-    cmd += [
+        # Adding decoders
         "--enable-decoder=aac",
         "--enable-decoder=aac_latm",
         "--enable-decoder=mp3",
@@ -364,6 +315,7 @@ def compile_ffmpeg_android(arch: str) -> None:
         "--enable-decoder=pcm_s16le",
         "--enable-decoder=opus",
         "--enable-decoder=vorbis",
+        # Adding parsers
         "--enable-parser=aac",
         "--enable-parser=aac_latm",
         "--enable-parser=mpegaudio",
@@ -382,16 +334,12 @@ def compile_ffmpeg_android(arch: str) -> None:
         print("Error: FFmpeg failed!")
 
     print("Compiling FFmpeg for Android ...")
-    subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True)
-
-    print("Copying lib files ...")
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(path_csharp, exist_ok=True)
-
-    for file in glob.glob("ffmpeg/bin/lib/*.so*"):
-        shutil.copy2(file, path)
-        shutil.copy2(file, path_csharp)
+    if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Android finished!")
 
@@ -411,7 +359,7 @@ def compile_ffmpeg_web() -> None:
 
     print("Configuring FFmpeg for Web ...")
 
-    path: str = "./test_room/addons/gde_gozen/bin/web"
+    path: str = "./test_room/addons/gde_gozen/"
     target_include_dir: str = f"{path}/include"
     ffmpeg_bin_dir: str = "ffmpeg/bin"
     ffmpeg_lib_dir: str = f"{ffmpeg_bin_dir}/lib"
@@ -481,8 +429,12 @@ def compile_ffmpeg_web() -> None:
         sys.exit(1)
 
     print("Compiling FFmpeg for Web (using emmake)...")
-    subprocess.run(["emmake", "make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True)
-    subprocess.run(["emmake", "make", "install"], cwd="./ffmpeg/", check=True)
+    if subprocess.run(["emmake", "make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
+    if subprocess.run(["emmake", "make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
+        print("Error: FFmpeg failed!")
+        sys.exit(1)
 
     print("Copying static lib files (.a) ...")
     for file in glob.glob(os.path.join(ffmpeg_lib_dir, "*.a")):
@@ -505,56 +457,6 @@ def update_csharp_bins():
 
                 os.makedirs(dst_dir, exist_ok=True)
                 shutil.copy2(os.path.join(root, file), os.path.join(dst_dir, file))
-
-
-def macos_fix(arch: str) -> None:
-    # This is a fix for the MacOS builds to get the libraries to properly connect to
-    # the gdextension library. Without it, the FFmpeg libraries can"t be found.
-    print("Running fix for MacOS builds ...")
-
-    debug_binary: str = f"./test_room/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
-    release_binary: str = f"./test_room/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
-    debug_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/debug/lib"
-    release_bin_folder: str = "./test_room/addons/gde_gozen/bin/macos/release/lib"
-
-    debug_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/debug/libgozen.macos.template_debug.{arch}.dylib"
-    release_binary_csharp: str = f"./test_room_csharp/addons/gde_gozen/bin/macos/release/libgozen.macos.template_release.{arch}.dylib"
-    debug_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/debug/lib"
-    release_bin_folder_csharp: str = "./test_room_csharp/addons/gde_gozen/bin/macos/release/lib"
-
-    print("Updating @loader_path for MacOS builds")
-
-    if os.path.exists(debug_binary) and os.path.exists(debug_binary_csharp):
-        for file in os.listdir(debug_bin_folder):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary], check=True)
-
-        for file in os.listdir(debug_bin_folder_csharp):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", debug_binary_csharp], check=True)
-
-        print("Fixing folder ", debug_binary, " & ", debug_binary_csharp)
-
-        subprocess.run(["otool", "-L", debug_binary], cwd="./")
-        subprocess.run(["otool", "-L", debug_binary_csharp], cwd="./")
-    else:
-        print("No debug folder found for MacOS!")
-
-    if os.path.exists(release_binary) and os.path.exists(release_binary_csharp):
-        for file in os.listdir(release_bin_folder):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary], check=True)
-
-        for file in os.listdir(release_bin_folder_csharp):
-            print("Fixing file ", file)
-            subprocess.run(["install_name_tool", "-change", f"./bin/lib/{file}", f"@loader_path/lib/{file}", release_binary_csharp], check=True)
-
-        print("Fixing folder ", release_binary, " & ", release_binary_csharp)
-
-        subprocess.run(["otool", "-L", release_binary], cwd="./")
-        subprocess.run(["otool", "-L", release_binary_csharp], cwd="./")
-    else:
-        print("No release folder found for MacOS!")
 
 
 def main():
@@ -586,12 +488,17 @@ def main():
     title_arch: str = "Choose architecture"
     platform: str = OS_LINUX
     arch: str = ARCH_X86_64
+    av1_support: bool = False
+
     match _print_options("Select platform", [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
         case 2:
             platform = OS_WINDOWS
         case 3:
             platform = OS_MACOS
-            arch = ARCH_ARM64
+            if _print_options(title_arch, [ARCH_ARM64, ARCH_X86_64]) == 2:
+                arch = ARCH_X86_64
+            else:
+                arch = ARCH_ARM64
         case 4:
             platform = OS_ANDROID
 
@@ -611,19 +518,20 @@ def main():
         target = TARGET_RELEASE
 
     clean_scons = False
-    if _print_options("Clean Scons?", ["no", "yes"]) == 2:
+    if _print_options("Clean Scons?", ["yes", "no"]) == 1:
         clean_scons = True
 
-    if _print_options("(Re)compile ffmpeg?", ["no", "yes"]) == 2:
-        compile_ffmpeg(platform, arch, _print_options("Add AV1 support?", ["no", "yes"]) == 2)
+    if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
+        av1_support = _print_options("Add AV1 support?", ["no", "yes"]) == 2
+        compile_ffmpeg(platform, arch, av1_support)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
         arch = "arm32"
 
-
-    cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
     env = os.environ.copy()
+    cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}",
+           f"arch={arch}", f"av1={'yes' if av1_support else 'no'}"]
 
     if platform == OS_ANDROID:
         # We need to check if ANDROID_HOME is set to the sdk folder.
@@ -633,15 +541,13 @@ def main():
                 env["ANDROID_HOME"] = os.getenv("ANDROID_HOME", ANDROID_SDK_PATH)
 
     if clean_scons:
-        clean_cmd = ["scons", "--clean", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}", f"arch={arch}"]
+        clean_cmd = ["scons", "--clean", f"-j{THREADS}", f"target=template_{target}",
+                     f"platform={platform}", f"arch={arch}",
+                     f"av1={'yes' if av1_support else 'no'}"]
         subprocess.run(clean_cmd, cwd="./", env=env)
 
     subprocess.run(cmd, cwd="./", env=env)
-
     update_csharp_bins()
-
-    if platform == OS_MACOS:
-        macos_fix(arch)
 
     print("")
     print("v=========================v")

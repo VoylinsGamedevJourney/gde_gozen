@@ -39,6 +39,11 @@ jobs:
             arch: arm64
             packages: yasm scons diffutils make
             setup_cmd: brew update
+          - os: macos-15-intel
+            platform: macos
+            arch: x86_64
+            packages: yasm scons diffutils make
+            setup_cmd: brew update
 
     steps:
       - name: Checkout
@@ -150,37 +155,32 @@ jobs:
         run: |
           VERSION="v${{ inputs.version }}"
 
-          # GDScript folders.
           mkdir -p test_room/addons/gde_gozen/bin
-          mkdir -p test_room/addons/gde_gozen/bin/macos/debug/lib
-          mkdir -p test_room/addons/gde_gozen/bin/macos/release/lib
-
-          # C# folders.
           mkdir -p test_room_csharp/addons/gde_gozen/bin
-          mkdir -p test_room_csharp/addons/gde_gozen/bin/macos/debug/lib
-          mkdir -p test_room_csharp/addons/gde_gozen/bin/macos/release/lib
           
           # Linux.
-          cp -r artifacts/bin_linux_x86_64/* test_room/addons/gde_gozen/bin/linux_x86_64/
-          cp -r artifacts/bin_linux_arm64/* test_room/addons/gde_gozen/bin/linux_arm64/
+          cp -r artifacts/bin_linux_x86_64/* test_room/addons/gde_gozen/bin/
+          cp -r artifacts/bin_linux_arm64/* test_room/addons/gde_gozen/bin/
           # Windows.
-          cp -r artifacts/bin_windows_x86_64/* test_room/addons/gde_gozen/bin/windows_x86_64/
+          cp -r artifacts/bin_windows_x86_64/* test_room/addons/gde_gozen/bin/
           # MacOS.
-          cp -r artifacts/bin_macos_arm64/* test_room/addons/gde_gozen/bin/macos/
+          cp -r artifacts/bin_macos_x86_64/* test_room/addons/gde_gozen/bin/
+          cp -r artifacts/bin_macos_arm64/* test_room/addons/gde_gozen/bin/
           # Android.
-          cp -r artifacts/bin_android_arm64/* test_room/addons/gde_gozen/bin/android_arm64/
-          cp -r artifacts/bin_android_arm32/* test_room/addons/gde_gozen/bin/android_arm32/
+          cp -r artifacts/bin_android_arm64/* test_room/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_arm32/* test_room/addons/gde_gozen/bin/
 
           # Linux (C#).
-          cp -r artifacts/bin_linux_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/linux_x86_64/
-          cp -r artifacts/bin_linux_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/linux_arm64/
+          cp -r artifacts/bin_linux_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/
+          cp -r artifacts/bin_linux_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/
           # Windows (C#).
-          cp -r artifacts/bin_windows_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/windows_x86_64/
+          cp -r artifacts/bin_windows_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/
           # MacOS (C#).
-          cp -r artifacts/bin_macos_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/macos/
+          cp -r artifacts/bin_macos_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/
+          cp -r artifacts/bin_macos_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/
           # Android (C#).
-          cp -r artifacts/bin_android_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/android_arm64/
-          cp -r artifacts/bin_android_arm32_csharp/* test_room_csharp/addons/gde_gozen/bin/android_arm32/
+          cp -r artifacts/bin_android_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_arm32_csharp/* test_room_csharp/addons/gde_gozen/bin/
 
           # Copy license and config.
           cp LICENSE test_room/addons/gde_gozen/

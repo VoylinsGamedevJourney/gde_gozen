@@ -7,10 +7,12 @@
 #include <godot_cpp/classes/audio_stream_playback.hpp>
 #include <godot_cpp/classes/audio_stream_playback_resampled.hpp>
 #include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 
 
 using namespace godot;
+
 
 class AudioStreamFFmpeg : public AudioStream {
 	GDCLASS(AudioStreamFFmpeg, AudioStream);
@@ -31,6 +33,9 @@ class AudioStreamFFmpeg : public AudioStream {
 	bool stereo = true;
 	int bytes_per_sample = 0;
 	int sample_rate = 44100;
+	double length = 0;
+
+	Mutex *mutex; // We need thread safety
 
 	String file_path;
 
@@ -48,7 +53,7 @@ class AudioStreamFFmpeg : public AudioStream {
 	void close();
 	inline bool is_open() const { return loaded; }
 
-	double _get_length() const override { return 0; }
+	double _get_length() const override { return length; }
 	bool _is_monophonic() const override { return !stereo; }
 
 	Ref<AudioStreamPlayback> _instantiate_playback() const override;
@@ -92,9 +97,7 @@ class AudioStreamFFmpegPlayback : public AudioStreamPlaybackResampled {
 		if (!av_decoded_frame)
 			av_decoded_frame = make_unique_ffmpeg<AVFrame, AVFrameDeleter>(av_frame_alloc());
 	}
-	~AudioStreamFFmpegPlayback() override {
-		delete[] buffer;
-	}
+	~AudioStreamFFmpegPlayback() override { delete[] buffer; }
 
 	bool fill_buffer();
 

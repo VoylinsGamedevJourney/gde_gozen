@@ -36,10 +36,10 @@ runs:
       shell: bash
       run: scons -j4 target=template_release platform=${{ inputs.platform }} arch=${{ inputs.arch }}
 
-    - name: MacOS fix (RPath)
-      if: inputs.platform == 'macos'
+    - name: Copy to C#
       shell: bash
-      run: python3 -c "import build; build.macos_fix('${{ inputs.arch }}')"
+      run: |
+        python3 -c "import build; build.update_csharp_bins()"
 
     - name: Upload artifact (GDScript)
       uses: actions/upload-artifact@v4

@@ -5,6 +5,7 @@ using Godot.Collections;
 [GlobalClass, Icon("res://addons/gde_gozen/icon.webp")]
 public partial class VideoPlayback : Control
 {
+    public enum StreamType { Video = 0, Audio = 1, Subtitle = 2 }
 
     [Signal]
     public delegate void FrameChangedEventHandler(int frame_nr);
@@ -29,6 +30,7 @@ public partial class VideoPlayback : Control
 
     public const float PLAYBACK_SPEED_MIN = 0.25f;
     public const float PLAYBACK_SPEED_MAX = 4.0f;
+    public const float AUDIO_OFFSET_THRESHOLD = 0.1f;
 
     private string _path = "";
 
@@ -39,6 +41,7 @@ public partial class VideoPlayback : Control
         set => SetVideoPath(value);
     }
     [Export] public bool EnableAudio = true;
+    [Export] public bool AudioSpeedToSync = false;
     [Export] public bool EnableAutoPlay = false;
 
     private float _playbackSpeed = 1.0f;
@@ -86,6 +89,11 @@ public partial class VideoPlayback : Control
         set => SetCurrentFrame(value);
     }
 
+    public int[] VideoStreams = [];
+    public int[] AudioStreams = [];
+    public int[] SubtitleStreams = [];
+    public Array<Chapter> Chapters = new Array<Chapter>();
+
     private float _timeElapsed = 0.0f;
     private float _timeFrame = 0.0f;
     private int _skippedFrames = 0;
@@ -94,6 +102,7 @@ public partial class VideoPlayback : Control
     private int _padding = 0;
     private float _frameRate = 0.0f;
     private int _frameCount = 0;
+    private bool _hasAlpha = 0;
 
     private Vector2I _resolution = Vector2I.Zero;
     private ShaderMaterial _shaderMaterial;
@@ -104,8 +113,23 @@ public partial class VideoPlayback : Control
     private ImageTexture _yTexture;
     private ImageTexture _uTexture;
     private ImageTexture _vTexture;
+    private ImageTexture _aTexture;
 
     private AudioStreamWav _currentStream;
+
+    public class Chapter : GodotObject
+    {
+        public float Start;
+        public float End;
+        public string Title;
+
+        public Chapter(float start, float end, string title)
+        {
+            Start = start;
+            End = end;
+            Title = title;
+        }
+    }
 
     #region Tree Functions
     public override void _EnterTree()
@@ -209,6 +233,23 @@ public partial class VideoPlayback : Control
         _frameRate = Video.GetFramerate();
         _resolution = Video.GetResolution();
         _frameCount = Video.GetFrameCount();
+        _hasAlpha = Video.GetHasAlpha();
+
+        VideoStreams = Video.GetStreams((int)StreamType.Video);
+        AudioStreams = Video.GetStreams((int)StreamType.Audio);
+        SubtitleStreams = Video.GetStreams((int)StreamType.Subtitle);
+
+        Chapters.Clear();
+        for (int i = 0; i < Video.GetChapterCount(); i++)
+        {
+            var meta = Video.GetChapterMetadata(i);
+            string title = meta.ContainsKey("title") ? meta["title"].AsString() : "";
+            Chapters.Add(new Chapter(
+                Video.GetChapterStart(i),
+                Video.GetChapterEnd(i),
+                title
+            ));
+        }
 
         if (Mathf.Abs(_rotation) == 90)
             image = Image.CreateEmpty(_resolution.Y, _resolution.X, false, Image.Format.R8);
@@ -221,23 +262,31 @@ public partial class VideoPlayback : Control
             PrintVideoDebug();
 
         ((ImageTexture)VideoTexture.Texture).SetImage(image);
-        if (Video.IsFullColorRange())
+		if (_hasAlpha)
         {
-            if (Video.GetInterlaced() == 0)
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_full.gdshader");
+            if (Video.IsFullColorRange())
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_full.gdshader");
             else
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
-        }
-        else if (Video.GetInterlaced() == 0)
-        {
-            _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader");
-            _shaderMaterial.Shader = GD.Load<VisualShader>("res://addons/gde_gozen/shaders/yuv420p_standard.tres");
-            _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_standard.gdshader");
         }
         else
         {
-            _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
-            _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+            if (Video.IsFullColorRange())
+            {
+                if (Video.GetInterlaced() == 0)
+                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_full.gdshader");
+                else
+                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
+            }
+            else if (Video.GetInterlaced() == 0)
+            {
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader");
+            }
+            else
+            {
+                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader");
+                _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+            }
         }
 
         SetColorProfile();
@@ -254,11 +303,17 @@ public partial class VideoPlayback : Control
             _yTexture = ImageTexture.CreateFromImage(Video.GetYData());
             _uTexture = ImageTexture.CreateFromImage(Video.GetUData());
             _vTexture = ImageTexture.CreateFromImage(Video.GetVData());
+
+			if (_hasAlpha)
+				_aTexture = ImageTexture.CreateFromImage(Video.GetAData());
         }
         
         _shaderMaterial.SetShaderParameter("y_data", _yTexture);
         _shaderMaterial.SetShaderParameter("u_data", _uTexture);
         _shaderMaterial.SetShaderParameter("v_data", _vTexture);
+
+        if (_hasAlpha)
+            _shaderMaterial.SetShaderParameter("a_data", _aTexture);
 
         SeekFrame(CurrentFrame);
 
@@ -343,6 +398,7 @@ public partial class VideoPlayback : Control
             _yTexture = null;
             _uTexture = null;
             _vTexture = null;
+            _aTexture = null;
         }
     }
     #endregion
@@ -383,6 +439,7 @@ public partial class VideoPlayback : Control
             }
             else
             {
+                _SyncAudioVideo();
                 while (skipped != 1)
                 {
                     NextFrame(true);
@@ -441,12 +498,75 @@ public partial class VideoPlayback : Control
         
         EmitSignalPlaybackPaused();
     }
+
+    private void _SyncAudioVideo()
+    {
+        if (EnableAudio && AudioStream.Stream.GetLength() != 0)
+        {
+            float audioOffset = AudioStream.GetPlaybackPosition() + (float)AudioServer.GetTimeSinceLastMix() - (CurrentFrame + 1) / _frameRate;
+
+            if (Mathf.Abs(audioOffset) > AUDIO_OFFSET_THRESHOLD)
+            {
+                if (Debug) GD.Print("Audio Sync: time correction: ", audioOffset);
+                AudioStream.Seek((CurrentFrame + 1) / _frameRate);
+                AudioStream.PitchScale = PlaybackSpeed;
+            }
+            else if (AudioSpeedToSync)
+            {
+                if (Mathf.IsZeroApprox(AudioStream.PitchScale - PlaybackSpeed))
+                {
+                    if (audioOffset > AUDIO_OFFSET_THRESHOLD / 2)
+                    {
+                        AudioStream.PitchScale = PlaybackSpeed * 0.99f;
+                        if (Debug) GD.Print("Audio Sync: slow down");
+                    }
+                    else if (audioOffset < -AUDIO_OFFSET_THRESHOLD / 2)
+                    {
+                        AudioStream.PitchScale = PlaybackSpeed * 1.01f;
+                        if (Debug) GD.Print("Audio Sync: speed up");
+                    }
+                }
+                else
+                {
+                    // Logic: if not (pitch > speed) != not (offset < 0) -> essentially XOR logic checking direction
+                    if (!((AudioStream.PitchScale > PlaybackSpeed) != (audioOffset < 0)))
+                    {
+                        AudioStream.PitchScale = PlaybackSpeed;
+                        if (Debug) GD.Print("Audio Sync: back to normal");
+                    }
+                }
+            }
+        }
+    }
     #endregion
     
     #region Getters
     public int GetVideoFrameCount() => _frameCount;
     public float GetVideoFramerate() => _frameRate;
     public int GetVideoRotation() => _rotation;
+    public float GetVideoLength() => _frameCount / _frameRate;
+
+    public string GetStreamTitle(int stream)
+    {
+        if (!IsOpen())
+        {
+            GD.PrintErr("Video is not open!");
+            return "";
+        }
+        var meta = Video.GetStreamMetadata(stream);
+        return meta.ContainsKey("title") ? meta["title"].AsString() : "";
+    }
+
+    public string GetStreamLanguage(int stream)
+    {
+        if (!IsOpen())
+        {
+            GD.PrintErr("Video is not open!");
+            return "";
+        }
+        var meta = Video.GetStreamMetadata(stream);
+        return meta.ContainsKey("language") ? meta["language"].AsString() : "";
+    }
 
     public bool IsOpen() => Video != null && Video.IsOpen();
 
@@ -471,6 +591,9 @@ public partial class VideoPlayback : Control
         _yTexture.Update(Video.GetYData());
         _uTexture.Update(Video.GetUData());
         _vTexture.Update(Video.GetVData());
+
+		if (_hasAlpha)
+			_aTexture.Update(Video.GetAData());
     }
 
     public void SetPlaybackSpeed(float speed)
@@ -505,9 +628,39 @@ public partial class VideoPlayback : Control
             _audioPitchEffect.PitchScale = 1.0f;
         }
     }
+
+    public void SetAudioStream(int stream)
+    {
+        if (!IsOpen())
+        {
+            GD.PrintErr("Video is not open!");
+            return;
+        }
+
+        if (!AudioStreams.Contains(stream))
+        {
+            GD.PrintErr("Invalid audio stream!");
+            return;
+        }
+
+        if (EnableAudio)
+        {
+            WorkerThreadPool.AddTask(Callable.From(() => OpenAudio(stream)));
+        }
+    }
     #endregion
     
     #region Misc
+    public string DurationToFormattedString(float durationInSeconds)
+    {
+        int hours = Mathf.FloorToInt(durationInSeconds / 3600.0f);
+        int minutes = Mathf.FloorToInt(durationInSeconds / 60.0f) % 60;
+        int seconds = Mathf.FloorToInt(durationInSeconds) % 60;
+
+        if (hours == 0)
+            return $"{minutes:D2}:{seconds:D2}";
+        return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+    }
 
     private void OpenVideo()
     {
@@ -515,13 +668,31 @@ public partial class VideoPlayback : Control
             GD.PrintErr("Error opening video!");
     }
 
-    private void OpenAudio()
+    private void OpenAudio(int stream = -1)
     {
-        var data = GoZenAudio.GetAudioData(Path);
+        var data = GoZenAudio.GetAudioData(Path, stream); // The GDScript passes 'stream' here, but GoZenAudio.cs GetAudioData currently only takes path.
+
         if (data.Length != 0)
             _currentStream.Data = data;
         else
             GD.PrintErr($"Audio data for video '{Path}' was 0!");
+    }
+
+    private void PrintStreamInfo(int[] streams)
+    {
+        for (int i = 0; i < streams.Length; i++)
+        {
+            var metadata = Video.GetStreamMetadata(streams[i]);
+            string title = metadata.ContainsKey("title") ? metadata["title"].AsString() : "";
+            string language = metadata.ContainsKey("language") ? metadata["language"].AsString() : "";
+
+            if (string.IsNullOrEmpty(title))
+                title = "Track " + (i + 1);
+            if (!string.IsNullOrEmpty(language))
+                title += $" - {language}";
+
+            GD.Print($"- {title}");
+        }
     }
 
     private void PrintSystemDebug()
@@ -543,13 +714,62 @@ public partial class VideoPlayback : Control
         GD.Print("Actual resolution: ", Video.GetActualResolution());
         GD.Print("Pixel format: ", Video.GetPixelFormat());
         GD.Print("Color profile: ", Video.GetColorProfile());
+		GD.Print("Has alpha: ", Video.GetHasAlpha());
         GD.Print("Framerate: ", _frameRate);
         GD.Print("Duration (in frames): ", _frameCount);
         GD.Print("Padding: ", _padding);
         GD.Print("Rotation: ", _rotation);
         GD.Print("Full color range: ", Video.IsFullColorRange());
+        GD.Print("Interlaced flag: ", Video.GetInterlaced());
         GD.Print("Using sws: ", Video.IsUsingSws());
         GD.Print("Sar: ", Video.GetSar());
+
+        if (VideoStreams.Length != 0)
+        {
+            GD.PrintRich($"Video streams: [i]({VideoStreams.Length})");
+            PrintStreamInfo(VideoStreams);
+        }
+        else
+        {
+            GD.Print("No video streams found.");
+        }
+
+        if (AudioStreams.Length != 0)
+        {
+            GD.PrintRich($"Audio streams: [i]({AudioStreams.Length})");
+            PrintStreamInfo(AudioStreams);
+        }
+        else
+        {
+            GD.Print("No audio streams found.");
+        }
+
+        if (SubtitleStreams.Length != 0)
+        {
+            GD.PrintRich($"Subtitle streams: [i]({SubtitleStreams.Length})");
+            PrintStreamInfo(SubtitleStreams);
+        }
+        else
+        {
+            GD.Print("No subtitle streams found.");
+        }
+
+        if (Chapters.Count != 0)
+        {
+            GD.PrintRich($"Chapters: [i]({Chapters.Count})");
+            for (int i = 0; i < Chapters.Count; i++)
+            {
+                string title = Chapters[i].Title;
+                if (string.IsNullOrEmpty(title))
+                    title = "Chapter " + (i + 1);
+
+                GD.Print($"- {DurationToFormattedString(Chapters[i].Start)}-{DurationToFormattedString(Chapters[i].End)} - {title}");
+            }
+        }
+        else
+        {
+            GD.Print("No chapters found.");
+        }
     }
     #endregion
 }

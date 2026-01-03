@@ -4,10 +4,10 @@ import platform as os_platform
 
 
 LIBS_COMMON = [
-    "avcodec",
     "avformat",
-    "swresample",
+    "avcodec",
     "swscale",
+    "swresample",
     "avutil"]
 LOCATION = "test_room/addons/gde_gozen/bin"
 
@@ -25,17 +25,20 @@ jobs = ARGUMENTS.get("jobs", 4)
 platform = ARGUMENTS.get("platform", "linux")
 arch = ARGUMENTS.get("arch", "x86_64")
 target = ARGUMENTS.get("target", "template_debug").split("_")[-1]
-libpath = f"{LOCATION}/{platform}"
+libpath = f"{LOCATION}/libgozen{env_suffix}{env_shlibsuffix}"
+
+if ARGUMENTS.get("av1", "no") == "yes":
+    LIBS_COMMON.append("aom")
 
 
 if "linux" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-
     if arch == "arm64":
         march_flags[arch] = "armv8-a"
         env["CC"] = "aarch64-linux-gnu-gcc"
         env["CXX"] = "aarch64-linux-gnu-g++"
         env["LINK"] = "aarch64-linux-gnu-g++"
+    else:
+        env.Append(LIBS=["z", "bz2", "lzma"])
 
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
@@ -45,38 +48,27 @@ if "linux" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
+    env.Append(LIBS=["m", "pthread", "dl"])
 elif "windows" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-    if os_platform.system().lower() == "windows":
-        env.Append(LIBS=[
-            "avcodec.lib",
-            "avformat.lib",
-            "avutil.lib",
-            "swresample.lib",
-            "swscale.lib"])
-    else:
-        env.Append(LIBS=LIBS_COMMON)
-
+    env.Append(
+        LINKFLAGS=["-static"],
+        LIBS=LIBS_COMMON)
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/bin"])
+        LIBPATH=["ffmpeg/bin/lib"],
+        LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
+    )
 elif "macos" in platform:
-    # MacOS can only be build on a MacOS machine!
-    macos_base_path = f"{libpath}/{target}"
-    macos_lib_path = f"{macos_base_path}/lib"
-    libpath = f"{macos_base_path}/libgozen{env_suffix}{env_shlibsuffix}"
-    os.makedirs(macos_lib_path, exist_ok=True)
+    # NOTE: MacOS can only be build on a MacOS machine!
+    if arch == "x86_64":
+        env.Append(CCFLAGS=["-arch", "x86_64"], LINKFLAGS=["-arch", "x86_64"])
+    elif arch == "arm64":
+        env.Append(CCFLAGS=["-arch", "arm64"], LINKFLAGS=["-arch", "arm64"])
 
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=[
             "ffmpeg/bin/lib",
-            "ffmpeg/bin/include/libavcodec",
-            "ffmpeg/bin/include/libavformat",
-            "ffmpeg/bin/include/libavutil",
-            "ffmpeg/bin/include/libswresample",
-            "ffmpeg/bin/include/libswscale",
-            macos_lib_path,
             "/usr/local/lib"],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
@@ -85,11 +77,11 @@ elif "macos" in platform:
             "-framework", "CoreVideo",
             "-framework", "CoreMedia",
             "-framework", "AVFoundation",
-            "-rpath", "@loader_path/lib"]
+            "-framework", "Security",      # Often needed by static FFmpeg
+            "-framework", "AudioToolbox"]  # Often needed by static FFmpeg
     )
+    env.Append(LIBS=["z", "bz2", "iconv", "m", "pthread"])
 elif "android" in platform:
-    libpath += f"_{arch}/libgozen{env_suffix}{env_shlibsuffix}"
-
     if arch == "arm64":
         env.Append(CCFLAGS=["-march=armv8-a"])
     elif arch == "armv7a":
@@ -102,10 +94,10 @@ elif "android" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
+    env.Append(LIBS=["z", "m", "log"])
 elif "web" in platform:
     web_bin_path = libpath
     web_include_path = f"{web_bin_path}/include"
-    libpath += f"/libgozen{env_suffix}{env_shlibsuffix}"
 
     env.Append(
         CPPPATH=[web_include_path],
@@ -117,6 +109,7 @@ elif "web" in platform:
             "-sUSE_PTHREADS=1",
             "-sSHARED_MEMORY=1",
             "-sALLOW_MEMORY_GROWTH=1",
+            "-sSIDE_MODULE=1",
         ]
     )
 else:
