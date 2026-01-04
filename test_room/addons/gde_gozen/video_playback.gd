@@ -70,18 +70,6 @@ var u_texture: ImageTexture;
 var v_texture: ImageTexture;
 var a_texture: ImageTexture;
 
-class Chapter:
-	var start: float ## Start of the chapter in seconds.
-	var end: float ## End of the chapter in seconds.
-	var title: String
-
-	@warning_ignore("SHADOWED_VARIABLE")
-	func _init(start: float, end: float, title: String) -> void:
-		self.start = start
-		self.end = end
-		self.title = title
-
-
 
 
 #------------------------------------------------ TREE FUNCTIONS
@@ -435,6 +423,11 @@ func get_video_rotation() -> int:
 	return _rotation
 
 
+## Check the alpha value of a video to know if this video has alpha or not
+func is_video_alpha() -> bool:
+	return _has_alpha
+
+
 ## Getting the title of a stream.
 func get_stream_title(stream: int) -> String:
 	if not is_open():
@@ -617,3 +610,16 @@ func _print_video_debug() -> void:
 			])
 	else:
 		print("No chapters found.")
+
+
+
+class Chapter:
+	var start: float ## Start of the chapter in seconds.
+	var end: float ## End of the chapter in seconds.
+	var title: String
+
+	func _init(_start: float, _end: float, _title: String) -> void:
+		start = _start
+		end = _end
+		title = _title
+
