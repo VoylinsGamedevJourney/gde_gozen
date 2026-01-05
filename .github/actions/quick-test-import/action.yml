@@ -6,7 +6,7 @@ inputs:
     description: Path to Godot Binary
   should_run:
     required: true
-    description: 'true' or 'false'
+    description: "'true' or 'false'"
 
 
 runs:
@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Run test room (Import)
       shell: bash
-      if: inputs.should_run == 'true'
+      if: ${{ inputs.should_run == 'true' }}
       continue-on-error: true
       run: |
         GODOT_BIN="${{ inputs.godot_bin }}"

@@ -120,7 +120,9 @@ jobs:
     steps:
       - name: Install Base Dependencies
         run: |
-          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip ${{ matrix.extra_packages }}
+          pacman-key --init
+          pacman-key --populate archlinux
+          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip fontconfig libx11 libxcursor libxrandr libxi alsa-lib vulkan-icd-loader ${{ matrix.extra_packages }}
 
       - name: Setup Android SDK
         if: matrix.platform == 'android'
