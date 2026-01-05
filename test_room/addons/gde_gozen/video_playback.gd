@@ -266,7 +266,7 @@ func seek_frame(new_frame_nr: int) -> void:
 		return
 
 	current_frame = clamp(new_frame_nr, 0, _frame_count)
-	if video.seek_frame(new_frame_nr):
+	if video.seek_frame(current_frame):
 		printerr("Couldn't seek frame!")
 	else:
 		_set_frame_image()
