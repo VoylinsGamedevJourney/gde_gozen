@@ -68,6 +68,26 @@ jobs:
           platform: ${{ matrix.platform }}
           arch: ${{ matrix.arch }}
 
+      - name: Setup Godot
+        id: godot_setup
+        uses: ./.github/actions/setup-godot
+        with:
+          platform: ${{ matrix.platform }}
+          arch: ${{ matrix.arch }}
+
+      - name: Quick test (Import)
+        uses: ./.github/actions/quick-test-import
+        with:
+          godot_bin: ${{ steps.godot_setup.outputs.godot_bin }}
+          should_run: ${{ steps.godot_setup.outputs.should_run }}
+
+      - name: Quick test (Execution)
+        uses: ./.github/actions/quick-test
+        with:
+          godot_bin: ${{ steps.godot_setup.outputs.godot_bin }}
+          should_run: ${{ steps.godot_setup.outputs.should_run }}
+
+
   build-container: # Arch Linux container.
     name: ${{ matrix.platform }} (${{ matrix.arch }})
     runs-on: ubuntu-latest
@@ -100,7 +120,7 @@ jobs:
     steps:
       - name: Install Base Dependencies
         run: |
-          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg ${{ matrix.extra_packages }}
+          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip ${{ matrix.extra_packages }}
 
       - name: Setup Android SDK
         if: matrix.platform == 'android'
@@ -135,6 +155,26 @@ jobs:
           platform: ${{ matrix.platform }}
           arch: ${{ matrix.arch }}
           ffmpeg_arch_arg: ${{ matrix.ffmpeg_arg }}
+
+      - name: Setup Godot
+        id: godot_setup
+        uses: ./.github/actions/setup-godot
+        with:
+          platform: ${{ matrix.platform }}
+          arch: ${{ matrix.arch }}
+
+      - name: Quick test (Import)
+        uses: ./.github/actions/quick-test-import
+        with:
+          godot_bin: ${{ steps.godot_setup.outputs.godot_bin }}
+          should_run: ${{ steps.godot_setup.outputs.should_run }}
+
+      - name: Quick test (Execution)
+        uses: ./.github/actions/quick-test
+        with:
+          godot_bin: ${{ steps.godot_setup.outputs.godot_bin }}
+          should_run: ${{ steps.godot_setup.outputs.should_run }}
+
 
   package-addon:
     needs: [build-native, build-container]

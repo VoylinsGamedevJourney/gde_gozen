@@ -56,4 +56,3 @@ runs:
         path: test_room_csharp/addons/gde_gozen/bin
         retention-days: 1
         if-no-files-found: error
-

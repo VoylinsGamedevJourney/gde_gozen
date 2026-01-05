@@ -1,0 +1,20 @@
+name: Run test (Execution)
+description: Downloads Godot and runs the project to quickly check for crashes.
+inputs:
+  godot_bin:
+    required: true
+    description: Path to Godot Binary
+  should_run:
+    required: true
+    description: 'true' or 'false'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run test room (Execution)
+      shell: bash
+      if: inputs.should_run == 'true'
+      continue-on-error: true
+      run: |
+        GODOT_BIN="${{ inputs.godot_bin }}"
+        $GODOT_BIN --headless --verbose --path test_room --quit-after 200
