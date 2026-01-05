@@ -50,25 +50,25 @@ runs:
           exit 0
         fi
 
-        echo "- Downloading Godot 4.3"
+        echo "- Downloading Godot 4.4"
         GODOT_BIN=""
         
         if [[ "$PLATFORM" == "linux" ]]; then
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
-          unzip -q Godot_v4.3-stable_linux.x86_64.zip
-          GODOT_BIN="./Godot_v4.3-stable_linux.x86_64"
+          wget -q https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4-stable_linux.x86_64.zip
+          GODOT_BIN="./Godot_v4.4-stable_linux.x86_64"
           chmod +x $GODOT_BIN
           
         elif [[ "$PLATFORM" == "macos" ]]; then
-          curl -L -O https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_macos.universal.zip
-          unzip -q Godot_v4.3-stable_macos.universal.zip
+          curl -L -O https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_macos.universal.zip
+          unzip -q Godot_v4.4-stable_macos.universal.zip
           GODOT_BIN="./Godot.app/Contents/MacOS/Godot"
           chmod +x $GODOT_BIN
           
         elif [[ "$PLATFORM" == "windows" ]]; then
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_win64.exe.zip
-          unzip -q Godot_v4.3-stable_win64.exe.zip
-          GODOT_BIN="wine Godot_v4.3-stable_win64.exe"
+          wget -q https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_win64.exe.zip
+          unzip -q Godot_v4.4-stable_win64.exe.zip
+          GODOT_BIN="wine Godot_v4.4-stable_win64.exe"
         fi
         
         echo "godot_bin=$GODOT_BIN" >> $GITHUB_OUTPUT
