@@ -1,0 +1,74 @@
+name: Setup Godot
+description: Downloads Godot
+inputs:
+  platform:
+    required: true
+    description: linux, windows, macos, android
+  arch:
+    required: true
+    description: x86_64, arm64, ...
+
+outputs:
+  godot_bin:
+    description: "Path to the Godot executable"
+    value: ${{ steps.setup.outputs.godot_bin }}
+  should_run:
+    description: "Whether the test should run"
+    value: ${{ steps.setup.outputs.should_run }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Godot
+      id: setup
+      shell: bash
+      run: |
+        PLATFORM="${{ inputs.platform }}"
+        ARCH="${{ inputs.arch }}"
+        
+        should_run=false
+        
+        if [[ "$PLATFORM" == "linux" || "$PLATFORM" == "macos" ]]; then
+          runner_arch=$(uname -m)
+          if [[ "$runner_arch" == "x86_64" && "$ARCH" == "x86_64" ]]; then should_run=true; fi
+          if [[ "$runner_arch" == "arm64" && "$ARCH" == "arm64" ]]; then should_run=true; fi
+        fi
+
+        if [[ "$PLATFORM" == "windows" && "$ARCH" == "x86_64" ]]; then
+           if command -v wine &> /dev/null; then
+             should_run=true
+           else
+             echo "Skipping: No wine installed."
+           fi
+        fi
+
+        # Output the result so the next steps know whether to run
+        echo "should_run=$should_run" >> $GITHUB_OUTPUT
+
+        if [ "$should_run" = false ]; then
+          echo "Skipping setup. Cannot run target $PLATFORM ($ARCH) on this runner."
+          exit 0
+        fi
+
+        echo "- Downloading Godot 4.3"
+        GODOT_BIN=""
+        
+        if [[ "$PLATFORM" == "linux" ]]; then
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.3-stable_linux.x86_64.zip
+          GODOT_BIN="./Godot_v4.3-stable_linux.x86_64"
+          chmod +x $GODOT_BIN
+          
+        elif [[ "$PLATFORM" == "macos" ]]; then
+          curl -L -O https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_macos.universal.zip
+          unzip -q Godot_v4.3-stable_macos.universal.zip
+          GODOT_BIN="./Godot.app/Contents/MacOS/Godot"
+          chmod +x $GODOT_BIN
+          
+        elif [[ "$PLATFORM" == "windows" ]]; then
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_win64.exe.zip
+          unzip -q Godot_v4.3-stable_win64.exe.zip
+          GODOT_BIN="wine Godot_v4.3-stable_win64.exe"
+        fi
+        
+        echo "godot_bin=$GODOT_BIN" >> $GITHUB_OUTPUT
