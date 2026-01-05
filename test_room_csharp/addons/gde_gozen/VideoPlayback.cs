@@ -197,7 +197,7 @@ public partial class VideoPlayback : Control
         
         _threads.Add(WorkerThreadPool.AddTask(Callable.From(() => OpenVideo())));
         if (EnableAudio)
-            _threads.Add(WorkerThreadPool.AddTask(Callable.From(() => OpenAudio())));
+            OpenAudio();
     }
 
     public void UpdateVideo(GoZenVideo video, AudioStream audioStream = null)
@@ -256,7 +256,7 @@ public partial class VideoPlayback : Control
             PrintVideoDebug();
 
         ((ImageTexture)VideoTexture.Texture).SetImage(image);
-		if (_hasAlpha)
+        if (_hasAlpha)
         {
             if (Video.IsFullColorRange())
                 _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_full.gdshader");
@@ -298,8 +298,8 @@ public partial class VideoPlayback : Control
             _uTexture = ImageTexture.CreateFromImage(Video.GetUData());
             _vTexture = ImageTexture.CreateFromImage(Video.GetVData());
 
-			if (_hasAlpha)
-				_aTexture = ImageTexture.CreateFromImage(Video.GetAData());
+            if (_hasAlpha)
+                _aTexture = ImageTexture.CreateFromImage(Video.GetAData());
         }
         
         _shaderMaterial.SetShaderParameter("y_data", _yTexture);
@@ -586,8 +586,8 @@ public partial class VideoPlayback : Control
         _uTexture.Update(Video.GetUData());
         _vTexture.Update(Video.GetVData());
 
-		if (_hasAlpha)
-			_aTexture.Update(Video.GetAData());
+        if (_hasAlpha)
+            _aTexture.Update(Video.GetAData());
     }
 
     public void SetPlaybackSpeed(float speed)
@@ -639,7 +639,13 @@ public partial class VideoPlayback : Control
 
         if (EnableAudio)
         {
-            WorkerThreadPool.AddTask(Callable.From(() => OpenAudio(stream)));
+            OpenAudio(stream);
+            if (IsPlaying && AudioStream.Stream.GetLength() != 0)
+            {
+                AudioStream.SetStreamPaused(false);
+                AudioStream.Play(CurrentFrame / _frameRate);
+                AudioStream.SetStreamPaused(!IsPlaying);
+            }
         }
     }
     #endregion
@@ -666,12 +672,10 @@ public partial class VideoPlayback : Control
     {
         var asff = new AudioStreamFFmpeg();
         asff.Open(Path, stream);
-        Callable.From(() =>
-        {
-            AudioStream.Stream = asff;
-            if (IsPlaying)
-                AudioStream.Play(CurrentFrame / _frameRate);
-        }).CallDeferred();
+        if (asff.Open(Path, stream) != (int)Error.Ok)
+            GD.PrintErr($"Failed to open AudioStreamFFmpeg for: {Path}");
+
+        AudioStream.Stream = asff;
     }
 
     private void PrintStreamInfo(int[] streams)
@@ -710,7 +714,7 @@ public partial class VideoPlayback : Control
         GD.Print("Actual resolution: ", Video.GetActualResolution());
         GD.Print("Pixel format: ", Video.GetPixelFormat());
         GD.Print("Color profile: ", Video.GetColorProfile());
-		GD.Print("Has alpha: ", Video.GetHasAlpha());
+        GD.Print("Has alpha: ", Video.GetHasAlpha());
         GD.Print("Framerate: ", _frameRate);
         GD.Print("Duration (in frames): ", _frameCount);
         GD.Print("Padding: ", _padding);

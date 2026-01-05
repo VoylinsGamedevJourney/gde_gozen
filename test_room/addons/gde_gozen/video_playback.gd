@@ -507,8 +507,11 @@ func set_audio_stream(stream: int) -> void:
 		return
 
 	if enable_audio:
-		@warning_ignore("return_value_discarded")
-		_open_audio(stream) # not the best to discard a task, but oh well
+		_open_audio(stream)
+		if is_playing and audio_player.stream.get_length() != 0:
+			audio_player.set_stream_paused(false)
+			audio_player.play(current_frame / _frame_rate)
+			audio_player.set_stream_paused(!is_playing)
 
 
 #------------------------------------------------ MISC
@@ -622,4 +625,3 @@ class Chapter:
 		start = _start
 		end = _end
 		title = _title
-
