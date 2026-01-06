@@ -17,6 +17,7 @@ GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourne
 - Video seeking;
 - Godot 4.3+ support;
 - C# Support (beta);
+- Alpha video support; (for single stream alpha videos)
 - Cross-platform (Linux, Windows, MacOS, and Android);
 - Playback speed control;
 - Regular updates;
