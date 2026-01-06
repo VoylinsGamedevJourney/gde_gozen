@@ -16,5 +16,8 @@ runs:
       if: ${{ inputs.should_run == 'true' }}
       continue-on-error: true
       run: |
+        export WINEPREFIX="$(pwd)/.wine_tmp"
+        mkdir -p "$WINEPREFIX"
+
         GODOT_BIN="${{ inputs.godot_bin }}"
         $GODOT_BIN --headless --verbose --path test_room --quit-after 200
