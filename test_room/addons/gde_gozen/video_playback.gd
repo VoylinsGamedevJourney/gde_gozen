@@ -169,7 +169,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 		return
 
 	var image: Image
-	var rotation_radians: float = deg_to_rad(float(video.get_rotation()))
+	var rotation_radians: float = deg_to_rad(video.get_rotation())
 
 	is_playing = false
 	current_frame = 0
@@ -455,12 +455,12 @@ func _set_current_frame(new_current_frame: int) -> void:
 
 
 func _set_frame_image() -> void:
-	y_texture.update(video.get_y_data())
-	u_texture.update(video.get_u_data())
-	v_texture.update(video.get_v_data())
+	RenderingServer.texture_2d_update(y_texture.get_rid(), video.get_y_data(), 0)
+	RenderingServer.texture_2d_update(u_texture.get_rid(), video.get_u_data(), 0)
+	RenderingServer.texture_2d_update(v_texture.get_rid(), video.get_v_data(), 0)
 
 	if _has_alpha:
-		a_texture.update(video.get_a_data())
+		RenderingServer.texture_2d_update(a_texture.get_rid(), video.get_a_data(), 0)
 
 
 func set_playback_speed(new_playback_value: float) -> void:
