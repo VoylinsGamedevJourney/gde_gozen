@@ -308,7 +308,7 @@ func _process(delta: float) -> void:
 		if _time_elapsed < _frame_time:
 			return
 
-		while _time_elapsed >= _frame_time:
+		while _time_elapsed >= _frame_time and _skips < 5:
 			_time_elapsed -= _frame_time
 			current_frame += 1
 			_skips += 1
