@@ -19,6 +19,7 @@ signal playback_paused ## Emitted when playback is paused.
 signal playback_ready ## Emitted when the node if fully setup and ready for playback.
 
 
+const SHADER_PATH: String = "res://addons/gde_gozen/yuv_to_rgb.gdshader"
 const PLAYBACK_SPEED_MIN: float = 0.25
 const PLAYBACK_SPEED_MAX: float = 4
 const AUDIO_OFFSET_THRESHOLD: float = 0.1
@@ -75,7 +76,7 @@ var a_texture: ImageTexture;
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
 	_shader_material = ShaderMaterial.new()
-	_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv_to_rgb.gdshader")
+	_shader_material.shader = preload(SHADER_PATH)
 
 	video_texture.material = _shader_material
 	video_texture.texture = ImageTexture.new()
