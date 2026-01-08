@@ -97,6 +97,17 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+	# Making certain no remaining tasks are running in separate threads.
+	while !_threads.is_empty():
+		for i: int in _threads:
+			if WorkerThreadPool.is_task_completed(i):
+				var error: int = WorkerThreadPool.wait_for_task_completion(i)
+
+				if error != OK:
+					printerr("Something went wrong waiting for task completion! %s" % error)
+
+				_threads.remove_at(_threads.find(i))
+
 	if video != null:
 		close()
 	
