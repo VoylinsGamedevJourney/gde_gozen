@@ -75,6 +75,7 @@ var a_texture: ImageTexture;
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
 	_shader_material = ShaderMaterial.new()
+	_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv_to_rgb.gdshader")
 
 	video_texture.material = _shader_material
 	video_texture.texture = ImageTexture.new()
@@ -158,6 +159,10 @@ func _update_video(new_video: GoZenVideo) -> void:
 	var image: Image
 	var rotation_radians: float = deg_to_rad(float(video.get_rotation()))
 
+	is_playing = false
+	current_frame = 0
+
+	# Getting video data
 	_padding = video.get_padding()
 	_rotation = video.get_rotation()
 	_frame_rate = video.get_framerate()
@@ -179,13 +184,12 @@ func _update_video(new_video: GoZenVideo) -> void:
 		)
 		chapters.append(chapter)
 		
-
 	if abs(_rotation) == 90:
 		image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_R8)
 	else:
 		image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
-	image.fill(Color.BLACK)
+	image.fill(Color.WHITE)
 
 	if debug:
 		_print_video_debug()
@@ -193,48 +197,24 @@ func _update_video(new_video: GoZenVideo) -> void:
 	@warning_ignore("UNSAFE_METHOD_ACCESS")
 	video_texture.texture.set_image(image)
 
-	if _has_alpha:
-		if video.is_full_color_range():
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuva420p_full.gdshader")
-		else:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuva420p_standard.gdshader")
-	else:
-		if video.is_full_color_range():
-			if video.get_interlaced() == 0:
-				_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_full.gdshader")
-			else:
-				_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader")
-		elif video.get_interlaced() == 0:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader")
-		else:
-			_shader_material.shader = preload("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader")
-			_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
-
-	_set_color_profile()
-
 	# Applying shader params.
 	_shader_material.set_shader_parameter("resolution", video.get_actual_resolution())
+	_shader_material.set_shader_parameter("full_color", video.is_full_color_range())
+	_shader_material.set_shader_parameter("interlaced", video.get_interlaced())
 	_shader_material.set_shader_parameter("rotation", rotation_radians)
+	_set_color_profile()
 
-	is_playing = false
-	set_playback_speed(playback_speed)
-	current_frame = 0
-
-	if !y_texture:
-		y_texture = ImageTexture.create_from_image(video.get_y_data())
-		u_texture = ImageTexture.create_from_image(video.get_u_data())
-		v_texture = ImageTexture.create_from_image(video.get_v_data())
-
-		if _has_alpha:
-			a_texture = ImageTexture.create_from_image(video.get_a_data())
+	y_texture = ImageTexture.create_from_image(video.get_y_data())
+	u_texture = ImageTexture.create_from_image(video.get_u_data())
+	v_texture = ImageTexture.create_from_image(video.get_v_data())
+	a_texture = ImageTexture.create_from_image(video.get_a_data() if _has_alpha else image)
 
 	_shader_material.set_shader_parameter("y_data", y_texture)
 	_shader_material.set_shader_parameter("u_data", u_texture)
 	_shader_material.set_shader_parameter("v_data", v_texture)
+	_shader_material.set_shader_parameter("a_data", a_texture)
 
-	if _has_alpha:
-		_shader_material.set_shader_parameter("a_data", a_texture)
-
+	set_playback_speed(playback_speed)
 	seek_frame(current_frame)
 
 	video_loaded.emit()
@@ -242,22 +222,20 @@ func _update_video(new_video: GoZenVideo) -> void:
 
 ## Sometimes color profiles are unknown from video files and in case that happens, the colors might be slightly off. Changing the export variable `color_profile` might help fixing the colors.
 func _set_color_profile(new_profile: COLOR_PROFILE = color_profile) -> void:
-	var profile: String = ""
+	var color_data: Vector4
+	var profile_str: String = video.get_color_profile()
+
 	color_profile = new_profile
 
-	match color_profile:
-		COLOR_PROFILE.AUTO: profile = video.get_color_profile()
-		COLOR_PROFILE.BT470: profile = "bt470"
-		COLOR_PROFILE.BT601: profile = "bt601"
-		COLOR_PROFILE.BT709: profile = "bt709"
-		COLOR_PROFILE.BT2020: profile = "bt2020"
-		COLOR_PROFILE.BT2100: profile = "bt2100"
+	if new_profile != COLOR_PROFILE.AUTO:
+		profile_str = str(COLOR_PROFILE.find_key(COLOR_PROFILE.BT2100)).to_lower()
 
-	match profile:
-		"bt601", "bt470": _shader_material.set_shader_parameter("color_profile", Vector4(1.402, 0.344136, 0.714136, 1.772))
-		"bt2020", "bt2100": _shader_material.set_shader_parameter("color_profile", Vector4(1.4746, 0.16455, 0.57135, 1.8814))
-		_: # bt709 and unknown
-			_shader_material.set_shader_parameter("color_profile", Vector4(1.5748, 0.1873, 0.4681, 1.8556))
+	match profile_str:
+		"bt2020", "bt2100": color_data = Vector4(1.4746, 0.16455, 0.57135, 1.8814)
+		"bt601", "bt470": color_data = Vector4(1.402, 0.344136, 0.714136, 1.772)
+		_: color_data = Vector4(1.5748, 0.1873, 0.4681, 1.8556) # bt709 and unknown
+
+	_shader_material.set_shader_parameter("color_profile", color_data)
 
 
 ## Seek frame can be used to switch to a frame number you want. Remember that some video codecs report incorrect video end frames or can't seek to the last couple of frames in a video file which may result in an error. Only use this when going to far distances in the video file, else you can use [code]next_frame()[/code].
