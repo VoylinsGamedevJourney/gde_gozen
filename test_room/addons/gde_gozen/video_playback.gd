@@ -63,7 +63,7 @@ var _has_alpha: bool = false
 var _resolution: Vector2i = Vector2i.ZERO
 var _shader_material: ShaderMaterial = null
 
-var _threads: PackedInt64Array = []
+var _video_thread: int = -1
 var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 
 var y_texture: ImageTexture
@@ -105,15 +105,12 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	# Making certain no remaining tasks are running in separate threads.
-	while !_threads.is_empty():
-		for i: int in _threads:
-			if WorkerThreadPool.is_task_completed(i):
-				var error: int = WorkerThreadPool.wait_for_task_completion(i)
+	if _video_thread != -1:
+		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
 
-				if error != OK:
-					printerr("Something went wrong waiting for task completion! %s" % error)
-
-				_threads.remove_at(_threads.find(i))
+		if error != OK:
+			printerr("Something went wrong waiting for task completion! %s" % error)
+		_video_thread = -1
 
 	if video != null:
 		close()
@@ -153,10 +150,10 @@ func set_video_path(new_path: String) -> void:
 	else:
 		video.disable_debug()
 
-	if _threads.append(WorkerThreadPool.add_task(_open_video)):
-		push_error("Something went wrong appending thread to _threads!")
-	if enable_audio and _threads.append(WorkerThreadPool.add_task(_open_audio)):
-			push_error("Something went wrong appending thread to _threads!")
+	_video_thread = WorkerThreadPool.add_task(_open_video)
+
+	if enable_audio:
+		WorkerThreadPool.add_task(_open_audio)
 
 
 ## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
@@ -321,21 +318,17 @@ func _process(delta: float) -> void:
 				next_frame(true)
 				_skips -= 1
 			next_frame()
-	elif !_threads.is_empty():
-		for i: int in _threads:
-			if WorkerThreadPool.is_task_completed(i):
-				var error: int = WorkerThreadPool.wait_for_task_completion(i)
+	elif _video_thread != -1:
+		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
 
-				if error != OK:
-					printerr("Something went wrong waiting for task completion! %s" % error)
+		if error != OK:
+			printerr("Something went wrong waiting for task completion! %s" % error)
 
-				_threads.remove_at(_threads.find(i))
+		_video_thread = -1
+		_update_video(video)
 
-			if _threads.is_empty():
-				_update_video(video)
-
-				if enable_auto_play:
-					play()
+		if enable_auto_play:
+			play()
 
 
 ## Start the video playback. This will play until reaching the end of the video and then pause and go back to the start.
