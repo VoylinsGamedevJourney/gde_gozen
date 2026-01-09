@@ -75,6 +75,13 @@ var a_texture: ImageTexture;
 
 #------------------------------------------------ TREE FUNCTIONS
 func _enter_tree() -> void:
+	var empty_image: Image = Image.create_empty(2,2,false, Image.FORMAT_R8)
+
+	y_texture = ImageTexture.create_from_image(empty_image)
+	u_texture = ImageTexture.create_from_image(empty_image)
+	v_texture = ImageTexture.create_from_image(empty_image)
+	a_texture = ImageTexture.create_from_image(empty_image)
+
 	_shader_material = ShaderMaterial.new()
 	_shader_material.shader = preload(SHADER_PATH)
 
@@ -216,10 +223,10 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_shader_material.set_shader_parameter("rotation", rotation_radians)
 	_set_color_profile()
 
-	y_texture = ImageTexture.create_from_image(video.get_y_data())
-	u_texture = ImageTexture.create_from_image(video.get_u_data())
-	v_texture = ImageTexture.create_from_image(video.get_v_data())
-	a_texture = ImageTexture.create_from_image(video.get_a_data() if _has_alpha else image)
+	y_texture.set_image(video.get_y_data())
+	u_texture.set_image(video.get_u_data())
+	v_texture.set_image(video.get_v_data())
+	a_texture.set_image(video.get_a_data() if _has_alpha else image)
 
 	_shader_material.set_shader_parameter("y_data", y_texture)
 	_shader_material.set_shader_parameter("u_data", u_texture)
