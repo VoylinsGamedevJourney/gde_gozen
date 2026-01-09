@@ -10,7 +10,6 @@
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 
-
 using namespace godot;
 
 
@@ -34,6 +33,12 @@ class AudioStreamFFmpeg : public AudioStream {
 	int bytes_per_sample = 0;
 	int sample_rate = 44100;
 	double length = 0;
+	bool use_icy = false;
+	String icy_metadata;
+	String icy_packet;
+
+	Dictionary icy_headers_cache;
+	Dictionary stream_title_cache;
 
 	Mutex *mutex; // We need thread safety
 
@@ -57,6 +62,11 @@ class AudioStreamFFmpeg : public AudioStream {
 	bool _is_monophonic() const override { return !stereo; }
 
 	Ref<AudioStreamPlayback> _instantiate_playback() const override;
+	void set_use_icy(bool value) { use_icy = value; }
+	bool get_use_icy() const { return use_icy; }
+	Dictionary get_icy_headers();
+	String get_stream_title();
+	Dictionary get_tags();
 
   protected:
 	static void _bind_methods();
@@ -85,6 +95,9 @@ class AudioStreamFFmpegPlayback : public AudioStreamPlaybackResampled {
 	uint32_t mixed = 0;
 	uint32_t mix_rate = 44100;
 	bool stereo = true;
+
+	Dictionary icy_headers;
+	String stream_title;
 
   public:
 	AudioStreamFFmpegPlayback() {

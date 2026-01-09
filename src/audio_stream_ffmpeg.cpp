@@ -1,4 +1,5 @@
 #include "audio_stream_ffmpeg.hpp"
+#include <cstdint>
 
 AudioStreamFFmpeg::~AudioStreamFFmpeg() {
 	_log("Closing video file at path: " + file_path);
@@ -21,7 +22,12 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	mutex = memnew(Mutex);
 	mutex->lock();
 	AVFormatContext* temp_format_ctx = nullptr;
+	AVDictionary* options = nullptr;
 	file_path = path;
+	
+	if (use_icy) {
+		av_dict_set(&options, "icy", "1", 0);
+	}
 
 	if (path.begins_with("res://") || path.begins_with("user://")) {
 		temp_format_ctx = avformat_alloc_context();
@@ -58,7 +64,7 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 			mutex->unlock();
 			return _log_err("Failed to open input from memory buffer");
 		}
-	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
+	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, &options)) {
 		mutex->unlock();
 		return _log_err("Couldn't open file");
 	}
@@ -155,6 +161,75 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	loaded = true;
 	mutex->unlock();
 	return 0;
+}
+
+Dictionary AudioStreamFFmpeg::get_icy_headers() {
+	if (!use_icy) {
+		return Dictionary();
+	}
+	char* metadata = nullptr;
+	av_opt_get(av_format_ctx.get(), "icy_metadata_headers", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&metadata);
+	if (metadata) {
+		if (String(metadata) == icy_headers_cache && !icy_headers_cache.is_empty()) {
+			av_freep(&metadata);
+			metadata = nullptr;
+			return icy_headers_cache;
+		}
+
+		PackedStringArray headers = String(metadata).split("\n");
+		Dictionary new_headers;
+		for (int i = 0; i < headers.size(); i++) {
+			PackedStringArray key_value = headers[i].split(": ");
+			if (key_value.size() == 2) {
+				new_headers[key_value[0].replace("icy-", "stream_")] = key_value[1];
+			}
+		}
+		av_freep(&metadata);
+		metadata = nullptr;
+		icy_headers_cache = new_headers;
+		return new_headers;
+
+	}
+	return Dictionary();
+}
+
+String AudioStreamFFmpeg::get_stream_title() {
+	if (!use_icy) {
+		return String();
+	}
+	char* metadata = nullptr;
+	av_opt_get(av_format_ctx.get(), "icy_metadata_packet", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&metadata);
+	if (metadata) {
+		if (String(metadata) == icy_packet && !stream_title_cache.is_empty()) {
+			av_freep(&metadata);
+			metadata = nullptr;
+			return stream_title_cache["StreamTitle"];
+		}
+		PackedStringArray parts = String(metadata).split(";");
+		for (int i = 0; i < parts.size(); i++) {
+			PackedStringArray key_value = parts[i].split("=");
+			if (key_value.size() == 2) {
+				stream_title_cache[String(key_value[0])] = String(key_value[1]).lstrip("'").rstrip("'");
+			}
+		}
+		icy_packet = String(metadata);
+		av_freep(&metadata);
+		metadata = nullptr;
+		return stream_title_cache["StreamTitle"];
+	}
+	return String();
+}
+
+Dictionary AudioStreamFFmpeg::get_tags() {
+	Dictionary tags;
+	AVDictionary* metadata = av_format_ctx.get()->metadata;
+	AVDictionaryEntry* tag = nullptr;
+
+	while ((tag = av_dict_get(metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		tags[String(tag->key).replace("icy-", "stream_")] = String(tag->value);
+	}
+
+	return tags;
 }
 
 Ref<AudioStreamPlayback> AudioStreamFFmpeg::_instantiate_playback() const {
@@ -377,4 +452,10 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 void AudioStreamFFmpeg::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("open", "path", "stream_index"), &AudioStreamFFmpeg::open, DEFVAL(-1));
 	ClassDB::bind_method(D_METHOD("__instantiate_playback"), &AudioStreamFFmpeg::_instantiate_playback);
+	ClassDB::bind_method(D_METHOD("set_use_icy", "value"), &AudioStreamFFmpeg::set_use_icy);
+	ClassDB::bind_method(D_METHOD("get_use_icy"), &AudioStreamFFmpeg::get_use_icy);
+	ClassDB::bind_method(D_METHOD("get_icy_headers"), &AudioStreamFFmpeg::get_icy_headers);
+	ClassDB::bind_method(D_METHOD("get_stream_title"), &AudioStreamFFmpeg::get_stream_title);
+	ClassDB::bind_method(D_METHOD("get_tags"), &AudioStreamFFmpeg::get_tags);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_icy"), "set_use_icy", "get_use_icy");
 }
