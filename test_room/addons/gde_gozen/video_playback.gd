@@ -66,10 +66,10 @@ var _shader_material: ShaderMaterial = null
 var _threads: PackedInt64Array = []
 var _audio_pitch_effect: AudioEffectPitchShift = AudioEffectPitchShift.new()
 
-var y_texture: ImageTexture;
-var u_texture: ImageTexture;
-var v_texture: ImageTexture;
-var a_texture: ImageTexture;
+var y_texture: ImageTexture
+var u_texture: ImageTexture
+var v_texture: ImageTexture
+var a_texture: ImageTexture
 
 
 
@@ -155,8 +155,8 @@ func set_video_path(new_path: String) -> void:
 
 	if _threads.append(WorkerThreadPool.add_task(_open_video)):
 		push_error("Something went wrong appending thread to _threads!")
-	if enable_audio:
-		_open_audio()
+	if enable_audio and _threads.append(WorkerThreadPool.add_task(_open_audio)):
+			push_error("Something went wrong appending thread to _threads!")
 
 
 ## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
@@ -234,8 +234,6 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_shader_material.set_shader_parameter("a_data", a_texture)
 
 	set_playback_speed(playback_speed)
-	seek_frame(current_frame)
-
 	video_loaded.emit()
 
 
@@ -289,11 +287,6 @@ func close() -> void:
 			pause()
 
 		video = null
-
-		y_texture = null
-		u_texture = null
-		v_texture = null
-		a_texture = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING
@@ -535,7 +528,7 @@ func _open_audio(stream_id: int = -1) -> void:
 		printerr("Failed to open AudioStreamFFmpeg for: %s" % path)
 		return
 
-	audio_player.stream = stream
+	audio_player.set_stream.call_deferred(stream)
 
 
 func _print_stream_info(streams: PackedInt32Array) -> void:
