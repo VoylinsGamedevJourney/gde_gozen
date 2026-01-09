@@ -117,25 +117,25 @@ def get_ndk_host_tag() -> str:
             sys.exit(2)
 
 
-def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False) -> None:
+def compile_ffmpeg(platform: str, arch: str, add_av1: bool = False, add_https: bool = False) -> None:
     if os.path.exists("./ffmpeg/ffbuild/config.mak"):
         print("Cleaning FFmpeg...")
         subprocess.run(["make", "distclean"], cwd="./ffmpeg/")
         subprocess.run(["rm", "-rf", "bin"], cwd="./ffmpeg/")
 
     if platform == OS_LINUX:
-        compile_ffmpeg_linux(arch, add_av1)
+        compile_ffmpeg_linux(arch, add_av1, add_https)
     elif platform == OS_WINDOWS:
-        compile_ffmpeg_windows(arch, add_av1)
+        compile_ffmpeg_windows(arch, add_av1, add_https)
     elif platform == OS_MACOS:
-        compile_ffmpeg_macos(arch, add_av1)
+        compile_ffmpeg_macos(arch, add_av1, add_https)
     elif platform == OS_ANDROID:
-        compile_ffmpeg_android(arch)
+        compile_ffmpeg_android(arch, add_https)
     elif platform == OS_WEB:
         compile_ffmpeg_web()
 
 
-def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
+def compile_ffmpeg_linux(arch: str, add_av1: bool = False, add_https: bool = False) -> None:
     print("Configuring FFmpeg for Linux ...")
     os.environ["PKG_CONFIG_PATH"] = "/usr/lib/pkgconfig"
 
@@ -178,7 +178,7 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False) -> None:
         sys.exit(1)
 
 
-def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
+def compile_ffmpeg_windows(arch: str, add_av1: bool = False, add_https: bool = False) -> None:
     print("Configuring FFmpeg for Windows ...")
     os.environ["PKG_CONFIG_LIBDIR"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
     os.environ["PKG_CONFIG_PATH"] = f"/usr/{arch}-w64-mingw32/lib/pkgconfig"
@@ -205,6 +205,11 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     if add_av1:
         cmd += ENABLE_AV1
 
+    if add_https:
+        cmd.append("--enable-schannel")
+        cmd.append("--enable-protocol=https")
+        cmd.append("--enable-protocol=tls")
+
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
         print("Error: FFmpeg failed!")
@@ -220,9 +225,8 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False) -> None:
     print("Compiling FFmpeg for Windows finished!")
 
 
-def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
+def compile_ffmpeg_macos(arch: str, add_av1: bool = False, add_https: bool = False) -> None:
     print("Configuring FFmpeg for MacOS ...")
-
     cmd = [
         "./configure",
         "--prefix=./bin",
@@ -242,6 +246,11 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     if add_av1:
         cmd += ENABLE_AV1
 
+    if add_https:
+        cmd.append("--enable-securetransport")
+        cmd.append("--enable-protocol=https")
+        cmd.append("--enable-protocol=tls")
+
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
         print("Error: FFmpeg failed!")
@@ -257,7 +266,7 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False) -> None:
     print("Compiling FFmpeg for MacOS finished!")
 
 
-def compile_ffmpeg_android(arch: str) -> None:
+def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
     print("Configuring FFmpeg for Android ...")
     ndk: str = os.getenv("ANDROID_NDK_ROOT")
 
@@ -489,6 +498,7 @@ def main():
     platform: str = OS_LINUX
     arch: str = ARCH_X86_64
     av1_support: bool = False
+    https_support: bool = False
 
     match _print_options("Select platform", [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]):
         case 2:
@@ -523,7 +533,9 @@ def main():
 
     if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
         av1_support = _print_options("Add AV1 support?", ["no", "yes"]) == 2
-        compile_ffmpeg(platform, arch, av1_support)
+        if platform in [OS_MACOS, OS_WINDOWS]:
+            https_support = _print_options("Add https support? (mbedtls)", ["no", "yes"]) == 2
+        compile_ffmpeg(platform, arch, av1_support, https_support)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
