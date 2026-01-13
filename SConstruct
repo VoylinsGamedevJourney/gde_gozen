@@ -47,6 +47,8 @@ if "linux" in platform:
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
 
+    if ARGUMENTS.get("add_https", "no") == "yes":
+        env.Append(LIBS=["gnutls", "nettle", "hogweed", "gmp"])
     if arch != "arm64":
         env.Append(LIBS=["z", "bz2", "lzma"])
     env.Append(LIBS=["m", "pthread", "dl"])

@@ -163,8 +163,12 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False, add_https: bool = Fal
         cmd += [
             "--enable-cross-compile",
             "--cross-prefix=aarch64-linux-gnu-",
-            "--cc=aarch64-linux-gnu-gcc",
-        ]
+            "--cc=aarch64-linux-gnu-gcc"]
+    if add_https:
+        cmd += [
+            "--enable-protocol=https",
+            "--enable-protocol=tls",
+            "--enable-gnutls"]
 
     if subprocess.run(cmd, cwd="./ffmpeg/").returncode != 0:
         print("Error: FFmpeg failed!")
@@ -204,11 +208,11 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False, add_https: bool = F
 
     if add_av1:
         cmd += ENABLE_AV1
-
     if add_https:
-        cmd.append("--enable-schannel")
-        cmd.append("--enable-protocol=https")
-        cmd.append("--enable-protocol=tls")
+        cmd += [
+            "--enable-schannel",
+            "--enable-protocol=https",
+            "--enable-protocol=tls"]
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -245,11 +249,11 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False, add_https: bool = Fal
 
     if add_av1:
         cmd += ENABLE_AV1
-
     if add_https:
-        cmd.append("--enable-securetransport")
-        cmd.append("--enable-protocol=https")
-        cmd.append("--enable-protocol=tls")
+        cmd += [
+            "--enable-securetransport",
+            "--enable-protocol=https",
+            "--enable-protocol=tls"]
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -534,7 +538,9 @@ def main():
     if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
         av1_support = _print_options("Add AV1 support?", ["no", "yes"]) == 2
         if platform in [OS_MACOS, OS_WINDOWS]:
-            https_support = _print_options("Add https support? (mbedtls)", ["no", "yes"]) == 2
+            https_support = _print_options("Add https support? (native)", ["no", "yes"]) == 2
+        elif platform == OS_LINUX:
+            https_support = _print_options("Add https support? (gnutls)", ["no", "yes"]) == 2
         compile_ffmpeg(platform, arch, av1_support, https_support)
 
     # Godot requires arm32 instead of armv7a.
@@ -543,7 +549,8 @@ def main():
 
     env = os.environ.copy()
     cmd = ["scons", f"-j{THREADS}", f"target=template_{target}", f"platform={platform}",
-           f"arch={arch}", f"av1={'yes' if av1_support else 'no'}"]
+           f"arch={arch}", f"av1={'yes' if av1_support else 'no'}",
+           f"add_https={'yes' if https_support else 'no'}"]
 
     if platform == OS_ANDROID:
         # We need to check if ANDROID_HOME is set to the sdk folder.
@@ -555,7 +562,8 @@ def main():
     if clean_scons:
         clean_cmd = ["scons", "--clean", f"-j{THREADS}", f"target=template_{target}",
                      f"platform={platform}", f"arch={arch}",
-                     f"av1={'yes' if av1_support else 'no'}"]
+                     f"av1={'yes' if av1_support else 'no'}",
+                     f"add_https={'yes' if https_support else 'no'}"]
         subprocess.run(clean_cmd, cwd="./", env=env)
 
     subprocess.run(cmd, cwd="./", env=env)
