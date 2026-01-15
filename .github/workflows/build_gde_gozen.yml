@@ -21,7 +21,7 @@ jobs:
           - os: ubuntu-22.04
             platform: linux
             arch: x86_64
-            packages: yasm scons build-essential diffutils
+            packages: yasm scons build-essential diffutils zlib1g-dev libbz2-dev liblzma-dev
           - os: ubuntu-22.04
             platform: linux
             arch: arm64
