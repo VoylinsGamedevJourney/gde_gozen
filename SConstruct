@@ -50,12 +50,7 @@ if "linux" in platform:
     if ARGUMENTS.get("add_https", "no") == "yes":
         env.Append(LIBS=["gnutls", "nettle", "hogweed", "gmp"])
     if arch != "arm64":
-        env.Append(LINKFLAGS=[
-            "-Wl,-Bstatic",
-            "-lz",
-            "-lbz2",
-            "-llzma",
-            "-Wl,-Bdynamic"])
+        env.Append(LIBS=["z"])
     env.Append(LIBS=["m", "pthread", "dl"])
 elif "windows" in platform:
     env.Append(

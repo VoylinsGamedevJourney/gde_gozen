@@ -57,6 +57,8 @@ ENABLE_AV1 = [
 ]
 
 DISABLED_MODULES = [
+    "--disable-bzlib",
+    "--disable-lzma",
     # Hardware decoders
     "--disable-vaapi",
     "--disable-vdpau",
