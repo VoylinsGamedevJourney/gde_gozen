@@ -61,7 +61,7 @@ You can join our Discord server to ask for help, but before joining the [Discord
 ### Error: ./configure can't be found
 This error is most likely due to not having initialized the submodules. Check the FFmpeg folder to see if it's empty or not. Empty = not initialized. Not empty = Create an issue as something might be wrong (but show a screenshot of the not empty folder for confirmation).
 
-On Windows this is most likely due to having cloned the repo from Windows and not WSL, this makes the end of lines in the FFmpeg repo incorrect for WSL to read the `configure` file correctly. Windows uses `\r\n` (CRLF) and Linux/MacOS uses `\n` (LF). You can update the repo with this command if you run into this issue on Windows: `git config core.autocrlf input`
+On Windows, this issue can be caused due to many reasons. Advice for this is to do EVERYTHING through WSL instead, even cloning the repo.
 
 ### Error: Can't compile through WSL
 Make certain that `mingw-w32` is not installed! Having this one installed can give issues and might make compiling FFmpeg not work.
