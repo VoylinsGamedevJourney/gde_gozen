@@ -11,6 +11,7 @@ uniform bool full_color;
 uniform int interlaced; // 0 = no, 1 = top first, 2 = bottom first
 uniform float rotation;
 
+uniform vec4 modulate;
 
 varying vec2 tex_uv;
 varying vec2 chroma_uv;
@@ -59,6 +60,6 @@ void fragment() {
 				yuv.x + (yuv.z * color_profile.x),
 				yuv.x - (yuv.y * color_profile.y) - (yuv.z * color_profile.z),
 				yuv.x + (yuv.y * color_profile.w),
-				texture(a_data, tex_uv).r);
+				texture(a_data, tex_uv).r) * modulate;
 	}
 }
