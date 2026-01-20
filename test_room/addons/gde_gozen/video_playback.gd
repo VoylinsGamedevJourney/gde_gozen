@@ -229,7 +229,6 @@ func _update_video(new_video: GoZenVideo) -> void:
 	_shader_material.set_shader_parameter("u_data", u_texture)
 	_shader_material.set_shader_parameter("v_data", v_texture)
 	_shader_material.set_shader_parameter("a_data", a_texture)
-	_shader_material.set_shader_parameter("modulate", modulate)
 
 	set_playback_speed(playback_speed)
 	video_loaded.emit()
@@ -456,8 +455,6 @@ func _set_frame_image() -> void:
 	if _has_alpha:
 		RenderingServer.texture_2d_update(a_texture.get_rid(), video.get_a_data(), 0)
 
-	_shader_material.set_shader_parameter("modulate", modulate)
-
 
 func set_playback_speed(new_playback_value: float) -> void:
 	playback_speed = clampf(new_playback_value, 0.5, 2)
@@ -498,14 +495,6 @@ func set_audio_stream(stream: int) -> void:
 			audio_player.set_stream_paused(false)
 			audio_player.play(current_frame / _frame_rate)
 			audio_player.set_stream_paused(!is_playing)
-
-
-## Helper function to directly update the video color since updating the modulate
-## color requires to update the shader param before the actual visual gets
-## updated.
-func update_modulate(modulate_color: Color) -> void:
-	modulate = modulate_color
-	_shader_material.set_shader_parameter("modulate", modulate)
 
 
 #------------------------------------------------ MISC

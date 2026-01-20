@@ -11,10 +11,9 @@ uniform bool full_color;
 uniform int interlaced; // 0 = no, 1 = top first, 2 = bottom first
 uniform float rotation;
 
-uniform vec4 modulate;
-
 varying vec2 tex_uv;
 varying vec2 chroma_uv;
+varying vec4 modulate;
 
 const vec3 LIMITED_Y_OFFSET = vec3(16.0/255.0, 128.0/255.0, 128.0/255.0);
 const vec3 LIMITED_SCALE = vec3(255.0/219.0, 255.0/224.0, 255.0/224.0);
@@ -32,6 +31,8 @@ void vertex() {
 
 	tex_uv = rotated_uv + 0.5;
 	chroma_uv = tex_uv; 
+
+	modulate = COLOR;
 }
 
 
