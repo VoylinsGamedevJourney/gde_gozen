@@ -59,7 +59,7 @@ elif "windows" in platform:
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
-        LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
+        LIBS=["winpthread", "ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
     )
 elif "macos" in platform:
     # NOTE: MacOS can only be build on a MacOS machine!
