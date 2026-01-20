@@ -83,7 +83,7 @@ elif "macos" in platform:
             "-framework", "Security",      # Often needed by static FFmpeg
             "-framework", "AudioToolbox"]  # Often needed by static FFmpeg
     )
-    env.Append(LIBS=["z", "bz2", "iconv", "m", "pthread"])
+    env.Append(LIBS=["z", "iconv", "m", "pthread"])
 elif "android" in platform:
     if arch == "arm64":
         env.Append(CCFLAGS=["-march=armv8-a"])
