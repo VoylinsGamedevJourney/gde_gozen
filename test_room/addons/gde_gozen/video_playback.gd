@@ -26,7 +26,7 @@ const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file.
-@export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
+@export var enable_audio: bool = true ## Enable/Disable audio playback. audio will still be loaded so you can switch it on and off whenever you please.
 @export var audio_speed_to_sync: bool = false ## Enable/Disable a slight audio playback speed increase/reduction when syncing audio and video to avoid a hard cut.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
 @export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
@@ -36,6 +36,7 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export_group("Extra's")
 @export var color_profile: COLOR_PROFILE = COLOR_PROFILE.AUTO: set = _set_color_profile ## Force a specific color profile if needed.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
+@export var load_audio: bool = true ## prevent audio being loaded. this makes the video load faster.
 
 var video: GoZenVideo = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 
@@ -152,7 +153,7 @@ func set_video_path(new_path: String) -> void:
 
 	_video_thread = WorkerThreadPool.add_task(_open_video)
 
-	if enable_audio:
+	if load_audio:
 		_open_audio()
 
 
@@ -263,7 +264,7 @@ func seek_frame(new_frame_nr: int) -> void:
 	else:
 		_set_frame_image()
 
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if load_audio and enable_audio and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play(current_frame / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -303,7 +304,7 @@ func _process(delta: float) -> void:
 		if current_frame >= _frame_count:
 			is_playing = !is_playing
 
-			if enable_audio and audio_player.stream != null:
+			if load_audio and enable_audio and audio_player.stream != null:
 				audio_player.set_stream_paused(true)
 
 			video_ended.emit()
@@ -337,7 +338,7 @@ func play() -> void:
 		return
 	is_playing = true
 
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if load_audio and enable_audio and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play((current_frame + 1) / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -349,7 +350,7 @@ func play() -> void:
 func pause() -> void:
 	is_playing = false
 	
-	if enable_audio and audio_player.stream != null:
+	if load_audio and enable_audio and audio_player.stream != null:
 		audio_player.set_stream_paused(true)
 
 	playback_paused.emit()
@@ -359,7 +360,7 @@ func pause() -> void:
 func _sync_audio_video() -> void:
 	if  _time_elapsed < 1.20:
 		return
-	elif enable_audio and audio_player.stream.get_length() != 0:
+	elif load_audio and enable_audio and audio_player.stream.get_length() != 0:
 		var audio_offset: float = audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate
 
 		if abs(audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate) > AUDIO_OFFSET_THRESHOLD:
@@ -460,7 +461,7 @@ func set_playback_speed(new_playback_value: float) -> void:
 	playback_speed = clampf(new_playback_value, 0.5, 2)
 	_frame_time = (1.0 / _frame_rate) / playback_speed
 
-	if enable_audio and audio_player.stream != null:
+	if load_audio and enable_audio and audio_player.stream != null:
 		audio_player.pitch_scale = playback_speed
 		_set_pitch_adjust()
 
@@ -489,7 +490,7 @@ func set_audio_stream(stream: int) -> void:
 		printerr("Invalid audio stream!")
 		return
 
-	if enable_audio:
+	if load_audio:
 		_open_audio(stream)
 		if is_playing and audio_player.stream.get_length() != 0:
 			audio_player.set_stream_paused(false)
