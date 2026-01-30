@@ -26,6 +26,7 @@ const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file.
+@export var load_audio: bool = true ## prevent audio being loaded. this makes the video load faster.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. audio will still be loaded so you can switch it on and off whenever you please.
 @export var audio_speed_to_sync: bool = false ## Enable/Disable a slight audio playback speed increase/reduction when syncing audio and video to avoid a hard cut.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
@@ -36,7 +37,6 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export_group("Extra's")
 @export var color_profile: COLOR_PROFILE = COLOR_PROFILE.AUTO: set = _set_color_profile ## Force a specific color profile if needed.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
-@export var load_audio: bool = true ## prevent audio being loaded. this makes the video load faster.
 
 var video: GoZenVideo = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 
