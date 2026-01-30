@@ -70,9 +70,10 @@ func _frame_changed(value: int) -> void:
 
 
 func open_video(file_path: String) -> void:
-	timeline.value = 0
-	loading_screen.visible = true
-	video_playback.set_video_path(file_path)
+	if video_playback and timeline and loading_screen:
+		timeline.value = 0
+		loading_screen.visible = true
+		video_playback.set_video_path(file_path)
 
 
 func after_video_open() -> void:
@@ -82,7 +83,7 @@ func after_video_open() -> void:
 		max_frame_value.text = str(video_playback.get_video_frame_count())
 		fps_value.text = str(video_playback.get_video_framerate()).left(5)
 		loading_screen.visible = false
-		
+
 		audio_track_option_button.clear()
 
 		for i: int in range(len(video_playback.audio_streams)):
