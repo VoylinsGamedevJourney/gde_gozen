@@ -114,7 +114,7 @@ func _exit_tree() -> void:
 
 	if video != null:
 		close()
-	
+
 	AudioServer.remove_bus(AudioServer.get_bus_index(audio_player.bus))
 
 
@@ -165,7 +165,7 @@ func update_video(video_instance: GoZenVideo) -> void:
 	_open_audio()
 
 
-## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using. 
+## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using.
 func _update_video(new_video: GoZenVideo) -> void:
 	video = new_video
 	if !is_open():
@@ -189,7 +189,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 	video_streams = video.get_streams(STREAM_TYPE.VIDEO)
 	audio_streams = video.get_streams(STREAM_TYPE.AUDIO)
 	subtitle_streams = video.get_streams(STREAM_TYPE.SUBTITLE)
-	
+
 	chapters.clear()
 	for i: int in range(video.get_chapter_count()):
 		@warning_ignore("UNSAFE_CALL_ARGUMENT")
@@ -199,7 +199,7 @@ func _update_video(new_video: GoZenVideo) -> void:
 			video.get_chapter_metadata(i).get("title", "")
 		)
 		chapters.append(chapter)
-		
+
 	if abs(_rotation) == 90:
 		image = Image.create_empty(_resolution.y, _resolution.x, false, Image.FORMAT_R8)
 	else:
@@ -277,7 +277,7 @@ func next_frame(skip: bool = false) -> void:
 	elif !skip:
 		print("Something went wrong getting next frame!")
 
-	
+
 func close() -> void:
 	if video != null:
 		if is_playing:
@@ -333,8 +333,10 @@ func _process(delta: float) -> void:
 
 ## Start the video playback. This will play until reaching the end of the video and then pause and go back to the start.
 func play() -> void:
-	if video != null and !is_open() and is_playing:
+	if not is_open():
+		print("The video on '%s' isn't open yet!" % path)
 		return
+	if is_playing: return
 	is_playing = true
 
 	if enable_audio and audio_player.stream.get_length() != 0:
@@ -348,7 +350,7 @@ func play() -> void:
 ## Pausing the video.
 func pause() -> void:
 	is_playing = false
-	
+
 	if enable_audio and audio_player.stream != null:
 		audio_player.set_stream_paused(true)
 
@@ -484,7 +486,7 @@ func set_audio_stream(stream: int) -> void:
 	if not is_open():
 		printerr("Video is not open!")
 		return
-	
+
 	if not stream in audio_streams:
 		printerr("Invalid audio stream!")
 		return
@@ -582,7 +584,7 @@ func _print_video_debug() -> void:
 		_print_stream_info(subtitle_streams)
 	else:
 		print("No subtitle streams found.")
-	
+
 	if chapters.size() != 0:
 		print_rich("Chapters: [i](%s)" % chapters.size())
 		for i: int in range(chapters.size()):
