@@ -7,9 +7,8 @@ Since version 8.0 it's possible to add and play videos from your project directl
 ## Exporting your project
 When exporting your projects, take in mind to bundle your executables with the FFmpeg library files which should be present in your exported projects folder. Also, add `*.mp4` and other extension names of your video files to the resources which need to get exported, otherwise your video files might not be included in your final export.
 
-## Size limit
-
-At this moment there's a limit of 2GB for the audio data, so video's over a couple of hours will not work!
+## Android (SAF)
+Due to the way SAF works (Godot 4.6+), accessing files through the browser might give invalid paths. You need to be certain you get the absolute path instead. Inside of the `test_room` (of the GDScript version only atm) you can find an example of how this is done for Android, by basically copying the videos to a temporary folder which will give an absolute path. Only thing to be careful of is to also remove the data afterwards out of the temporary folder.
 
 ## Help needed?
 You can go to the [GitHub repo](https://github.com/VoylinsGamedevJourney/gde_gozen/issues) to report problems, or visit out [Discord server](discord.gg/BdbUf7VKYC) for help/advice.
