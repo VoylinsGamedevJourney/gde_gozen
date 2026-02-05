@@ -9,6 +9,9 @@ To see video files in your projects file tree, you need to add `mp4` and any oth
 1. When exporting, you'll have your executable and the GDE GoZen library file, these do need to be both shared for the application to work.
 2. Also, you will have to add `*.mp4` and other extension names of your video files to the resources which need to get exported for each platform you want to export for, otherwise your video files will not be included in your final export.
 
+## Android (SAF)
+Due to the way SAF works (Godot 4.6+), accessing files through the browser might give invalid paths. You need to be certain you get the absolute path instead. Inside of the `test_room` you can find an example of how this is done for Android, by basically copying the videos to a temporary folder which will give an absolute path. Only thing to be careful of is to also remove the data afterwards out of the temporary folder.
+
 ## Help needed?
 You can go to the [GitHub repo](https://github.com/VoylinsGamedevJourney/gde_gozen/issues) to report problems, or visit out [Discord server](discord.gg/BdbUf7VKYC) for help/advice.
 
