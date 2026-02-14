@@ -41,9 +41,9 @@ public partial class Main : Control
         _speedSpinBox = GetNode<SpinBox>("%SpeedSpinBox");
         _audioTrackOption = GetNode<OptionButton>("%AudioTrackOption");
         _loadingScreen = GetNode<Panel>("LoadingPanel");
-        
-        _icons.Add(GD.Load<Texture2D>("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png"));
-        _icons.Add(GD.Load<Texture2D>("res://icons/pause_48dp_FILL1_wght400_GRAD0_opsz48.png"));
+
+        _icons.Add(GD.Load<Texture2D>("res://icons/play.png"));
+        _icons.Add(GD.Load<Texture2D>("res://icons/pause.png"));
 
         if (OS.GetCmdlineArgs().Length > 1)
             OpenVideo(OS.GetCmdlineArgs()[1]);
@@ -145,7 +145,7 @@ public partial class Main : Control
                 _playPauseButton.TextureNormal = _icons[1];
             }
         }
-        
+
         _playPauseButton.ReleaseFocus();
     }
 
@@ -177,7 +177,7 @@ public partial class Main : Control
     public void OnLoadVideoButtonPressed()
     {
         var dialog = new FileDialog();
-        
+
         dialog.Title = "Open Video";
         dialog.ForceNative = true;
         dialog.UseNativeDialog = true;

@@ -22,8 +22,8 @@ const VIDEO_EXTENSIONS: PackedStringArray = [
 @onready var loading_screen: Panel = $LoadingPanel
 
 var icons: Array[Texture2D] = [
-	preload("res://icons/play_arrow_48dp_FILL1_wght400_GRAD0_opsz48.png"), # PLAY
-	preload("res://icons/pause_48dp_FILL1_wght400_GRAD0_opsz48.png") # PAUSE
+	preload("res://icons/play.png"), # PLAY
+	preload("res://icons/pause.png") # PAUSE
 ]
 
 var is_dragging: bool = false
