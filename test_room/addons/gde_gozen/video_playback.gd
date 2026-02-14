@@ -157,12 +157,15 @@ func set_video_path(new_path: String) -> void:
 
 
 ## Update the video manually by providing a GoZenVideo instance and an optional AudioStreamWAV.
-func update_video(video_instance: GoZenVideo) -> void:
+func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
 	if video != null:
 		close()
 
 	_update_video(video_instance)
-	_open_audio()
+	if audio_stream:
+		audio_player.stream = audio_stream
+	else:
+		_open_audio()
 
 
 ## Only run this function after manually having added a Video object to the `video` variable. A good reason for doing this is to load your video's at startup time to prevent your program for freezing for a second when loading in big video files. Some video formats load faster then others so if you are experiencing issues with long loading times, try to use this function and create the video object on startup, or try switching the video format which you are using.
@@ -523,7 +526,7 @@ func _open_audio(stream_id: int = -1) -> void:
 		printerr("Failed to open AudioStreamFFmpeg for: %s" % path)
 		return
 
-	audio_player.set_stream.call_deferred(stream)
+	audio_player.stream = stream
 
 
 func _print_stream_info(streams: PackedInt32Array) -> void:
