@@ -107,11 +107,9 @@ func _exit_tree() -> void:
 	# Making certain no remaining tasks are running in separate threads.
 	if _video_thread != -1:
 		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
-
 		if error != OK:
 			printerr("Something went wrong waiting for task completion! %s" % error)
 		_video_thread = -1
-
 	if video != null:
 		close()
 
@@ -129,7 +127,6 @@ func _ready() -> void:
 func set_video_path(new_path: String) -> void:
 	if video != null:
 		close()
-
 	if !is_node_ready():
 		await ready
 	if !get_tree().root.is_node_ready():
@@ -144,14 +141,12 @@ func set_video_path(new_path: String) -> void:
 
 	path = new_path
 	video = GoZenVideo.new()
-
 	if debug:
 		video.enable_debug()
 	else:
 		video.disable_debug()
 
 	_video_thread = WorkerThreadPool.add_task(_open_video)
-
 	if enable_audio:
 		_open_audio()
 
@@ -160,7 +155,7 @@ func set_video_path(new_path: String) -> void:
 func update_video(video_instance: GoZenVideo, audio_stream: AudioStreamWAV = null) -> void:
 	if video != null:
 		close()
-
+	path = video_instance.get_path()
 	_update_video(video_instance)
 	if audio_stream:
 		audio_player.stream = audio_stream
@@ -209,7 +204,6 @@ func _update_video(new_video: GoZenVideo) -> void:
 		image = Image.create_empty(_resolution.x, _resolution.y, false, Image.FORMAT_R8)
 
 	image.fill(Color.WHITE)
-
 	if debug:
 		_print_video_debug()
 
@@ -243,7 +237,6 @@ func _set_color_profile(new_profile: COLOR_PROFILE = color_profile) -> void:
 	var profile_str: String = video.get_color_profile()
 
 	color_profile = new_profile
-
 	if new_profile != COLOR_PROFILE.AUTO:
 		profile_str = str(COLOR_PROFILE.find_key(COLOR_PROFILE.BT2100)).to_lower()
 
@@ -251,7 +244,6 @@ func _set_color_profile(new_profile: COLOR_PROFILE = color_profile) -> void:
 		"bt2020", "bt2100": color_data = Vector4(1.4746, 0.16455, 0.57135, 1.8814)
 		"bt601", "bt470": color_data = Vector4(1.402, 0.344136, 0.714136, 1.772)
 		_: color_data = Vector4(1.5748, 0.1873, 0.4681, 1.8556) # bt709 and unknown
-
 	_shader_material.set_shader_parameter("color_profile", color_data)
 
 
@@ -285,7 +277,6 @@ func close() -> void:
 	if video != null:
 		if is_playing:
 			pause()
-
 		video = null
 
 
@@ -294,7 +285,6 @@ func _process(delta: float) -> void:
 	if is_playing:
 		_skips = 0
 		_time_elapsed += delta
-
 		if _time_elapsed < _frame_time:
 			return
 
@@ -305,31 +295,26 @@ func _process(delta: float) -> void:
 
 		if current_frame >= _frame_count:
 			is_playing = !is_playing
-
 			if enable_audio and audio_player.stream != null:
 				audio_player.set_stream_paused(true)
 
 			video_ended.emit()
-
 			if loop:
 				seek_frame(0)
 				play()
 		else:
 			_sync_audio_video()
-
 			while _skips != 1:
 				next_frame(true)
 				_skips -= 1
 			next_frame()
 	elif _video_thread != -1:
 		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
-
 		if error != OK:
 			printerr("Something went wrong waiting for task completion! %s" % error)
 
 		_video_thread = -1
 		_update_video(video)
-
 		if enable_auto_play:
 			play()
 
@@ -353,10 +338,8 @@ func play() -> void:
 ## Pausing the video.
 func pause() -> void:
 	is_playing = false
-
 	if enable_audio and audio_player.stream != null:
 		audio_player.set_stream_paused(true)
-
 	playback_paused.emit()
 
 
@@ -366,7 +349,6 @@ func _sync_audio_video() -> void:
 		return
 	elif enable_audio and audio_player.stream.get_length() != 0:
 		var audio_offset: float = audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate
-
 		if abs(audio_player.get_playback_position() + AudioServer.get_time_since_last_mix() - (current_frame + 1) / _frame_rate) > AUDIO_OFFSET_THRESHOLD:
 			if debug: print("Audio Sync: time correction: ", audio_offset)
 			audio_player.seek((current_frame + 1) / _frame_rate)
@@ -456,7 +438,6 @@ func _set_frame_image() -> void:
 	RenderingServer.texture_2d_update(y_texture.get_rid(), video.get_y_data(), 0)
 	RenderingServer.texture_2d_update(u_texture.get_rid(), video.get_u_data(), 0)
 	RenderingServer.texture_2d_update(v_texture.get_rid(), video.get_v_data(), 0)
-
 	if _has_alpha:
 		RenderingServer.texture_2d_update(a_texture.get_rid(), video.get_a_data(), 0)
 
@@ -468,7 +449,6 @@ func set_playback_speed(new_playback_value: float) -> void:
 	if enable_audio and audio_player.stream != null:
 		audio_player.pitch_scale = playback_speed
 		_set_pitch_adjust()
-
 		if is_playing:
 			audio_player.play(current_frame * (1.0 / _frame_rate))
 
@@ -570,22 +550,19 @@ func _print_video_debug() -> void:
 	print("Using sws: ", video.is_using_sws())
 	print("Sar: ", video.get_sar())
 
-	if video_streams.size() != 0:
-		print_rich("Video streams: [i](%s)" % video_streams.size())
-		_print_stream_info(video_streams)
-	else:
-		print("No video streams found.")
+	print_rich("Video streams: [i](%s)" % video_streams.size())
+	_print_stream_info(video_streams)
 
 	if audio_streams.size() != 0:
 		print_rich("Audio streams: [i](%s)" % audio_streams.size())
 		_print_stream_info(audio_streams)
-	else:
+	elif debug:
 		print("No audio streams found.")
 
 	if subtitle_streams.size() != 0:
 		print_rich("Subtitle streams: [i](%s)" % subtitle_streams.size())
 		_print_stream_info(subtitle_streams)
-	else:
+	elif debug:
 		print("No subtitle streams found.")
 
 	if chapters.size() != 0:
