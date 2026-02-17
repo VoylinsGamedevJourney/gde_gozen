@@ -32,6 +32,9 @@ var was_playing: bool = false
 
 
 func _ready() -> void:
+	if OS.get_name() == "Android":
+		clear_folder("user://temp", true)
+	
 	if OS.get_cmdline_args().size() > 1:
 		open_video(OS.get_cmdline_args()[1])
 	if OS.get_name().to_lower() == "android" and OS.request_permissions():
@@ -132,17 +135,50 @@ func _on_speed_spin_box_value_changed(value: float) -> void:
 
 
 func _on_load_video_button_pressed() -> void:
-	var dialog: FileDialog = FileDialog.new()
+	var current_directory : String = OS.get_system_dir(OS.SYSTEM_DIR_MOVIES)
+	var filters : PackedStringArray = PackedStringArray(["*"])
+	var error : Error = DisplayServer.file_dialog_show("Open video", current_directory, "", false, DisplayServer.FILE_DIALOG_MODE_OPEN_FILE, filters, _file_dialog_callback)
+	if error:
+		printerr("Problem with file dialog")
 
-	dialog.title = "Open video"
-	dialog.force_native = true
-	dialog.use_native_dialog = true
-	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	_connect(dialog.file_selected, open_video)
 
-	add_child(dialog)
-	dialog.popup_centered()
+func _file_dialog_callback(_status: bool, selected_uris: PackedStringArray, _selected_filter_index: int) -> void:
+	var filepath : String = selected_uris[0]
+	if OS.get_name() != "Android":
+		open_video(filepath)
+		return
+
+	if filepath.begins_with("user://") or filepath.begins_with("res://"):
+		open_video(filepath)
+		return
+
+	var file_read : FileAccess = FileAccess.open(filepath, FileAccess.READ)
+
+	if not file_read:
+		return
+	
+	# android files starting with "content://" should be copied to a temp folder
+	# in order to get absolute paths that Gozen GDE could read
+	if DirAccess.dir_exists_absolute("user://temp"):
+		clear_folder("user://temp", false)
+	else:
+		var createDirError : Error = DirAccess.make_dir_absolute("user://temp")
+		if createDirError:
+			printerr("Problem with temp folder creation")
+			return
+
+	var temp_path : String = "user://temp/temp_" + str(Time.get_ticks_msec()) + ".tmp"
+	var file_write : FileAccess = FileAccess.open(temp_path, FileAccess.WRITE)
+	if file_write:
+		var storeOperationOk : bool = file_write.store_buffer(file_read.get_buffer(file_read.get_length()))
+		if not storeOperationOk:
+			printerr("Problem catching the file")
+			return
+		file_write.close()
+	file_read.close()
+	
+	open_video(ProjectSettings.globalize_path(temp_path))
+	return
 
 
 func _connect(from_signal: Signal, target_func: Callable) -> void:
@@ -152,3 +188,33 @@ func _connect(from_signal: Signal, target_func: Callable) -> void:
 
 func _on_audio_track_option_item_selected(index: int) -> void:
 	video_playback.set_audio_stream(video_playback.audio_streams[index])
+
+
+func clear_folder(path: String, delete_folder : bool) -> void:
+	var dir : DirAccess = DirAccess.open(path)
+	if not dir:
+		return
+	
+	var error : Error = dir.list_dir_begin()
+	if error:
+		printerr("Problems while reading %s folder" % path)
+		return
+	var item: String = dir.get_next()
+	while item != "":
+		if item != "." and item != "..":
+			var full_path: String = path.path_join(item)
+			if dir.current_is_dir():
+				clear_folder(full_path, delete_folder)
+			else:
+				var removeFileError : Error = dir.remove(full_path)
+				if removeFileError:
+					printerr("Problem while removing %s file" % full_path)
+					continue
+		item = dir.get_next()
+	
+	if not delete_folder:
+		return
+	
+	var removeFolderError : Error = DirAccess.remove_absolute(path)
+	if removeFolderError:
+		printerr("Problem while removing %s folder" % path)
