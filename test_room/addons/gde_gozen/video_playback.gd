@@ -24,12 +24,15 @@ const PLAYBACK_SPEED_MIN: float = 0.25
 const PLAYBACK_SPEED_MAX: float = 4
 const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
+## Vector2(min, max) speed to override PLAYBACK_SPEED_MIN and PLAYBACK_SPEED_MAX constants
+## Ignored if ZERO
+@export var playback_speed_override: Vector2 = Vector2.ZERO
 
 @export_file var path: String = "": set = set_video_path ## Full path to video file.
 @export var enable_audio: bool = true ## Enable/Disable audio playback. When setting this on false before loading the audio, the audio playback won't be loaded meaning that the video will load faster. If you want audio but only disable it at certain moments, switch this value to false *after* the video is loaded.
 @export var audio_speed_to_sync: bool = false ## Enable/Disable a slight audio playback speed increase/reduction when syncing audio and video to avoid a hard cut.
 @export var enable_auto_play: bool = false ## Enable/disable auto video playback.
-@export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05)
+@export_range(PLAYBACK_SPEED_MIN, PLAYBACK_SPEED_MAX, 0.05, "or_less", "or_greater")
 var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video playback speed, 0.5 = half the speed and 2 = double the speed.
 @export var pitch_adjust: bool = true: set = set_pitch_adjust ## When changing playback speed, do you want the pitch to change or stay the same?
 @export var loop: bool = false ## Enable/disable looping on video_ended.
@@ -258,7 +261,7 @@ func seek_frame(new_frame_nr: int) -> void:
 	else:
 		_set_frame_image()
 
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if enable_audio and audio_player.stream and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play(current_frame / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -283,15 +286,18 @@ func close() -> void:
 #------------------------------------------------ PLAYBACK HANDLING
 func _process(delta: float) -> void:
 	if is_playing:
-		_skips = 0
+		_skips = 1
 		_time_elapsed += delta
 		if _time_elapsed < _frame_time:
 			return
 
-		while _time_elapsed >= _frame_time and _skips < 5:
-			_time_elapsed -= _frame_time
-			current_frame += 1
-			_skips += 1
+		if _time_elapsed >= _frame_time:
+			var frames = _time_elapsed / _frame_time
+			_skips = int(frames)
+
+		_time_elapsed -= _skips * _frame_time
+		current_frame += _skips
+		#print(_skips)
 
 		if current_frame >= _frame_count:
 			is_playing = !is_playing
@@ -303,11 +309,15 @@ func _process(delta: float) -> void:
 				seek_frame(0)
 				play()
 		else:
+			## TODO check what happens with video sync
 			_sync_audio_video()
-			while _skips != 1:
-				next_frame(true)
-				_skips -= 1
-			next_frame()
+			if _skips > _frame_rate:
+				seek_frame(current_frame)
+			else:	
+				while _skips != 1:
+					next_frame(true)
+					_skips -= 1
+				next_frame()
 	elif _video_thread != -1:
 		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
 		if error != OK:
@@ -327,7 +337,7 @@ func play() -> void:
 	if is_playing: return
 	is_playing = true
 
-	if enable_audio and audio_player.stream.get_length() != 0:
+	if enable_audio and audio_player.stream and audio_player.stream.get_length() != 0:
 		audio_player.set_stream_paused(false)
 		audio_player.play((current_frame + 1) / _frame_rate)
 		audio_player.set_stream_paused(!is_playing)
@@ -378,14 +388,24 @@ func get_video_framerate() -> float:
 	return _frame_rate
 
 
-## Getting the length of the video in seconds
+## Getting the length of the video in seconds (integer)
 func get_video_length() -> int:
 	return int(_frame_count / _frame_rate)
 
 
-## Getting the current playback position of the video in seconds
+## Getting the length of the video in seconds (float)
+func get_video_length_float() -> float:
+	return _frame_count / _frame_rate
+
+
+## Getting the current playback position of the video in seconds (integer)
 func get_current_playback_position() -> int:
 	return int(current_frame / _frame_rate)
+
+
+## Getting the current playback position of the video in seconds (float)
+func get_current_playback_position_float() -> float:
+	return current_frame / _frame_rate
 
 
 ## Getting the rotation in degrees of the video
@@ -443,7 +463,10 @@ func _set_frame_image() -> void:
 
 
 func set_playback_speed(new_playback_value: float) -> void:
-	playback_speed = clampf(new_playback_value, 0.5, 2)
+	if playback_speed_override == Vector2.ZERO:
+		playback_speed = clampf(new_playback_value, 0.5, 2)
+	else:
+		playback_speed = clampf(new_playback_value, playback_speed_override.x, playback_speed_override.y)
 	_frame_time = (1.0 / _frame_rate) / playback_speed
 
 	if enable_audio and audio_player.stream != null:
