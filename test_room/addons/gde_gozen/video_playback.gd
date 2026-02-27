@@ -309,8 +309,8 @@ func _process(delta: float) -> void:
 				seek_frame(0)
 				play()
 		else:
-			## TODO check what happens with video sync
-			_sync_audio_video()
+			if enable_audio:
+				_sync_audio_video()
 			if _skips > _frame_rate:
 				seek_frame(current_frame)
 			else:	
