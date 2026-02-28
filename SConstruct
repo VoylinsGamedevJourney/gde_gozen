@@ -8,7 +8,10 @@ LIBS_COMMON = [
     "avcodec",
     "swscale",
     "swresample",
-    "avutil"]
+    "avutil",
+    "mbedtls",
+    "mbedx509",
+    "mbedcrypto"]
 LOCATION = "test_room/addons/gde_gozen/bin"
 
 march_flags = {

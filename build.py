@@ -45,7 +45,7 @@ ANDROID_API_LEVEL: int = 24
 
 ENABLED_MODULES = [
     "--enable-swscale",
-
+    "--enable-mbedtls",
     "--enable-demuxer=ogg",
     "--enable-demuxer=matroska,webm",
 ]
@@ -147,12 +147,14 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False, add_https: bool = Fal
         "--disable-shared",
         "--enable-static",
         "--enable-pic",
+        "--enable-version3",
         "--disable-asm",
         f"--arch={arch}",
         "--target-os=linux",
         "--quiet",
         "--enable-pthreads",
         "--extra-cflags=-fPIC",
+        "--extra-libs=-lmbedtls -lmbedx509 -lmbedcrypto",
         # TODO: Remove this line if safe "--extra-ldflags=-fPIC",
     ]
     cmd += ENABLED_MODULES
@@ -195,6 +197,7 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False, add_https: bool = F
         "--disable-shared",
         "--enable-static",
         "--enable-pic",
+	"--enable-version3",
         "--disable-asm",
         f"--arch={arch}",
         "--target-os=mingw32",
@@ -239,6 +242,7 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False, add_https: bool = Fal
         "--disable-shared",
         "--enable-static",
         "--enable-pic",
+	"--enable-version3",
         "--disable-asm",
         f"--arch={arch}",
         "--quiet",
@@ -312,6 +316,7 @@ def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
         "--enable-static",
         "--disable-asm",
         "--enable-pic",
+	"--enable-version3",
         f"--arch={ffmpeg_arch}",
         "--target-os=android",
         "--enable-pic",
@@ -401,9 +406,11 @@ def compile_ffmpeg_web() -> None:
         "--extra-cflags=-O3 -msimd128 -DNDEBUG -pthread -sUSE_PTHREADS=1 -sASYNCIFY=1 -fPIC",
         "--extra-ldflags=-O3 -msimd128 -pthread -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sASYNCIFY=1 -fPIC -sWASM_BIGINT=1",
         "--enable-pic",
+		"--enable-version3",
         "--enable-small",
         "--disable-everything",
 
+		"--enable-mbedtls",
         "--enable-avcodec",
         "--enable-avformat",
         "--enable-avutil",
