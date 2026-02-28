@@ -221,6 +221,16 @@ int GoZenVideo::open(const String& video_path) {
 			framerate = guessed_rate;
 	}
 
+	// - Fix for WMV/ASF format. (reports a false 1000 FPS)
+	if (std::abs(framerate - 1000.0) < 0.001) {
+		if (av_stream->r_frame_rate.num > 0 && av_stream->r_frame_rate.den > 0) {
+			double r_rate = av_q2d(av_stream->r_frame_rate);
+			if (r_rate > 0.1 && r_rate < 990.0) {
+				framerate = r_rate;
+			}
+		}
+	}
+
 	// - Make sure we have a valid framerate after all checks.
 	if (framerate <= 0) {
 		close();
