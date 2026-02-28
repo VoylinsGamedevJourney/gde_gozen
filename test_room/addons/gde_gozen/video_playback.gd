@@ -297,7 +297,6 @@ func _process(delta: float) -> void:
 
 		_time_elapsed -= _skips * _frame_time
 		current_frame += _skips
-		#print(_skips)
 
 		if current_frame >= _frame_count:
 			is_playing = !is_playing
