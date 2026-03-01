@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version'
         type: string
-        default: '9.0'
+        default: '9.3'
 
 run-name: 'Build GDE GoZen: v${{ inputs.version }}'
 
@@ -21,15 +21,15 @@ jobs:
           - os: ubuntu-22.04
             platform: linux
             arch: x86_64
-            packages: yasm scons build-essential diffutils zlib1g-dev libbz2-dev liblzma-dev
+            packages: yasm scons build-essential diffutils zlib1g-dev libbz2-dev liblzma-dev libvpx-dev
           - os: ubuntu-22.04
             platform: linux
             arch: arm64
-            packages: yasm scons build-essential diffutils gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+            packages: yasm scons build-essential diffutils gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu libvpx-dev
             setup_cmd: |
               sudo dpkg --add-architecture arm64
               sudo sed -i 's/^deb/deb [arch=amd64]/g' /etc/apt/sources.list
-              
+
               # Add ARM64 ports
               echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
               echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
@@ -37,12 +37,12 @@ jobs:
           - os: macos-latest
             platform: macos
             arch: arm64
-            packages: yasm scons diffutils make
+            packages: yasm scons diffutils make libvpx
             setup_cmd: brew update
           - os: macos-15-intel
             platform: macos
             arch: x86_64
-            packages: yasm scons diffutils make
+            packages: yasm scons diffutils make libvpx
             setup_cmd: brew update
 
     steps:
@@ -99,7 +99,7 @@ jobs:
         include:
           - platform: windows
             arch: x86_64
-            extra_packages: mingw-w64 wine ninja fakeroot debugedit
+            extra_packages: mingw-w64 wine ninja fakeroot debugedit  mingw-w64-libvpx
           - platform: android
             arch: arm64
             ffmpeg_arg: arm64
@@ -133,14 +133,14 @@ jobs:
           echo "${ANDROID_SDK_ROOT}/platform-tools" >> $GITHUB_PATH
           echo "${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> $GITHUB_PATH
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
-          
+
           # Download tools.
           CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
           wget -q "${CMDLINE_TOOLS_URL}" -O cmdline-tools.zip
           mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
           unzip -q cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools/temp"
           mv "${ANDROID_SDK_ROOT}/cmdline-tools/temp/cmdline-tools/"* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/"
-          
+
           # Install SDK/NDK.
           mkdir -p ${ANDROID_SDK_ROOT}/licenses/
           yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses || true
@@ -199,7 +199,7 @@ jobs:
 
           mkdir -p test_room/addons/gde_gozen/bin
           mkdir -p test_room_csharp/addons/gde_gozen/bin
-          
+
           # Linux.
           cp -r artifacts/bin_linux_x86_64/* test_room/addons/gde_gozen/bin/
           cp -r artifacts/bin_linux_arm64/* test_room/addons/gde_gozen/bin/

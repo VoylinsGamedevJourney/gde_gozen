@@ -153,7 +153,7 @@ def compile_ffmpeg_linux(arch: str, add_av1: bool = False, add_https: bool = Fal
         "--quiet",
         "--enable-pthreads",
         "--extra-cflags=-fPIC",
-        # TODO: Remove this line if safe "--extra-ldflags=-fPIC",
+        "--enable-libvpx",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -204,6 +204,7 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False, add_https: bool = F
         "--extra-libs=-lpthread",
         "--extra-ldflags=-static",
         "--extra-cflags=-fPIC",
+        "--enable-libvpx",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -245,6 +246,7 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False, add_https: bool = Fal
         "--extra-ldflags=-mmacosx-version-min=10.13",
         "--extra-cflags=-fPIC -mmacosx-version-min=10.13",
         "--disable-lzma",
+        "--enable-libvpx",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES

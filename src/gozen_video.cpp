@@ -104,8 +104,23 @@ int GoZenVideo::open(const String& video_path) {
 	}
 
 	// Setup Decoder codec context.
-	const AVCodec* av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
-	if (!av_codec) {
+	const AVCodec* av_codec = nullptr;
+
+	// Check for VP8/VP9 with alpha. (VP wanting to be special :/)
+	if (av_stream->codecpar->codec_id == AV_CODEC_ID_VP9 || av_stream->codecpar->codec_id == AV_CODEC_ID_VP8) {
+		AVDictionaryEntry* alpha_entry = av_dict_get(av_stream->metadata, "alpha_mode", nullptr, 0);
+		if (alpha_entry && String(alpha_entry->value).strip_edges() == "1") {
+			const char* libvpx_name = (av_stream->codecpar->codec_id == AV_CODEC_ID_VP9) ? "libvpx-vp9" : "libvpx";
+			av_codec = avcodec_find_decoder_by_name(libvpx_name);
+			if (!av_codec) {
+				_log_err(String("Detected alpha_mode but '") + libvpx_name + "' decoder is missing!");
+			}
+		}
+	}
+	if (!av_codec) { // Set to normal decoder.
+		av_codec = avcodec_find_decoder(av_stream->codecpar->codec_id);
+	}
+	if (!av_codec) { // Couldn't find decoder so exit.
 		close();
 		return _log_err("Couldn't find decoder");
 	}
