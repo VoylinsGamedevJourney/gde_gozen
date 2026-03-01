@@ -8,8 +8,7 @@ LIBS_COMMON = [
     "avcodec",
     "swscale",
     "swresample",
-    "avutil",
-    "vpx"]
+    "avutil"]
 LOCATION = "test_room/addons/gde_gozen/bin"
 
 march_flags = {
@@ -47,6 +46,7 @@ if "linux" in platform:
             "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON)
+    env.Append(LIBS=["vpx"])
 
     if ARGUMENTS.get("add_https", "no") == "yes":
         env.Append(LIBS=["gnutls", "nettle", "hogweed", "gmp"])
@@ -73,7 +73,8 @@ elif "macos" in platform:
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=[
             "ffmpeg/bin/lib",
-            "/usr/local/lib"],
+            "/usr/local/lib",
+            "/opt/homebrew/lib"],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
             "-stdlib=libc++",
@@ -84,6 +85,7 @@ elif "macos" in platform:
             "-framework", "Security",      # Often needed by static FFmpeg
             "-framework", "AudioToolbox"]  # Often needed by static FFmpeg
     )
+    env.Append(LIBS=["vpx"])
     env.Append(LIBS=["z", "iconv", "m", "pthread"])
 elif "android" in platform:
     if arch == "arm64":

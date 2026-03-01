@@ -204,7 +204,6 @@ def compile_ffmpeg_windows(arch: str, add_av1: bool = False, add_https: bool = F
         "--extra-libs=-lpthread",
         "--extra-ldflags=-static",
         "--extra-cflags=-fPIC",
-        "--enable-libvpx",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -276,7 +275,7 @@ def compile_ffmpeg_macos(arch: str, add_av1: bool = False, add_https: bool = Fal
 
 def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
     print("Configuring FFmpeg for Android ...")
-    ndk: str = os.getenv("ANDROID_NDK_ROOT")
+    ndk = os.getenv("ANDROID_NDK_ROOT")
 
     if not ndk:
         ndk = os.getenv("ANDROID_NDK")
