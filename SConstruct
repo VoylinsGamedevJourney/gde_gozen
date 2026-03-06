@@ -94,7 +94,7 @@ elif "android" in platform:
         env.Append(CCFLAGS=["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"])
 
     env.Append(
-        LINKFLAGS=["-static-libstdc++"],
+        LINKFLAGS=["-static-libstdc++", "-Wl,-z,max-page-size=16384"],
         CPPFLAGS=[
             "-Iffmpeg/bin",
             "-Iffmpeg/bin/include"],
