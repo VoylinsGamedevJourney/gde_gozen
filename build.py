@@ -292,11 +292,11 @@ def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
 
     if arch == ARCH_ARM64:
         target_arch = "aarch64-linux-android"
-        arch_flags = "-march=armv8-a"
+        arch_flags = "-march=armv8-a -Wl,-z,max-page-size=16384"
         ffmpeg_arch = "aarch64"
     else:  # armv7a
         target_arch = "armv7a-linux-androideabi"
-        arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
+        arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon -Wl,-z,max-page-size=16384"
         ffmpeg_arch = "arm"
 
     main_folder: str = f"{ndk}/toolchains/llvm/prebuilt/{host_tag}"
