@@ -10,7 +10,7 @@
 ## What is GDE GoZen?
 GDE GoZen is a GDExtension addon for the Godot game engine which provides video playback for all kinds of video formats. Godot natively only supports Theora, but with this GDExtension you'll be able to use files such as `.mp4` and more thanks to using the power of FFmpeg.
 
-GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourney/GoZen), a video editor made with Godot! 
+GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourney/GoZen), a video editor made with Godot!
 
 ## Features
 - Smooth video playback;
@@ -60,3 +60,4 @@ Please be careful and read up on the licensing requirements of both this repo an
 > This software uses libraries from the FFmpeg project under the LGPLv2.1
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)
+[Patreon page](https://patreon.com/voylin)
