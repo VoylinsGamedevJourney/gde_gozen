@@ -12,3 +12,9 @@
 	path = emsdk
 	url = https://github.com/emscripten-core/emsdk.git
 	ignore = dirty
+[submodule "libvpx"]
+	path = libvpx
+	url = https://chromium.googlesource.com/webm/libvpx
+[submodule "libaom"]
+	path = libaom
+	url = https://aomedia.googlesource.com/aom
