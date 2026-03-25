@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version'
         type: string
-        default: '9.3'
+        default: '9.4'
 
 run-name: 'Build GDE GoZen: v${{ inputs.version }}'
 
@@ -37,7 +37,7 @@ jobs:
           - os: macos-latest
             platform: macos
             arch: arm64
-            packages: yasm scons diffutils make libvpx
+            packages: yasm scons diffutils make libvpx cmake
             setup_cmd: brew update
           - os: macos-15-intel
             platform: macos
@@ -99,7 +99,7 @@ jobs:
         include:
           - platform: windows
             arch: x86_64
-            extra_packages: mingw-w64 wine ninja fakeroot debugedit
+            extra_packages: mingw-w64 wine ninja fakeroot debugedit cmake
           - platform: android
             arch: arm64
             ffmpeg_arg: arm64
@@ -122,7 +122,7 @@ jobs:
         run: |
           pacman-key --init
           pacman-key --populate archlinux
-          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip fontconfig libx11 libxcursor libxrandr libxi alsa-lib vulkan-icd-loader ${{ matrix.extra_packages }}
+          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip fontconfig libx11 libxcursor libxrandr libxi alsa-lib vulkan-icd-loader pkgconf ${{ matrix.extra_packages }}
 
       - name: Setup Android SDK
         if: matrix.platform == 'android'

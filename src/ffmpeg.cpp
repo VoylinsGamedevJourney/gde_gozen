@@ -4,9 +4,8 @@
 
 void FFmpeg::print_av_error(const char* message, int error) {
 	char l_error_buffer[AV_ERROR_MAX_STRING_SIZE];
-
 	av_strerror(error, l_error_buffer, sizeof(l_error_buffer));
-	UtilityFunctions::printerr((std::string(message) + " " + l_error_buffer).c_str());
+	UtilityFunctions::printerr(message, l_error_buffer);
 }
 
 void FFmpeg::enable_multithreading(AVCodecContext* codec_ctx, const AVCodec* codec) {

@@ -3,18 +3,10 @@ import os
 import platform as os_platform
 
 
-LIBS_COMMON = [
-    "avformat",
-    "avcodec",
-    "swscale",
-    "swresample",
-    "avutil"]
+LIBS_COMMON = ["avformat", "avcodec", "swscale", "swresample", "avutil"]
 LOCATION = "test_room/addons/gde_gozen/bin"
 
-march_flags = {
-    "x86_64": "x86-64",
-    "arm64": "armv8-a"
-}
+march_flags = {"x86_64": "x86-64", "arm64": "armv8-a"}
 
 env = SConscript("godot_cpp/SConstruct")
 env.Append(CPPPATH=["src"])
@@ -27,9 +19,6 @@ arch = ARGUMENTS.get("arch", "x86_64")
 target = ARGUMENTS.get("target", "template_debug").split("_")[-1]
 libpath = f"{LOCATION}/libgozen{env_suffix}{env_shlibsuffix}"
 
-if ARGUMENTS.get("av1", "no") == "yes":
-    LIBS_COMMON.append("aom")
-
 
 if "linux" in platform:
     if arch == "arm64":
@@ -41,12 +30,11 @@ if "linux" in platform:
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
         CCFLAGS=[f"-march={march_flags[arch]}"],
-        CPPFLAGS=[
-            "-Iffmpeg/bin",
-            "-Iffmpeg/bin/include"],
+        CPPFLAGS=["-Iffmpeg/bin", "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
-        LIBS=LIBS_COMMON)
-    env.Append(LIBS=["vpx"])
+        LIBS=LIBS_COMMON,
+    )
+    env.Append(LIBS=["vpx", "aom"])
 
     if ARGUMENTS.get("add_https", "no") == "yes":
         env.Append(LIBS=["gnutls", "nettle", "hogweed", "gmp"])
@@ -54,13 +42,12 @@ if "linux" in platform:
         env.Append(LIBS=["z"])
     env.Append(LIBS=["m", "pthread", "dl"])
 elif "windows" in platform:
-    env.Append(
-        LINKFLAGS=["-static"],
-        LIBS=LIBS_COMMON)
+    env.Append(LINKFLAGS=["-static"], LIBS=LIBS_COMMON)
+    env.Append(LIBS=["vpx", "aom"])
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
-        LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"]
+        LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"],
     )
 elif "macos" in platform:
     # NOTE: MacOS can only be build on a MacOS machine!
@@ -71,21 +58,25 @@ elif "macos" in platform:
 
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=[
-            "ffmpeg/bin/lib",
-            "/usr/local/lib",
-            "/opt/homebrew/lib"],
+        LIBPATH=["ffmpeg/bin/lib", "/usr/local/lib", "/opt/homebrew/lib"],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
             "-stdlib=libc++",
-            "-framework", "CoreFoundation",
-            "-framework", "CoreVideo",
-            "-framework", "CoreMedia",
-            "-framework", "AVFoundation",
-            "-framework", "Security",      # Often needed by static FFmpeg
-            "-framework", "AudioToolbox"]  # Often needed by static FFmpeg
+            "-framework",
+            "CoreFoundation",
+            "-framework",
+            "CoreVideo",
+            "-framework",
+            "CoreMedia",
+            "-framework",
+            "AVFoundation",
+            "-framework",
+            "Security",  # Often needed by static FFmpeg
+            "-framework",
+            "AudioToolbox",
+        ],  # Often needed by static FFmpeg
     )
-    env.Append(LIBS=["vpx"])
+    env.Append(LIBS=["vpx", "aom"])
     env.Append(LIBS=["z", "iconv", "m", "pthread"])
 elif "android" in platform:
     if arch == "arm64":
@@ -95,11 +86,11 @@ elif "android" in platform:
 
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
-        CPPFLAGS=[
-            "-Iffmpeg/bin",
-            "-Iffmpeg/bin/include"],
+        CPPFLAGS=["-Iffmpeg/bin", "-Iffmpeg/bin/include"],
         LIBPATH=["ffmpeg/bin/lib"],
-        LIBS=LIBS_COMMON)
+        LIBS=LIBS_COMMON,
+    )
+    env.Append(LIBS=["vpx", "aom"])
     env.Append(LIBS=["z", "m", "log"])
 elif "web" in platform:
     web_bin_path = libpath
@@ -116,8 +107,9 @@ elif "web" in platform:
             "-sSHARED_MEMORY=1",
             "-sALLOW_MEMORY_GROWTH=1",
             "-sSIDE_MODULE=1",
-        ]
+        ],
     )
+    env.Append(LIBS=["vpx", "aom"])
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 
