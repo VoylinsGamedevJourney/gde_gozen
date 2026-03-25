@@ -292,7 +292,7 @@ func _process(delta: float) -> void:
 			return
 
 		if _time_elapsed >= _frame_time:
-			var frames = _time_elapsed / _frame_time
+			var frames: int = roundi(_time_elapsed / _frame_time)
 			_skips = int(frames)
 
 		_time_elapsed -= _skips * _frame_time
@@ -312,7 +312,7 @@ func _process(delta: float) -> void:
 				_sync_audio_video()
 			if _skips > _frame_rate:
 				seek_frame(current_frame)
-			else:	
+			else:
 				while _skips != 1:
 					next_frame(true)
 					_skips -= 1
