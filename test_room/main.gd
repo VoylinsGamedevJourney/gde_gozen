@@ -22,8 +22,8 @@ const VIDEO_EXTENSIONS: PackedStringArray = [
 @onready var loading_screen: Panel = $LoadingPanel
 
 var icons: Array[Texture2D] = [
-	preload("res://icons/play.png"), # PLAY
-	preload("res://icons/pause.png") # PAUSE
+	preload("res://icons/play.svg"), # PLAY
+	preload("res://icons/pause.svg") # PAUSE
 ]
 
 var is_dragging: bool = false
@@ -34,7 +34,7 @@ var was_playing: bool = false
 func _ready() -> void:
 	if OS.get_name() == "Android":
 		clear_folder("user://temp", true)
-	
+
 	if OS.get_cmdline_args().size() > 1:
 		open_video(OS.get_cmdline_args()[1])
 	if OS.get_name().to_lower() == "android" and OS.request_permissions():
@@ -156,7 +156,7 @@ func _file_dialog_callback(_status: bool, selected_uris: PackedStringArray, _sel
 
 	if not file_read:
 		return
-	
+
 	# android files starting with "content://" should be copied to a temp folder
 	# in order to get absolute paths that Gozen GDE could read
 	if DirAccess.dir_exists_absolute("user://temp"):
@@ -176,7 +176,7 @@ func _file_dialog_callback(_status: bool, selected_uris: PackedStringArray, _sel
 			return
 		file_write.close()
 	file_read.close()
-	
+
 	open_video(ProjectSettings.globalize_path(temp_path))
 	return
 
@@ -194,7 +194,7 @@ func clear_folder(path: String, delete_folder : bool) -> void:
 	var dir : DirAccess = DirAccess.open(path)
 	if not dir:
 		return
-	
+
 	var error : Error = dir.list_dir_begin()
 	if error:
 		printerr("Problems while reading %s folder" % path)
@@ -211,10 +211,10 @@ func clear_folder(path: String, delete_folder : bool) -> void:
 					printerr("Problem while removing %s file" % full_path)
 					continue
 		item = dir.get_next()
-	
+
 	if not delete_folder:
 		return
-	
+
 	var removeFolderError : Error = DirAccess.remove_absolute(path)
 	if removeFolderError:
 		printerr("Problem while removing %s folder" % path)

@@ -1,8 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://b1e501df8faw"]
+[gd_scene format=3 uid="uid://b1e501df8faw"]
 
 [ext_resource type="Script" uid="uid://bew656lm826vq" path="res://main.gd" id="1_kus11"]
 [ext_resource type="Script" uid="uid://ivx7m2bfysip" path="res://addons/gde_gozen/video_playback.gd" id="2_p7wtn"]
-[ext_resource type="Texture2D" uid="uid://cnmcxoy57tr0" path="res://icons/play.png" id="3_vr00e"]
+[ext_resource type="Texture2D" uid="uid://f7jht7l5yrys" path="res://icons/play.svg" id="3_vr00e"]
 
 [sub_resource type="ImageTexture" id="ImageTexture_w3bnw"]
 
@@ -23,7 +23,7 @@ content_margin_bottom = 7.0
 bg_color = Color(0.230469, 0.230469, 0.230469, 0.556863)
 corner_radius_bottom_right = 14
 
-[node name="Main" type="Control"]
+[node name="Main" type="Control" unique_id=641570160]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,7 +32,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_kus11")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1354088209]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -41,41 +41,41 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0
 
-[node name="FramePanel" type="PanelContainer" parent="VBox"]
+[node name="FramePanel" type="PanelContainer" parent="VBox" unique_id=676575335]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="FrameImage" type="TextureRect" parent="VBox/FramePanel"]
+[node name="FrameImage" type="TextureRect" parent="VBox/FramePanel" unique_id=1598304805]
 unique_name_in_owner = true
 layout_mode = 2
 texture = SubResource("ImageTexture_w3bnw")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="VideoPlayback" type="Control" parent="VBox/FramePanel"]
+[node name="VideoPlayback" type="Control" parent="VBox/FramePanel" unique_id=298534305]
 unique_name_in_owner = true
 layout_mode = 2
 script = ExtResource("2_p7wtn")
 debug = true
 
-[node name="BottomPanel" type="PanelContainer" parent="VBox"]
+[node name="BottomPanel" type="PanelContainer" parent="VBox" unique_id=1298077579]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fiepf")
 
-[node name="VBox" type="VBoxContainer" parent="VBox/BottomPanel"]
+[node name="VBox" type="VBoxContainer" parent="VBox/BottomPanel" unique_id=1373913743]
 layout_mode = 2
 
-[node name="Timeline" type="HSlider" parent="VBox/BottomPanel/VBox"]
+[node name="Timeline" type="HSlider" parent="VBox/BottomPanel/VBox" unique_id=1405249525]
 unique_name_in_owner = true
 layout_mode = 2
 ticks_on_borders = true
 
-[node name="ButtonsHBox" type="HBoxContainer" parent="VBox/BottomPanel/VBox"]
+[node name="ButtonsHBox" type="HBoxContainer" parent="VBox/BottomPanel/VBox" unique_id=1775850333]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 alignment = 1
 
-[node name="PlayPauseButton" type="TextureButton" parent="VBox/BottomPanel/VBox/ButtonsHBox"]
+[node name="PlayPauseButton" type="TextureButton" parent="VBox/BottomPanel/VBox/ButtonsHBox" unique_id=982922770]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(30, 30)
 layout_mode = 2
@@ -83,7 +83,7 @@ texture_normal = ExtResource("3_vr00e")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="LoadingPanel" type="Panel" parent="."]
+[node name="LoadingPanel" type="Panel" parent="." unique_id=1751903679]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -91,7 +91,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TitleLabel" type="Label" parent="LoadingPanel"]
+[node name="TitleLabel" type="Label" parent="LoadingPanel" unique_id=1138688342]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -107,7 +107,7 @@ grow_vertical = 2
 text = "Video is loading, a moment please ..."
 label_settings = SubResource("LabelSettings_30qi2")
 
-[node name="InfoLabel" type="Label" parent="LoadingPanel"]
+[node name="InfoLabel" type="Label" parent="LoadingPanel" unique_id=1309820351]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -120,7 +120,7 @@ text = "If this takes too long, the video might have failed to load (check the l
 label_settings = SubResource("LabelSettings_h2yge")
 horizontal_alignment = 1
 
-[node name="Debug" type="Control" parent="."]
+[node name="Debug" type="Control" parent="." unique_id=1001476627]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -129,81 +129,81 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="DebugPanel" type="PanelContainer" parent="Debug"]
+[node name="DebugPanel" type="PanelContainer" parent="Debug" unique_id=438499633]
 layout_mode = 0
 offset_right = 181.0
 offset_bottom = 118.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ae1f1")
 
-[node name="DebugVBox" type="VBoxContainer" parent="Debug/DebugPanel"]
+[node name="DebugVBox" type="VBoxContainer" parent="Debug/DebugPanel" unique_id=1114971973]
 layout_mode = 2
 
-[node name="LoadVideoButton" type="Button" parent="Debug/DebugPanel/DebugVBox"]
+[node name="LoadVideoButton" type="Button" parent="Debug/DebugPanel/DebugVBox" unique_id=1049769801]
 layout_mode = 2
 text = "Load video ..."
 
-[node name="URLLineEdit" type="LineEdit" parent="Debug/DebugPanel/DebugVBox"]
+[node name="URLLineEdit" type="LineEdit" parent="Debug/DebugPanel/DebugVBox" unique_id=1610421909]
 layout_mode = 2
 placeholder_text = "Enter URL/path"
 
-[node name="DebugGrid" type="GridContainer" parent="Debug/DebugPanel/DebugVBox"]
+[node name="DebugGrid" type="GridContainer" parent="Debug/DebugPanel/DebugVBox" unique_id=1526242744]
 layout_mode = 2
 columns = 2
 
-[node name="EditorFPSLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="EditorFPSLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=646635355]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Editor FPS:"
 
-[node name="EditorFPSValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="EditorFPSValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=809543119]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0.0"
 horizontal_alignment = 2
 
-[node name="CurrentFrameLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="CurrentFrameLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=1357249801]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Current frame:"
 
-[node name="CurrentFrameValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="CurrentFrameValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=1374010351]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0"
 horizontal_alignment = 2
 
-[node name="MaxFrameLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="MaxFrameLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=869685812]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Total frames:"
 
-[node name="MaxFrameValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="MaxFrameValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=177639365]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0"
 horizontal_alignment = 2
 
-[node name="FPSLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="FPSLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=58588545]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "FPS:"
 
-[node name="FPSValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="FPSValue" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=556207695]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0.0"
 horizontal_alignment = 2
 
-[node name="SpeedLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="SpeedLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=460284594]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Playback speed:"
 
-[node name="SpeedSpinBox" type="SpinBox" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="SpeedSpinBox" type="SpinBox" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=775737148]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "This value can be set from 0.25 to 4"
@@ -214,12 +214,12 @@ value = 1.0
 alignment = 2
 update_on_text_changed = true
 
-[node name="AudioTrackLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="AudioTrackLabel" type="Label" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=632362181]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Audio track:"
 
-[node name="AudioTrackOption" type="OptionButton" parent="Debug/DebugPanel/DebugVBox/DebugGrid"]
+[node name="AudioTrackOption" type="OptionButton" parent="Debug/DebugPanel/DebugVBox/DebugGrid" unique_id=1706853498]
 unique_name_in_owner = true
 layout_mode = 2
 
