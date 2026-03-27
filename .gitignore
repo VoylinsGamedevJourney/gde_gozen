@@ -61,3 +61,4 @@ test_room/addons/gde_gozen/bin/macos*
 # C# Stuff
 .idea/
 .qodo/
+/libressl-3.9.2

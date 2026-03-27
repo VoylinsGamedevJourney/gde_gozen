@@ -34,10 +34,9 @@ if "linux" in platform:
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON,
     )
-    env.Append(LIBS=["vpx", "aom"])
 
-    if ARGUMENTS.get("add_https", "no") == "yes":
-        env.Append(LIBS=["gnutls", "nettle", "hogweed", "gmp"])
+    env.Append(LIBS=["tls", "ssl", "crypto", "vpx", "aom"])
+
     if arch != "arm64":
         env.Append(LIBS=["z"])
     env.Append(LIBS=["m", "pthread", "dl"])
@@ -90,7 +89,8 @@ elif "android" in platform:
         LIBPATH=["ffmpeg/bin/lib"],
         LIBS=LIBS_COMMON,
     )
-    env.Append(LIBS=["vpx", "aom"])
+
+    env.Append(LIBS=["tls", "ssl", "crypto", "vpx", "aom"])
     env.Append(LIBS=["z", "m", "log"])
 elif "web" in platform:
     web_bin_path = libpath
@@ -109,7 +109,7 @@ elif "web" in platform:
             "-sSIDE_MODULE=1",
         ],
     )
-    env.Append(LIBS=["vpx", "aom"])
+    env.Append(LIBS=["tls", "ssl", "crypto", "vpx", "aom"])
 else:
     print(f"Warning: Unsupported platform '{platform}' in SConstruct.")
 

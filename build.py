@@ -20,6 +20,8 @@ import platform as os_platform
 import subprocess
 import glob
 import shutil
+import urllib.request
+import tarfile
 
 
 THREADS: int = os.cpu_count() or 4
@@ -54,6 +56,9 @@ ENABLED_MODULES = [
     "--enable-libaom",
     "--enable-decoder=av1",
     "--enable-parser=av1",
+    # HTTPS support
+    "--enable-protocol=https",
+    "--enable-protocol=tls",
 ]
 
 DISABLED_MODULES = [
@@ -278,25 +283,92 @@ def compile_libaom(platform: str, arch: str) -> None:
     print("libaom compilation finished!")
 
 
-def compile_ffmpeg(platform: str, arch: str, add_https: bool = False) -> None:
+def compile_libressl(platform: str, arch: str) -> None:
+    libressl_version = "3.9.2"
+    libressl_dir = f"libressl-{libressl_version}"
+    tar_name = f"{libressl_dir}.tar.gz"
+
+    if not os.path.exists(libressl_dir):
+        print(f"Downloading LibreSSL v{libressl_version}...")
+        url = f"https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/{tar_name}"
+        try:
+            urllib.request.urlretrieve(url, tar_name)
+        except Exception as e:
+            print(f"Error downloading LibreSSL: {e}")
+            sys.exit(1)
+
+        print("Extracting LibreSSL...")
+        with tarfile.open(tar_name, "r:gz") as tar:
+            if hasattr(tarfile, "data_filter"):
+                tar.extractall(filter="data")
+            else:
+                tar.extractall()
+
+    print(f"Configuring libressl for {platform} ({arch}) ...")
+    prefix = os.path.abspath("./ffmpeg/bin")
+    build_dir = f"./{libressl_dir}/build"
+    os.makedirs(build_dir, exist_ok=True)
+
+    cmd = [
+        "cmake",
+        "..",
+        f"-DCMAKE_INSTALL_PREFIX={prefix}",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DLIBRESSL_APPS=OFF",
+        "-DLIBRESSL_TESTS=OFF",
+        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+    ]
+
+    if platform == OS_LINUX:
+        if arch == ARCH_ARM64:
+            cmd += [
+                "-DCMAKE_SYSTEM_NAME=Linux",
+                "-DCMAKE_SYSTEM_PROCESSOR=aarch64",
+                "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc",
+                "-DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++",
+            ]
+    elif platform == OS_ANDROID:
+        ndk = os.getenv("ANDROID_NDK_ROOT") or os.getenv("ANDROID_NDK")
+        abi = "arm64-v8a" if arch == ARCH_ARM64 else "armeabi-v7a"
+        cmd += [
+            f"-DCMAKE_TOOLCHAIN_FILE={ndk}/build/cmake/android.toolchain.cmake",
+            f"-DANDROID_ABI={abi}",
+            f"-DANDROID_PLATFORM=android-{ANDROID_API_LEVEL}",
+        ]
+    elif platform == OS_WEB:
+        cmd.insert(0, "emcmake")
+
+    if subprocess.run(cmd, cwd=build_dir).returncode != 0:
+        print("Error: libressl cmake configure failed!")
+        sys.exit(1)
+    elif subprocess.run(["make", f"-j{THREADS}"], cwd=build_dir).returncode != 0:
+        print("Error: libressl compile failed!")
+        sys.exit(1)
+    elif subprocess.run(["make", "install"], cwd=build_dir).returncode != 0:
+        print("Error: libressl install failed!")
+        sys.exit(1)
+    print("libressl compilation finished!")
+
+
+def compile_ffmpeg(platform: str, arch: str) -> None:
     if os.path.exists("./ffmpeg/ffbuild/config.mak"):
         print("Cleaning FFmpeg...")
         subprocess.run(["make", "distclean"], cwd="./ffmpeg/")
         subprocess.run(["rm", "-rf", "bin"], cwd="./ffmpeg/")
 
     if platform == OS_LINUX:
-        compile_ffmpeg_linux(arch, add_https)
+        compile_ffmpeg_linux(arch)
     elif platform == OS_WINDOWS:
-        compile_ffmpeg_windows(arch, add_https)
+        compile_ffmpeg_windows(arch)
     elif platform == OS_MACOS:
-        compile_ffmpeg_macos(arch, add_https)
+        compile_ffmpeg_macos(arch)
     elif platform == OS_ANDROID:
-        compile_ffmpeg_android(arch, add_https)
+        compile_ffmpeg_android(arch)
     elif platform == OS_WEB:
         compile_ffmpeg_web(arch)
 
 
-def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
+def compile_ffmpeg_linux(arch: str) -> None:
     print("Configuring FFmpeg for Linux ...")
     prefix_bin = os.path.abspath("./ffmpeg/bin")
     os.environ["PKG_CONFIG_PATH"] = (
@@ -304,6 +376,7 @@ def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
     )
     compile_libvpx(OS_LINUX, arch)
     compile_libaom(OS_LINUX, arch)
+    compile_libressl(OS_LINUX, arch)
     cmd = [
         "./configure",
         "--prefix=./bin",
@@ -318,6 +391,7 @@ def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
         "--pkg-config-flags=--static",
         "--extra-cflags=-fPIC",
         "--enable-libvpx",
+        "--enable-libtls",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -328,8 +402,6 @@ def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
             "--cross-prefix=aarch64-linux-gnu-",
             "--cc=aarch64-linux-gnu-gcc",
         ]
-    if add_https:
-        cmd += ["--enable-protocol=https", "--enable-protocol=tls", "--enable-gnutls"]
 
     if subprocess.run(cmd, cwd="./ffmpeg/").returncode != 0:
         print("Error: FFmpeg failed!")
@@ -349,8 +421,6 @@ def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
         "Copying static external libraries to ffmpeg/bin/lib to force static linking..."
     )
     libs_to_static = ["vpx", "aom"]
-    if add_https:
-        libs_to_static.append("gnutls")
 
     for lib in libs_to_static:
         try:
@@ -378,7 +448,7 @@ def compile_ffmpeg_linux(arch: str, add_https: bool = False) -> None:
     print("Compiling FFmpeg for Linux finished!")
 
 
-def compile_ffmpeg_windows(arch: str, add_https: bool = False) -> None:
+def compile_ffmpeg_windows(arch: str) -> None:
     print("Configuring FFmpeg for Windows ...")
     prefix_bin = os.path.abspath("./ffmpeg/bin")
     os.environ["PKG_CONFIG_LIBDIR"] = (
@@ -408,12 +478,10 @@ def compile_ffmpeg_windows(arch: str, add_https: bool = False) -> None:
         "--extra-ldflags=-static",
         "--extra-cflags=-fPIC",
         "--enable-libvpx",
+        "--enable-schannel",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
-
-    if add_https:
-        cmd += ["--enable-schannel", "--enable-protocol=https", "--enable-protocol=tls"]
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -430,7 +498,7 @@ def compile_ffmpeg_windows(arch: str, add_https: bool = False) -> None:
     print("Compiling FFmpeg for Windows finished!")
 
 
-def compile_ffmpeg_macos(arch: str, add_https: bool = False) -> None:
+def compile_ffmpeg_macos(arch: str) -> None:
     print("Configuring FFmpeg for MacOS ...")
     prefix_bin = os.path.abspath("./ffmpeg/bin")
     os.environ["PKG_CONFIG_PATH"] = (
@@ -453,16 +521,10 @@ def compile_ffmpeg_macos(arch: str, add_https: bool = False) -> None:
         "--extra-cflags=-fPIC -mmacosx-version-min=10.13",
         "--disable-lzma",
         "--enable-libvpx",
+        "--enable-securetransport",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
-
-    if add_https:
-        cmd += [
-            "--enable-securetransport",
-            "--enable-protocol=https",
-            "--enable-protocol=tls",
-        ]
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
@@ -509,7 +571,7 @@ def compile_ffmpeg_macos(arch: str, add_https: bool = False) -> None:
     print("Compiling FFmpeg for MacOS finished!")
 
 
-def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
+def compile_ffmpeg_android(arch: str) -> None:
     print("Configuring FFmpeg for Android ...")
     ndk = os.getenv("ANDROID_NDK_ROOT")
 
@@ -550,7 +612,7 @@ def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
 
     compile_libvpx(OS_ANDROID, arch)
     compile_libaom(OS_ANDROID, arch)
-
+    compile_libressl(OS_ANDROID, arch)
     cmd = [
         "./configure",
         "--prefix=./bin",
@@ -584,6 +646,7 @@ def compile_ffmpeg_android(arch: str, add_https: bool = False) -> None:
         "--enable-parser=opus",
         "--enable-parser=vorbis",
         "--enable-libvpx",
+        "--enable-libtls",
     ]
     cmd += ENABLED_MODULES
     cmd += DISABLED_MODULES
@@ -625,6 +688,7 @@ def compile_ffmpeg_web(arch: str) -> None:
 
     compile_libvpx(OS_WEB, arch)
     compile_libaom(OS_WEB, arch)
+    compile_libressl(OS_WEB, arch)
 
     print("Configuring FFmpeg for Web ...")
 
@@ -684,6 +748,7 @@ def compile_ffmpeg_web(arch: str) -> None:
         "--enable-protocol=file,http",
         "--enable-libvpx",
         "--enable-libaom",
+        "--enable-libtls",
     ]
     cmd += DISABLED_MODULES
 
@@ -767,7 +832,6 @@ def main():
     title_arch: str = "Choose architecture"
     platform: str = OS_LINUX
     arch: str = ARCH_X86_64
-    https_support: bool = False
 
     match _print_options(
         "Select platform", [OS_LINUX, OS_WINDOWS, OS_MACOS, OS_ANDROID, OS_WEB]
@@ -803,15 +867,7 @@ def main():
         clean_scons = True
 
     if _print_options("(Re)compile ffmpeg?", ["yes", "no"]) == 1:
-        if platform in [OS_MACOS, OS_WINDOWS]:
-            https_support = (
-                _print_options("Add https support? (native)", ["no", "yes"]) == 2
-            )
-        elif platform == OS_LINUX:
-            https_support = (
-                _print_options("Add https support? (gnutls)", ["no", "yes"]) == 2
-            )
-        compile_ffmpeg(platform, arch, https_support)
+        compile_ffmpeg(platform, arch)
 
     # Godot requires arm32 instead of armv7a.
     if arch == ARCH_ARMV7A:
@@ -824,7 +880,6 @@ def main():
         f"target=template_{target}",
         f"platform={platform}",
         f"arch={arch}",
-        f"add_https={'yes' if https_support else 'no'}",
     ]
 
     if platform == OS_ANDROID:
@@ -842,7 +897,6 @@ def main():
             f"target=template_{target}",
             f"platform={platform}",
             f"arch={arch}",
-            f"add_https={'yes' if https_support else 'no'}",
         ]
         subprocess.run(clean_cmd, cwd="./", env=env)
 
