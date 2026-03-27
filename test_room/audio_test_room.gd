@@ -8,7 +8,7 @@ func _ready() -> void:
 	if get_window().files_dropped.connect(_on_audio_drop):
 		printerr("Couldn't connect files_dropped!")
 
-	
+
 func _on_audio_drop(a_files: PackedStringArray) -> void:
 	print("loading audio ...")
 	var stream: AudioStreamFFmpeg = AudioStreamFFmpeg.new()
@@ -19,3 +19,8 @@ func _on_audio_drop(a_files: PackedStringArray) -> void:
 	player.stream = stream
 	print("Audio loaded")
 	player.play()
+
+
+func _on_line_edit_text_submitted(new_text: String) -> void:
+	_on_audio_drop([new_text])
+

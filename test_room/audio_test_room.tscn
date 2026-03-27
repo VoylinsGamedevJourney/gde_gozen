@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://ds3xtdcbgtvw5"]
+[gd_scene format=3 uid="uid://ds3xtdcbgtvw5"]
 
 [ext_resource type="Script" uid="uid://cpoyi8qd1b60i" path="res://audio_test_room.gd" id="1_dqjus"]
 
-[node name="AudioTestRoom" type="Control"]
+[node name="AudioTestRoom" type="Control" unique_id=930069780]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,5 +11,13 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dqjus")
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=664211432]
 autoplay = true
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=688797350]
+layout_mode = 0
+offset_right = 588.0
+offset_bottom = 46.0
+placeholder_text = "Type url + enter"
+
+[connection signal="text_submitted" from="LineEdit" to="." method="_on_line_edit_text_submitted"]
