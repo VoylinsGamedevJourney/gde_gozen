@@ -107,15 +107,7 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
-	# Making certain no remaining tasks are running in separate threads.
-	if _video_thread != -1:
-		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
-		if error != OK:
-			printerr("Something went wrong waiting for task completion! %s" % error)
-		_video_thread = -1
-	if video != null:
-		close()
-
+	close()
 	AudioServer.remove_bus(AudioServer.get_bus_index(audio_player.bus))
 
 
@@ -277,6 +269,13 @@ func next_frame(skip: bool = false) -> void:
 
 
 func close() -> void:
+	# Making certain no tasks are still running in separate threads before closing.
+	if _video_thread != -1:
+		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
+		if error != OK:
+			printerr("Something went wrong waiting for task completion! %s" % error)
+		_video_thread = -1
+
 	if video != null:
 		if is_playing:
 			pause()
