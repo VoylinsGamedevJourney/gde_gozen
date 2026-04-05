@@ -31,7 +31,7 @@ if "linux" in platform:
         LINKFLAGS=["-static-libstdc++"],
         CCFLAGS=[f"-march={march_flags[arch]}"],
         CPPFLAGS=["-Iffmpeg/bin", "-Iffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/lib"],
+        LIBPATH=["ffmpeg/bin/lib", "ffmpeg/bin/lib64"],
         LIBS=LIBS_COMMON,
     )
 
@@ -45,7 +45,7 @@ elif "windows" in platform:
     env.Append(LIBS=["vpx", "aom"])
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/lib"],
+        LIBPATH=["ffmpeg/bin/lib", "ffmpeg/bin/lib64"],
         LIBS=["ws2_32", "bcrypt", "secur32", "shlwapi", "mfuuid", "strmiids"],
     )
 elif "macos" in platform:
@@ -57,7 +57,12 @@ elif "macos" in platform:
 
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/lib", "/usr/local/lib", "/opt/homebrew/lib"],
+        LIBPATH=[
+            "ffmpeg/bin/lib",
+            "ffmpeg/bin/lib64",
+            "/usr/local/lib",
+            "/opt/homebrew/lib",
+        ],
         LIBS=LIBS_COMMON,
         LINKFLAGS=[  # macOS-specific linking flags
             "-stdlib=libc++",
@@ -86,7 +91,7 @@ elif "android" in platform:
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
         CPPFLAGS=["-Iffmpeg/bin", "-Iffmpeg/bin/include"],
-        LIBPATH=["ffmpeg/bin/lib"],
+        LIBPATH=["ffmpeg/bin/lib", "ffmpeg/bin/lib64"],
         LIBS=LIBS_COMMON,
     )
 

@@ -11,18 +11,26 @@ def check_required_programs_wsl():
     l_required_programs = {
         "gcc": "build-essential",
         "make": "build-essential",
+        "cmake": "cmake",
         "pkg-config": "pkg-config",
         "python3": "python3",
         "scons": "scons",
         "mingw-w64": "mingw-w64",
         "git": "git",
-        "yasm": "yasm"
+        "yasm": "yasm",
     }
 
     for l_program, l_package in l_required_programs.items():
         try:
-            if subprocess.run(["wsl", "which", l_program], capture_output=True,
-                              text=True, shell=True).returncode != 0:
+            if (
+                subprocess.run(
+                    ["wsl", "which", l_program],
+                    capture_output=True,
+                    text=True,
+                    shell=True,
+                ).returncode
+                != 0
+            ):
                 l_missing_programs.append(l_package)
         except subprocess.SubprocessError as l_error:
             print(f"Error checking for {l_program}: {l_error}")
@@ -37,13 +45,19 @@ def install_wsl_required_programs():
 
     try:
         subprocess.run("wsl sudo apt-get update", shell=True, check=True, cwd="./")
-        subprocess.run("wsl sudo apt-get install -y build-essential pkg-config python3 scons mingw-w64 git", shell=True, cwd="./")
-        print("Successfully isntalled the required WSL programs!")
+        subprocess.run(
+            "wsl sudo apt-get install -y build-essential cmake pkg-config python3 scons mingw-w64 git yasm",
+            shell=True,
+            cwd="./",
+        )
+        print("Successfully installed the required WSL programs!")
     except subprocess.CalledProcessError:
         print("Error installing programs!")
         print("Please run the following commands in WSL manually:")
         print("\tsudo apt-get update")
-        print("\tsudo apt-get install build-essential pkg-config python3 scons mingw-w64 git")
+        print(
+            "\tsudo apt-get install build-essential cmake pkg-config python3 scons mingw-w64 git yasm"
+        )
         input("Press Enter to exit...")
         sys.exit(1)
 
@@ -59,17 +73,25 @@ def main():
     # else provide instructions to the user.
     wsl_found = True
     try:
-        wsl_found = subprocess.run("wsl --status", capture_output=True,
-                                   text=True, shell=True).returncode == 0
+        wsl_found = (
+            subprocess.run(
+                "wsl --status", capture_output=True, text=True, shell=True
+            ).returncode
+            == 0
+        )
     except FileNotFoundError:
         wsl_found = False
 
     if not wsl_found:
-        print("WSL (Windows Subsystem for Linux) is not installed!\nSteps to install WSL:")
+        print(
+            "WSL (Windows Subsystem for Linux) is not installed!\nSteps to install WSL:"
+        )
         print("\t1. Open PowerShell as an Administrator;")
         print("\t2. Run the command: wsl --install")
         print("\t3. Restart your computer;")
-        print("\t4. Complete the Ubuntu setup when it launches automatically after restart;")
+        print(
+            "\t4. Complete the Ubuntu setup when it launches automatically after restart;"
+        )
         input("After installation, run this script again.\nPress Enter to exit...")
         sys.exit(1)
 

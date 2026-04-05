@@ -7,7 +7,7 @@ For the people who need extra help, feel free to watch [this video](https://yout
 ## Compiling
 ### Prerequisites
 The build process needs to be done through the terminal.
-1. Install **python 3**, **scons**, and **git**;
+1. Install **python 3**, **scons**, **git**, and **cmake**;
 2. If you want the C# version, ensure you have the **.NET SDK** installed;
 3. If building on Windows you will need **WSL** installed and clone the repo through WSL directly;
 4. Initialize the submodules of the git repo with `git submodule update --init --recursive`. Updating the submodules can be done with `git submodule update --recursive --remote`;
