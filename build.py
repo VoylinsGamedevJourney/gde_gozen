@@ -28,6 +28,7 @@ THREADS: int = os.cpu_count() or 4
 PATH_BUILD_WINDOWS: str = "build_on_windows.py"
 
 ARCH_X86_64: str = "x86_64"
+ARCH_X86_32: str = "x86_32"
 ARCH_ARM64: str = "arm64"  # armv8
 ARCH_ARMV7A: str = "armv7a"
 ARCH_WASM32: str = "wasm32"
@@ -159,7 +160,8 @@ def compile_libvpx(platform: str, arch: str) -> None:
             env["CROSS"] = "aarch64-linux-gnu-"
     elif platform == OS_WINDOWS:
         target = "generic-gnu"
-        env["CROSS"] = f"{arch}-w64-mingw32-"
+        toolchain = "i686" if arch == ARCH_X86_32 else "x86_64"
+        env["CROSS"] = f"{toolchain}-w64-mingw32-"
     elif platform == OS_MACOS:
         target = "arm64-darwin20-gcc" if arch == ARCH_ARM64 else "x86_64-darwin20-gcc"
     elif platform == OS_ANDROID:
@@ -223,6 +225,14 @@ def compile_libaom(platform: str, arch: str) -> None:
     print(f"Configuring libaom for {platform} ({arch}) ...")
     prefix = os.path.abspath("./ffmpeg/bin")
     build_dir = "./libaom/build"
+
+    cache_file = os.path.join(build_dir, "CMakeCache.txt")
+    cmake_files_dir = os.path.join(build_dir, "CMakeFiles")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    if os.path.exists(cmake_files_dir):
+        shutil.rmtree(cmake_files_dir)
+
     os.makedirs(build_dir, exist_ok=True)
 
     cmd = [
@@ -246,8 +256,11 @@ def compile_libaom(platform: str, arch: str) -> None:
                 "-DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++",
             ]
     elif platform == OS_WINDOWS:
+        aom_toolchain = (
+            "x86-mingw-gcc.cmake" if arch == ARCH_X86_32 else "x86_64-mingw-gcc.cmake"
+        )
         cmd += [
-            f"-DCMAKE_TOOLCHAIN_FILE={os.path.abspath('./libaom/build/cmake/toolchains/x86_64-mingw-gcc.cmake')}",
+            f"-DCMAKE_TOOLCHAIN_FILE={os.path.abspath(f'./libaom/build/cmake/toolchains/{aom_toolchain}')}",
             "-DCMAKE_SYSTEM_NAME=Windows",
         ]
     elif platform == OS_MACOS:
@@ -307,6 +320,14 @@ def compile_libressl(platform: str, arch: str) -> None:
     print(f"Configuring libressl for {platform} ({arch}) ...")
     prefix = os.path.abspath("./ffmpeg/bin")
     build_dir = f"./{libressl_dir}/build"
+
+    cache_file = os.path.join(build_dir, "CMakeCache.txt")
+    cmake_files_dir = os.path.join(build_dir, "CMakeFiles")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    if os.path.exists(cmake_files_dir):
+        shutil.rmtree(cmake_files_dir)
+
     os.makedirs(build_dir, exist_ok=True)
 
     cmd = [
@@ -449,13 +470,15 @@ def compile_ffmpeg_linux(arch: str) -> None:
 
 
 def compile_ffmpeg_windows(arch: str) -> None:
-    print("Configuring FFmpeg for Windows ...")
+    print(f"Configuring FFmpeg for Windows ({arch}) ...")
+    toolchain = "i686" if arch == ARCH_X86_32 else "x86_64"
+    ffmpeg_arch = "x86" if arch == ARCH_X86_32 else "x86_64"
     prefix_bin = os.path.abspath("./ffmpeg/bin")
     os.environ["PKG_CONFIG_LIBDIR"] = (
-        f"{prefix_bin}/lib/pkgconfig:{prefix_bin}/lib64/pkgconfig:/usr/{arch}-w64-mingw32/lib/pkgconfig"
+        f"{prefix_bin}/lib/pkgconfig:{prefix_bin}/lib64/pkgconfig:/usr/{toolchain}-w64-mingw32/lib/pkgconfig"
     )
     os.environ["PKG_CONFIG_PATH"] = (
-        f"{prefix_bin}/lib/pkgconfig:{prefix_bin}/lib64/pkgconfig:/usr/{arch}-w64-mingw32/lib/pkgconfig"
+        f"{prefix_bin}/lib/pkgconfig:{prefix_bin}/lib64/pkgconfig:/usr/{toolchain}-w64-mingw32/lib/pkgconfig"
     )
     compile_libvpx(OS_WINDOWS, arch)
     compile_libaom(OS_WINDOWS, arch)
@@ -468,10 +491,10 @@ def compile_ffmpeg_windows(arch: str) -> None:
         "--enable-static",
         "--enable-pic",
         "--disable-asm",
-        f"--arch={arch}",
+        f"--arch={ffmpeg_arch}",
         "--target-os=mingw32",
         "--enable-cross-compile",
-        f"--cross-prefix={arch}-w64-mingw32-",
+        f"--cross-prefix={toolchain}-w64-mingw32-",
         "--quiet",
         "--pkg-config-flags=--static",
         "--extra-libs=-lpthread",
@@ -838,6 +861,10 @@ def main():
     ):
         case 2:
             platform = OS_WINDOWS
+            if _print_options(title_arch, [ARCH_X86_64, ARCH_X86_32]) == 2:
+                arch = ARCH_X86_32
+            else:
+                arch = ARCH_X86_64
         case 3:
             platform = OS_MACOS
             if _print_options(title_arch, [ARCH_ARM64, ARCH_X86_64]) == 2:
