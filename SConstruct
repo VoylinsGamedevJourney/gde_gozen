@@ -34,7 +34,6 @@ if "linux" in platform:
         LIBPATH=["ffmpeg/bin/lib", "ffmpeg/bin/lib64"],
         LIBS=LIBS_COMMON,
     )
-
     env.Append(LIBS=["tls", "ssl", "crypto", "vpx", "aom"])
 
     if arch != "arm64":
@@ -42,6 +41,7 @@ if "linux" in platform:
     env.Append(LIBS=["m", "pthread", "dl"])
 elif "windows" in platform:
     env.Append(LINKFLAGS=["-static"], LIBS=LIBS_COMMON)
+
     env.Append(LIBS=["vpx", "aom"])
     env.Append(
         CPPPATH=["ffmpeg/bin/include"],

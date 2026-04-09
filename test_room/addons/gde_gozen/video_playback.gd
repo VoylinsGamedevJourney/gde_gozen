@@ -275,12 +275,12 @@ func seek_frame(new_frame_nr: int) -> void:
 
 
 ## Seeking frames can be slow, so when you just need to go a couple of frames ahead, you can use next_frame and set skip to false for the last frame.
-func next_frame(skip: bool = false) -> void:
-	if video.next_frame(skip) and !skip:
+func next_frame(skip: bool = false) -> bool:
+	var success: bool = video.next_frame(skip)
+	if success and !skip:
 		_set_frame_image()
 		next_frame_called.emit(current_frame)
-	elif !skip:
-		print("Something went wrong getting next frame!")
+	return success
 
 
 func close() -> void:
@@ -312,15 +312,10 @@ func _process(delta: float) -> void:
 		_time_elapsed -= _skips * _frame_time
 		current_frame += _skips
 
-		if current_frame >= _frame_count:
-			is_playing = !is_playing
-			if enable_audio and audio_player.stream != null:
-				audio_player.set_stream_paused(true)
+		var eof_reached: bool = false
 
-			video_ended.emit()
-			if loop:
-				seek_frame(0)
-				play()
+		if _frame_count > 0 and current_frame >= _frame_count:
+			eof_reached = true
 		else:
 			if enable_audio:
 				_sync_audio_video()
@@ -328,9 +323,21 @@ func _process(delta: float) -> void:
 				seek_frame(current_frame)
 			else:
 				while _skips != 1:
-					next_frame(true)
+					if not next_frame(true):
+						eof_reached = true
+						break
 					_skips -= 1
-				next_frame()
+				if not eof_reached and not next_frame():
+					eof_reached = true
+		if eof_reached:
+			is_playing = !is_playing
+			if enable_audio and audio_player.stream != null:
+				audio_player.set_stream_paused(true)
+				video_ended.emit()
+
+			if loop:
+				seek_frame(0)
+				play()
 	elif _video_thread != -1:
 		var error: int = WorkerThreadPool.wait_for_task_completion(_video_thread)
 		if error != OK:

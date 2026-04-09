@@ -60,6 +60,13 @@ ENABLED_MODULES = [
     # HTTPS support
     "--enable-protocol=https",
     "--enable-protocol=tls",
+    # Animated images support
+    "--enable-demuxer=gif",
+    "--enable-decoder=gif",
+    "--enable-demuxer=apng",
+    "--enable-decoder=apng",
+    "--enable-demuxer=image2",
+    "--enable-demuxer=image2pipe",
 ]
 
 DISABLED_MODULES = [
@@ -88,6 +95,9 @@ DISABLED_MODULES = [
     "--disable-ffplay",
     "--disable-ffmpeg",
     "--disable-hwaccels",
+    # FFmpeg 7.0 fixes
+    "--disable-libdrm",
+    "--disable-vulkan",
 ]
 
 
@@ -442,7 +452,6 @@ def compile_ffmpeg_linux(arch: str) -> None:
         "Copying static external libraries to ffmpeg/bin/lib to force static linking..."
     )
     libs_to_static = ["vpx", "aom"]
-
     for lib in libs_to_static:
         try:
             libdir = subprocess.check_output(
@@ -772,6 +781,13 @@ def compile_ffmpeg_web(arch: str) -> None:
         "--enable-libvpx",
         "--enable-libaom",
         "--enable-libtls",
+        # Animated images support
+        "--enable-demuxer=gif",
+        "--enable-decoder=gif",
+        "--enable-demuxer=apng",
+        "--enable-decoder=apng",
+        "--enable-demuxer=image2",
+        "--enable-demuxer=image2pipe",
     ]
     cmd += DISABLED_MODULES
 

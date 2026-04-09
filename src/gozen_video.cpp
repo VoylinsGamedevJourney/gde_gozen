@@ -172,12 +172,6 @@ int GoZenVideo::open(const String& video_path) {
 
 	avcodec_flush_buffers(av_codec_ctx.get());
 	bool duration_from_bitrate = av_format_ctx->duration_estimation_method == AVFMT_DURATION_FROM_BITRATE;
-
-	if (duration_from_bitrate) {
-		close();
-		return _log_err("Invalid video");
-	}
-
 	int response = 0;
 	int attempts = 0;
 
@@ -190,16 +184,19 @@ int GoZenVideo::open(const String& video_path) {
 		else if (response == AVERROR(EAGAIN) || response == AVERROR(EWOULDBLOCK)) {
 			if (attempts > 10) {
 				FFmpeg::print_av_error("Reached max attempts trying to get first frame!", response);
-				break;
+				close();
+				return _log_err("Failed to decode first frame (max attempts)");
 			}
 
 			attempts++;
 		} else if (response == AVERROR_EOF) {
 			FFmpeg::print_av_error("Reached EOF trying to get first frame!", response);
-			break;
+			close();
+			return _log_err("Failed to decode first frame (EOF)");
 		} else {
 			FFmpeg::print_av_error("Something went wrong getting first frame!", response);
-			break;
+			close();
+			return _log_err("Failed to decode first frame (Invalid Data)");
 		}
 	}
 
@@ -248,8 +245,8 @@ int GoZenVideo::open(const String& video_path) {
 
 	// - Make sure we have a valid framerate after all checks.
 	if (framerate <= 0) {
-		close();
-		return _log_err("Invalid framerate (could not be determined)");
+		_log("Framerate could not be determined, defaulting to 24 FPS");
+		framerate = 24.0; // Mainly for image formats.
 	}
 
 	// Setting variables.
@@ -257,46 +254,49 @@ int GoZenVideo::open(const String& video_path) {
 	stream_time_base_video = av_q2d(av_stream->time_base) * 1000.0 * 10000.0; // Converting timebase to ticks.
 
 	// Check for alpha layer.
-	has_alpha = (av_frame->format == AV_PIX_FMT_YUVA420P || av_frame->format == AV_PIX_FMT_YUVA444P ||
-				 av_frame->format == AV_PIX_FMT_ARGB || av_frame->format == AV_PIX_FMT_BGRA ||
-				 av_frame->format == AV_PIX_FMT_ABGR || av_frame->format == AV_PIX_FMT_RGBA);
+	const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get((AVPixelFormat)av_frame->format);
+	has_alpha = desc && (desc->flags & AV_PIX_FMT_FLAG_ALPHA);
+	if (av_frame->format == AV_PIX_FMT_PAL8) { // For Gif's.
+		has_alpha = true;
+	}
 
 	pixel_format = av_get_pix_fmt_name((AVPixelFormat)av_frame->format);
 	_log(String("Selected pixel format is: ") + pixel_format);
 
 	// Preparing the data images.
+	int uv_width = (actual_resolution.x + 1) / 2;
+	int uv_height = (actual_resolution.y + 1) / 2;
 	bool is_natively_supported = (av_frame->format == AV_PIX_FMT_YUV420P || av_frame->format == AV_PIX_FMT_YUVJ420P ||
 								  av_frame->format == AV_PIX_FMT_YUVA420P);
 
 	if (is_natively_supported) {
-		padding = av_frame->linesize[0] - resolution.x;
-		y_data = Image::create_empty(av_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
-		u_data = Image::create_empty(av_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
-		v_data = Image::create_empty(av_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
+		padding = av_frame->linesize[0] - actual_resolution.x;
+		y_data = Image::create_empty(actual_resolution.x, actual_resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(uv_width, uv_height, false, Image::FORMAT_R8);
+		v_data = Image::create_empty(uv_width, uv_height, false, Image::FORMAT_R8);
 
 		if (has_alpha)
-			a_data = Image::create_empty(av_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
+			a_data = Image::create_empty(actual_resolution.x, actual_resolution.y, false, Image::FORMAT_R8);
 	} else {
 		AVPixelFormat new_format = has_alpha ? AV_PIX_FMT_YUVA420P : AV_PIX_FMT_YUV420P;
 
 		using_sws = true;
 		sws_ctx = make_unique_ffmpeg<SwsContext, SwsCtxDeleter>(
-			sws_getContext(resolution.x, resolution.y, (AVPixelFormat)av_frame->format, resolution.x, resolution.y,
-						   new_format, sws_flag, NULL, NULL, NULL));
+			sws_getContext(actual_resolution.x, actual_resolution.y, (AVPixelFormat)av_frame->format,
+						   actual_resolution.x, actual_resolution.y, new_format, sws_flag, NULL, NULL, NULL));
 
 		// We will use av_hw_frame to convert the frame data to as we won't use it anyway without hw decoding.
 		av_sws_frame = make_unique_avframe();
 		sws_scale_frame(sws_ctx.get(), av_sws_frame.get(), av_frame.get());
 
-		// NOTE: It's possible that linesize is empty so we should switch to resolution.x and to resolution.x / 2.
-		// If that's the case, padding is automatically 0 due to how SWR works.
-		padding = av_sws_frame->linesize[0] - resolution.x;
-		y_data = Image::create_empty(av_sws_frame->linesize[0], resolution.y, false, Image::FORMAT_R8);
-		u_data = Image::create_empty(av_sws_frame->linesize[1], resolution.y / 2, false, Image::FORMAT_R8);
-		v_data = Image::create_empty(av_sws_frame->linesize[2], resolution.y / 2, false, Image::FORMAT_R8);
+		padding = av_sws_frame->linesize[0] - actual_resolution.x;
+		y_data = Image::create_empty(actual_resolution.x, actual_resolution.y, false, Image::FORMAT_R8);
+		u_data = Image::create_empty(uv_width, uv_height, false, Image::FORMAT_R8);
+		v_data = Image::create_empty(uv_width, uv_height, false, Image::FORMAT_R8);
 
-		if (has_alpha)
-			a_data = Image::create_empty(av_sws_frame->linesize[3], resolution.y, false, Image::FORMAT_R8);
+		if (has_alpha) {
+			a_data = Image::create_empty(actual_resolution.x, actual_resolution.y, false, Image::FORMAT_R8);
+		}
 
 		av_frame_unref(av_sws_frame.get());
 	}
@@ -304,8 +304,8 @@ int GoZenVideo::open(const String& video_path) {
 	duration = av_format_ctx->duration;
 	if (av_stream->duration == AV_NOPTS_VALUE || duration_from_bitrate) {
 		if (duration == AV_NOPTS_VALUE || duration_from_bitrate) {
-			close();
-			return _log_err("Invalid video duration");
+			_log("Invalid video duration, assuming continuous stream (Common for GIF/WebP)");
+			duration = 0; // Rely on EOF instead of frame_count (for images).
 		} else {
 			AVRational temp_rational = AVRational{1, AV_TIME_BASE};
 			if (temp_rational.num != av_stream->time_base.num || temp_rational.num != av_stream->time_base.num)
@@ -539,24 +539,45 @@ void GoZenVideo::_copy_frame_data() {
 		return;
 	}
 
+	int uv_width = (actual_resolution.x + 1) / 2;
+	int uv_height = (actual_resolution.y + 1) / 2;
+
 	if (using_sws) {
 		sws_scale_frame(sws_ctx.get(), av_sws_frame.get(), av_frame.get());
 
-		memcpy(y_data->ptrw(), av_sws_frame->data[0], y_data->get_size().x * y_data->get_size().y);
-		memcpy(u_data->ptrw(), av_sws_frame->data[1], u_data->get_size().x * u_data->get_size().y);
-		memcpy(v_data->ptrw(), av_sws_frame->data[2], v_data->get_size().x * v_data->get_size().y);
+		for (int i = 0; i < actual_resolution.y; i++) {
+			memcpy(y_data->ptrw() + i * actual_resolution.x, av_sws_frame->data[0] + i * av_sws_frame->linesize[0],
+				   actual_resolution.x);
+		}
+		for (int i = 0; i < uv_height; i++) {
+			memcpy(u_data->ptrw() + i * uv_width, av_sws_frame->data[1] + i * av_sws_frame->linesize[1], uv_width);
+			memcpy(v_data->ptrw() + i * uv_width, av_sws_frame->data[2] + i * av_sws_frame->linesize[2], uv_width);
+		}
 
-		if (has_alpha)
-			memcpy(a_data->ptrw(), av_sws_frame->data[3], a_data->get_size().x * a_data->get_size().y);
+		if (has_alpha) {
+			for (int i = 0; i < actual_resolution.y; i++) {
+				memcpy(a_data->ptrw() + i * actual_resolution.x, av_sws_frame->data[3] + i * av_sws_frame->linesize[3],
+					   actual_resolution.x);
+			}
+		}
 
 		av_frame_unref(av_sws_frame.get());
 	} else {
-		memcpy(y_data->ptrw(), av_frame->data[0], y_data->get_size().x * y_data->get_size().y);
-		memcpy(u_data->ptrw(), av_frame->data[1], u_data->get_size().x * u_data->get_size().y);
-		memcpy(v_data->ptrw(), av_frame->data[2], v_data->get_size().x * v_data->get_size().y);
+		for (int i = 0; i < actual_resolution.y; i++) {
+			memcpy(y_data->ptrw() + i * actual_resolution.x, av_frame->data[0] + i * av_frame->linesize[0],
+				   actual_resolution.x);
+		}
+		for (int i = 0; i < uv_height; i++) {
+			memcpy(u_data->ptrw() + i * uv_width, av_frame->data[1] + i * av_frame->linesize[1], uv_width);
+			memcpy(v_data->ptrw() + i * uv_width, av_frame->data[2] + i * av_frame->linesize[2], uv_width);
+		}
 
-		if (has_alpha)
-			memcpy(a_data->ptrw(), av_frame->data[3], a_data->get_size().x * a_data->get_size().y);
+		if (has_alpha) {
+			for (int i = 0; i < actual_resolution.y; i++) {
+				memcpy(a_data->ptrw() + i * actual_resolution.x, av_frame->data[3] + i * av_frame->linesize[3],
+					   actual_resolution.x);
+			}
+		}
 	}
 }
 
