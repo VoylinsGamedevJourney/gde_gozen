@@ -366,14 +366,17 @@ void GoZenVideo::close() {
 	av_packet.reset();
 	av_frame.reset();
 	av_sws_frame.reset();
-	avio_ctx.reset();
-
-	file_buffer.clear();
-
 	sws_ctx.reset();
+
+	if (av_codec_ctx) {
+		avcodec_flush_buffers(av_codec_ctx.get());
+	}
 
 	av_codec_ctx.reset();
 	av_format_ctx.reset();
+
+	avio_ctx.reset();
+	file_buffer.clear();
 }
 
 int GoZenVideo::seek_frame(int frame_nr) {

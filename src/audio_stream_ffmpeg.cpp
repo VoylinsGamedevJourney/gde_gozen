@@ -5,18 +5,24 @@
 AudioStreamFFmpeg::~AudioStreamFFmpeg() {
 	_log("Closing video file at path: " + file_path);
 
-	if (!loaded)
+	if (!loaded) {
 		return;
+	}
 
 	memdelete(mutex);
 
 	loaded = false;
 	av_stream = nullptr;
-	file_buffer.clear();
-	avio_ctx.reset();
 	swr_ctx.reset();
+
+	if (av_codec_ctx) {
+		avcodec_flush_buffers(av_codec_ctx.get());
+	}
 	av_codec_ctx.reset();
 	av_format_ctx.reset();
+
+	avio_ctx.reset();
+	file_buffer.clear();
 }
 
 int AudioStreamFFmpeg::open(const String& path, int stream_index) {
@@ -194,12 +200,20 @@ Dictionary AudioStreamFFmpeg::get_icy_headers() {
 	if (!use_icy) {
 		return Dictionary();
 	}
+
+	mutex->lock();
+	if (!av_format_ctx) {
+		mutex->unlock();
+		return Dictionary();
+	}
+
 	char* metadata = nullptr;
 	av_opt_get(av_format_ctx.get(), "icy_metadata_headers", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&metadata);
 	if (metadata) {
 		if (String(metadata) == icy_headers_cache && !icy_headers_cache.is_empty()) {
 			av_freep(&metadata);
 			metadata = nullptr;
+			mutex->unlock();
 			return icy_headers_cache;
 		}
 
@@ -211,11 +225,15 @@ Dictionary AudioStreamFFmpeg::get_icy_headers() {
 				new_headers[key_value[0].replace("icy-", "stream_")] = key_value[1];
 			}
 		}
+
 		av_freep(&metadata);
 		metadata = nullptr;
 		icy_headers_cache = new_headers;
+		mutex->unlock();
 		return new_headers;
 	}
+
+	mutex->unlock();
 	return Dictionary();
 }
 
@@ -223,12 +241,20 @@ String AudioStreamFFmpeg::get_stream_title() {
 	if (!use_icy) {
 		return String();
 	}
+
+	mutex->lock();
+	if (!av_format_ctx) {
+		mutex->unlock();
+		return String();
+	}
+
 	char* metadata = nullptr;
 	av_opt_get(av_format_ctx.get(), "icy_metadata_packet", AV_OPT_SEARCH_CHILDREN, (uint8_t**)&metadata);
 	if (metadata) {
 		if (String(metadata) == icy_packet && !stream_title_cache.is_empty()) {
 			av_freep(&metadata);
 			metadata = nullptr;
+			mutex->unlock();
 			return stream_title_cache["StreamTitle"];
 		}
 		PackedStringArray parts = String(metadata).split(";");
@@ -241,13 +267,22 @@ String AudioStreamFFmpeg::get_stream_title() {
 		icy_packet = String(metadata);
 		av_freep(&metadata);
 		metadata = nullptr;
+		mutex->unlock();
 		return stream_title_cache["StreamTitle"];
 	}
+
+	mutex->unlock();
 	return String();
 }
 
 Dictionary AudioStreamFFmpeg::get_tags() {
 	Dictionary tags;
+	mutex->lock();
+	if (!av_format_ctx) {
+		mutex->unlock();
+		return tags;
+	}
+
 	AVDictionary* metadata = av_format_ctx.get()->metadata;
 	AVDictionaryEntry* tag = nullptr;
 
@@ -255,15 +290,17 @@ Dictionary AudioStreamFFmpeg::get_tags() {
 		tags[String(tag->key).replace("icy-", "stream_")] = String(tag->value);
 	}
 
+	mutex->unlock();
 	return tags;
 }
 
 Ref<AudioStreamPlayback> AudioStreamFFmpeg::_instantiate_playback() const {
-	if (!loaded)
+	if (!loaded) {
 		return nullptr;
+	}
 
 	auto playback = memnew(AudioStreamFFmpegPlayback);
-	playback->audio_stream_ffmpeg = this;
+	playback->audio_stream_ffmpeg = Ref<AudioStreamFFmpeg>(const_cast<AudioStreamFFmpeg*>(this));
 	playback->mix_rate = sample_rate;
 	playback->stereo = stereo;
 	playback->fill_buffer();

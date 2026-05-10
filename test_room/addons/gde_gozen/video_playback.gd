@@ -125,13 +125,13 @@ func set_video_path(new_path: String) -> void:
 	if _ignore_path_setter:
 		path = new_path
 		return
+
 	close()
 	if !is_node_ready():
 		await ready
 	if !get_tree().root.is_node_ready():
 		await get_tree().root.ready
 
-	audio_player.stream = null # Cleaning up the stream just in case.
 	if new_path == "" or new_path.ends_with(".tscn"):
 		return
 	elif new_path.split(":")[0] == "uid":
@@ -157,7 +157,6 @@ func update_video(video_instance: GoZenVideo, audio_stream: AudioStream = null) 
 	if !get_tree().root.is_node_ready():
 		await get_tree().root.ready
 
-	audio_player.stream = null # Cleaning up the stream just in case.
 	_ignore_path_setter = true
 	path = video_instance.get_path()
 	_ignore_path_setter = false
@@ -295,6 +294,10 @@ func close() -> void:
 		if is_playing:
 			pause()
 		video = null
+
+	if audio_player:
+		audio_player.stop()
+		audio_player.stream = null
 
 
 #------------------------------------------------ PLAYBACK HANDLING

@@ -41,7 +41,7 @@ class AudioStreamFFmpeg : public AudioStream {
 	Dictionary stream_title_cache;
 	String headers;
 
-	Mutex *mutex; // We need thread safety
+	Mutex* mutex; // We need thread safety
 
 	String file_path;
 
@@ -80,7 +80,7 @@ class AudioStreamFFmpegPlayback : public AudioStreamPlaybackResampled {
 	GDCLASS(AudioStreamFFmpegPlayback, AudioStreamPlaybackResampled);
 
   private:
-	const AudioStreamFFmpeg* audio_stream_ffmpeg = nullptr;
+	Ref<AudioStreamFFmpeg> audio_stream_ffmpeg;
 	UniqueAVFrame av_frame;
 	UniqueAVFrame av_decoded_frame;
 	UniqueAVPacket av_packet;
