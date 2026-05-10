@@ -13,6 +13,12 @@ public partial class AudioStreamFFmpeg : AudioStream
 		set => _backer.AsGodotObject().Set("use_icy", value);
 	}
 
+    public string Headers
+    {
+        get => _backer.AsGodotObject().Get("headers").AsString();
+        set => _backer.AsGodotObject().Set("headers", value);
+    }
+
     public AudioStreamFFmpeg()
     {
         _backer = ClassDB.Instantiate("AudioStreamFFmpeg");

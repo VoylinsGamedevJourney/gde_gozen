@@ -39,6 +39,7 @@ class AudioStreamFFmpeg : public AudioStream {
 
 	Dictionary icy_headers_cache;
 	Dictionary stream_title_cache;
+	String headers;
 
 	Mutex *mutex; // We need thread safety
 
@@ -67,6 +68,8 @@ class AudioStreamFFmpeg : public AudioStream {
 	Dictionary get_icy_headers();
 	String get_stream_title();
 	Dictionary get_tags();
+	void set_headers(const String& headers_str) { headers = headers_str; }
+	String get_headers() const { return headers; }
 
   protected:
 	static void _bind_methods();

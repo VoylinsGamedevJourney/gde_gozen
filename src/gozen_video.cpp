@@ -7,6 +7,11 @@ int GoZenVideo::open(const String& video_path) {
 
 	// Allocate video file context.
 	AVFormatContext* temp_format_ctx = nullptr;
+	AVDictionary* options = nullptr;
+
+	if (headers != "") {
+		av_dict_set(&options, "headers", headers.utf8().get_data(), 0);
+	}
 
 	path = video_path;
 	resolution = Vector2i(0, 0);
@@ -44,7 +49,7 @@ int GoZenVideo::open(const String& video_path) {
 			close();
 			return _log_err("Failed to open input from memory buffer");
 		}
-	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, NULL)) {
+	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, &options)) {
 		close();
 		return _log_err("Couldn't open video");
 	}
@@ -651,4 +656,8 @@ void GoZenVideo::_bind_methods() {
 	BIND_METHOD(enable_debug);
 	BIND_METHOD(disable_debug);
 	BIND_METHOD(get_debug_enabled);
+	BIND_METHOD_ARGS(set_headers, "headers_str");
+	BIND_METHOD(get_headers);
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "headers"), "set_headers", "get_headers");
 }
