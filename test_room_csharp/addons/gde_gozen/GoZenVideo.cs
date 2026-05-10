@@ -15,6 +15,12 @@ public partial class GoZenVideo : Resource
         _gdHndl = ClassDB.Instantiate("GoZenVideo");
     }
 
+    public String Headers
+    {
+        get => _gdHndl.AsGodotObject().Get("headers").AsString();
+        set => _gdHndl.AsGodotObject().Set("headers", value);
+    }
+
     public static Dictionary GetFileMeta(string file_path) =>
         ClassDB.ClassCallStatic("GoZenVideo", "get_file_meta", Variant.CreateFrom(file_path)).AsGodotDictionary();
 

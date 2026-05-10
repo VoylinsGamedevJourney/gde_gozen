@@ -71,6 +71,7 @@ class GoZenVideo : public Resource {
 	// Godot classes.
 	String path = "";
 	String pixel_format = "";
+	String headers = "";
 
 	Vector2i resolution = Vector2i(0, 0);
 	Vector2i actual_resolution = Vector2i(0, 0);
@@ -122,6 +123,8 @@ class GoZenVideo : public Resource {
 	float get_chapter_start(int chapter_index);
 	float get_chapter_end(int chapter_index);
 	Dictionary get_chapter_metadata(int chapter_index);
+	void set_headers(const String& headers_str) { headers = headers_str; }
+	String get_headers() const { return headers; }
 
 	inline void set_sws_flag_bilinear() { sws_flag = SWS_BILINEAR; }
 	inline void set_sws_flag_bicubic() { sws_flag = SWS_BICUBIC; }

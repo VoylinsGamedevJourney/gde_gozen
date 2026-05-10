@@ -29,6 +29,10 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 		av_dict_set(&options, "icy", "1", 0);
 	}
 
+	if (headers != "") {
+		av_dict_set(&options, "headers", headers.utf8().get_data(), 0);
+	}
+
 	if (path.begins_with("res://") || path.begins_with("user://")) {
 		temp_format_ctx = avformat_alloc_context();
 		file_buffer = FileAccess::get_file_as_bytes(path);
@@ -454,8 +458,11 @@ void AudioStreamFFmpeg::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("__instantiate_playback"), &AudioStreamFFmpeg::_instantiate_playback);
 	ClassDB::bind_method(D_METHOD("set_use_icy", "value"), &AudioStreamFFmpeg::set_use_icy);
 	ClassDB::bind_method(D_METHOD("get_use_icy"), &AudioStreamFFmpeg::get_use_icy);
+	ClassDB::bind_method(D_METHOD("set_headers", "headers_str"), &AudioStreamFFmpeg::set_headers);
+	ClassDB::bind_method(D_METHOD("get_headers"), &AudioStreamFFmpeg::get_headers);
 	ClassDB::bind_method(D_METHOD("get_icy_headers"), &AudioStreamFFmpeg::get_icy_headers);
 	ClassDB::bind_method(D_METHOD("get_stream_title"), &AudioStreamFFmpeg::get_stream_title);
 	ClassDB::bind_method(D_METHOD("get_tags"), &AudioStreamFFmpeg::get_tags);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_icy"), "set_use_icy", "get_use_icy");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "headers"), "set_headers", "get_headers");
 }
