@@ -16,6 +16,10 @@ int GoZenVideo::open(const String& video_path) {
 	path = video_path;
 	resolution = Vector2i(0, 0);
 
+	if (path.begins_with("rtsp://")) {
+		av_dict_set(&options, "rtsp_transport", "tcp", 0);
+	}
+
 	if (path.begins_with("res://") || path.begins_with("user://")) {
 		if (!(temp_format_ctx = avformat_alloc_context()))
 			return _log_err("Failed to allocate AVFormatContext");
@@ -23,6 +27,9 @@ int GoZenVideo::open(const String& video_path) {
 		file_buffer = FileAccess::get_file_as_bytes(path);
 
 		if (file_buffer.is_empty()) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			avformat_free_context(temp_format_ctx);
 			close();
 			return _log_err("Couldn't load file from res:// at path '" + path + "'");
@@ -38,6 +45,9 @@ int GoZenVideo::open(const String& video_path) {
 							   &FFmpeg::read_buffer_packet, nullptr, &FFmpeg::seek_buffer));
 
 		if (!avio_ctx) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			close();
 			av_free(avio_ctx_buffer);
 			return _log_err("Failed to create avio_ctx");
@@ -46,12 +56,22 @@ int GoZenVideo::open(const String& video_path) {
 		temp_format_ctx->pb = avio_ctx.get();
 
 		if (avformat_open_input(&temp_format_ctx, nullptr, nullptr, nullptr) != 0) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			close();
 			return _log_err("Failed to open input from memory buffer");
 		}
 	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, &options)) {
+		if (options) {
+			av_dict_free(&options);
+		}
 		close();
 		return _log_err("Couldn't open video");
+	}
+
+	if (options) {
+		av_dict_free(&options);
 	}
 
 	av_format_ctx = make_unique_ffmpeg<AVFormatContext, AVFormatCtxInputDeleter>(temp_format_ctx);

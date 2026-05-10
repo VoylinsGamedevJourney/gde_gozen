@@ -1,4 +1,5 @@
 #include "audio_stream_ffmpeg.hpp"
+
 #include <cstdint>
 
 AudioStreamFFmpeg::~AudioStreamFFmpeg() {
@@ -24,9 +25,13 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 	AVFormatContext* temp_format_ctx = nullptr;
 	AVDictionary* options = nullptr;
 	file_path = path;
-	
+
 	if (use_icy) {
 		av_dict_set(&options, "icy", "1", 0);
+	}
+
+	if (path.begins_with("rtsp://")) {
+		av_dict_set(&options, "rtsp_transport", "tcp", 0);
 	}
 
 	if (headers != "") {
@@ -38,9 +43,15 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 		file_buffer = FileAccess::get_file_as_bytes(path);
 
 		if (!temp_format_ctx) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			mutex->unlock();
 			return _log_err("Failed to allocate AVFormatContext");
 		} else if (file_buffer.is_empty()) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			avformat_free_context(temp_format_ctx);
 			mutex->unlock();
 			return _log_err("Couldn't load file from res:// or user://");
@@ -57,6 +68,9 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 							   &FFmpeg::seek_buffer));
 
 		if (!avio_ctx) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			av_free(avio_ctx_buffer);
 			mutex->unlock();
 			return _log_err("Failed to create avio_ctx");
@@ -65,12 +79,21 @@ int AudioStreamFFmpeg::open(const String& path, int stream_index) {
 		temp_format_ctx->pb = avio_ctx.get();
 
 		if (avformat_open_input(&temp_format_ctx, nullptr, nullptr, nullptr) != 0) {
+			if (options) {
+				av_dict_free(&options);
+			}
 			mutex->unlock();
 			return _log_err("Failed to open input from memory buffer");
 		}
 	} else if (avformat_open_input(&temp_format_ctx, path.utf8(), NULL, &options)) {
+		if (options) {
+			av_dict_free(&options);
+		}
 		mutex->unlock();
 		return _log_err("Couldn't open file");
+	}
+	if (options) {
+		av_dict_free(&options);
 	}
 
 	av_format_ctx = make_unique_ffmpeg<AVFormatContext, AVFormatCtxInputDeleter>(temp_format_ctx);
@@ -192,7 +215,6 @@ Dictionary AudioStreamFFmpeg::get_icy_headers() {
 		metadata = nullptr;
 		icy_headers_cache = new_headers;
 		return new_headers;
-
 	}
 	return Dictionary();
 }
@@ -294,7 +316,7 @@ void AudioStreamFFmpegPlayback::_seek(double p_position) {
 			found_target = true;
 
 			av_decoded_frame->format = AV_SAMPLE_FMT_S16;
-            av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+			av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 			av_decoded_frame->sample_rate = av_frame->sample_rate;
 			av_decoded_frame->nb_samples =
 				swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame->nb_samples);
@@ -400,7 +422,7 @@ bool AudioStreamFFmpegPlayback::fill_buffer() {
 	}
 
 	av_decoded_frame.get()->format = AV_SAMPLE_FMT_S16;
-    av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+	av_decoded_frame->ch_layout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
 	av_decoded_frame.get()->sample_rate = av_frame.get()->sample_rate;
 	av_decoded_frame.get()->nb_samples =
 		swr_get_out_samples(audio_stream_ffmpeg->swr_ctx.get(), av_frame.get()->nb_samples);
