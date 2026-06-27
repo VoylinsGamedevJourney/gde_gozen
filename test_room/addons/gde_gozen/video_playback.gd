@@ -336,7 +336,7 @@ func _process(delta: float) -> void:
 			is_playing = !is_playing
 			if enable_audio and audio_player.stream != null:
 				audio_player.set_stream_paused(true)
-				video_ended.emit()
+			video_ended.emit()
 
 			if loop:
 				seek_frame(0)
