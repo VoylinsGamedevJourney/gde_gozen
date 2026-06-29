@@ -1,16 +1,16 @@
+<img src="./assets/icon.svg" alt="GoZen Logo" width="200"/>
+
 # GDE GoZen
 
 [![Discord](https://img.shields.io/discord/1120566516899926068?label=Discord&logo=discord&logoColor=white)](https://discord.gg/BdbUf7VKYC)
 [![License: LGPL v2](https://img.shields.io/badge/License-LGPL_v2-blue.svg)](https://www.gnu.org/licenses/lgpl-2.0)
-
-<img src="./assets/icon.svg" alt="GoZen Logo" width="200"/>
 
 *Video playback addon for the Godot game engine*
 
 ## What is GDE GoZen?
 GDE GoZen is a GDExtension addon for the Godot game engine which provides video playback for all kinds of video formats. Godot natively only supports Theora, but with this GDExtension you'll be able to use files such as `.mp4` and more thanks to using the power of FFmpeg.
 
-GDE GoZen is part of the [GoZen project](https://github.com/VoylinsGamedevJourney/GoZen), a video editor made with Godot!
+GDE GoZen is part of the [GoZen project](https://codeberg.org/gozen/gozen), a video editor made with Godot!
 
 ## Features
 - Smooth video playback;
@@ -39,13 +39,13 @@ For more info about the compiling, head over to [the COMPILE_INFO manual](./COMP
 At this moment there's a limit of 2GB for the audio data, so video's over a couple of hours will not work!
 
 ### Download compiled version
-If compiling the addon for your system and all the operating systems which you want to support, they are also available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot). Source code will always be available for free and it will stay open source, so you can compile everything yourself.
+If compiling the addon for your system and all the operating systems which you want to support, they are also available on [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and on [itch.io](https://voylin.itch.io/gde-gozen). Source code will always be available for free and it will stay open source, so you can compile everything yourself.
 
 Getting the compiled builds from Itch.io or Ko-fi gives you access to new compiled builds on every new release so you won't have to compile them all manualy. Getting the compiled versions through Ko-fi or Itch.io is also one of the best way's to support the future development of this GDExtension.
 
 ## Supporting GDE GoZen
 
-Supporting can be done through contributions to the project and through donations. For more information on how to contribute to the project, feel free to take a look at [the CONTRIBUTING manual](./.github/CONTRIBUTING.md). Financial supporting GDE GoZen and GoZen can be done through [my Ko-fi page](https://ko-fi.com/voylin)
+Supporting can be done through contributions to the project and through donations. For more information on how to contribute to the project, feel free to take a look at [the CONTRIBUTING manual](./CONTRIBUTING.md). Financial supporting GDE GoZen and GoZen can be done through [my Ko-fi page](https://ko-fi.com/voylin)
 
 ## Projects using GDE GoZen
 ### Games
@@ -53,12 +53,13 @@ Supporting can be done through contributions to the project and through donation
 - [Hypnotic Typing Prototype](https://mat383.com/blog/hypnotic-typing-prototype/);
 
 ### Projects
-- [GoZen - video editor](https://github.com/VoylinsGamedevJourney/GoZen)
+- [GoZen - video editor](https://codeberg.org/gozen/gozen)
 
 ## Licensing
 Please be careful and read up on the licensing requirements of both this repo and of FFmpeg when using this GDExtension. Licensing is complicated and I'm not a lawyer. As long as you don't make adjustments to the way that FFmpeg gets compiled, there should be no issue for your projects/games.
 
 > This software uses libraries from the FFmpeg project under the LGPLv2.1
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R4M1UM6)
-[Patreon page](https://patreon.com/voylin)
+## Support me and Teledot
+- [My Ko-fi page](https://ko-fi.com/voylin);
+- [My Patreon page](https://patreon.com/voylin)

@@ -2,7 +2,7 @@
 For the people who need extra help, feel free to watch [this video](https://youtu.be/62smFmZyekg). Some things have changed since that video and I got rid of the EasyMenu program support due to maintaining multiple way's to build GDE GoZen was time consuming.
 
 > [!TIP]
-> Compiling the GDExtension for every platform you want to support can be time consuming, if you don't want to compile the GDExtension yourself **and** want to easily get new compiled builds on new version releases of GDE GoZen then you can always get the addon from [my ko-fi page](https://ko-fi.com/s/c6ec85052b) and from [itch.io](https://voylin.itch.io/gde-gozen-video-playback-addon-for-godot).
+> Compiling the GDExtension for every platform you want to support can be time consuming, if you don't want to compile the GDExtension yourself **and** want to easily get new compiled builds on new version releases of GDE GoZen then you can always get the addon from [my ko-fi page](https://ko-fi.com/voylin) and from [itch.io](https://voylin.itch.io/gde-gozen).
 
 ## Compiling
 ### Prerequisites
