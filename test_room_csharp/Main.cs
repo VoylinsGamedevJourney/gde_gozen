@@ -42,8 +42,8 @@ public partial class Main : Control
         _audioTrackOption = GetNode<OptionButton>("%AudioTrackOption");
         _loadingScreen = GetNode<Panel>("LoadingPanel");
 
-        _icons.Add(GD.Load<Texture2D>("res://icons/play.png"));
-        _icons.Add(GD.Load<Texture2D>("res://icons/pause.png"));
+        _icons.Add(GD.Load<Texture2D>("res://icons/play.svg"));
+        _icons.Add(GD.Load<Texture2D>("res://icons/pause.svg"));
 
         if (OS.GetCmdlineArgs().Length > 1)
             OpenVideo(OS.GetCmdlineArgs()[1]);
