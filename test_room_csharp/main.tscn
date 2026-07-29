@@ -1,8 +1,8 @@
-[gd_scene load_steps=9 format=3 uid="uid://b1e501df8faw"]
+[gd_scene format=3 uid="uid://b1e501df8faw"]
 
 [ext_resource type="Script" uid="uid://li62m77pscot" path="res://Main.cs" id="1_h2yge"]
 [ext_resource type="Script" uid="uid://dqo4ee3g73ock" path="res://addons/gde_gozen/VideoPlayback.cs" id="2_1bvp3"]
-[ext_resource type="Texture2D" uid="uid://00frs7e5b0k" path="res://icons/play.png" id="3_vr00e"]
+[ext_resource type="Texture2D" path="res://icons/play.svg" id="3_vr00e"]
 
 [sub_resource type="ImageTexture" id="ImageTexture_w3bnw"]
 
