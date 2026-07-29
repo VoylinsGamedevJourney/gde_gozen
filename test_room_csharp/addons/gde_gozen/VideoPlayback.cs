@@ -22,16 +22,20 @@ public partial class VideoPlayback : Control
 
     [Signal]
     public delegate void PlaybackStartedEventHandler();
-    
+
     [Signal]
     public delegate void PlaybackPausedEventHandler();
 
     [Signal]
     public delegate void PlaybackReadyEventHandler();
 
+    public const string SHADER_PATH_COMPATIBILITY = "res://addons/gde_gozen/shaders/yuv_to_rgb_compatibility.gdshader";
+    public const string SHADER_PATH_FORWARD = "res://addons/gde_gozen/shaders/yuv_to_rgb_forward.gdshader";
     public const float PLAYBACK_SPEED_MIN = 0.25f;
     public const float PLAYBACK_SPEED_MAX = 4.0f;
     public const float AUDIO_OFFSET_THRESHOLD = 0.1f;
+
+    [Export] public Vector2 PlaybackSpeedOverride = Vector2.Zero;
 
     private string _path = "";
 
@@ -47,7 +51,7 @@ public partial class VideoPlayback : Control
 
     private float _playbackSpeed = 1.0f;
 
-    [Export(PropertyHint.Range, $"0.25,4.0,0.05")]
+    [Export(PropertyHint.Range, "0.25,4.0,0.05,or_less,or_greater")]
     public float PlaybackSpeed
     {
         get => _playbackSpeed;
@@ -76,7 +80,7 @@ public partial class VideoPlayback : Control
 
     [Export] public bool Debug = false;
 
-    public GoZenVideo? Video;
+    public GoZenVideo Video;
 
     public TextureRect VideoTexture = new TextureRect();
     public AudioStreamPlayer AudioStream = new AudioStreamPlayer();
@@ -108,8 +112,10 @@ public partial class VideoPlayback : Control
     private Vector2I _resolution = Vector2I.Zero;
     private ShaderMaterial _shaderMaterial;
 
-    private Array<long> _threads = [];
+    private long _videoThread = -1;
     private AudioEffectPitchShift _audioPitchEffect = new AudioEffectPitchShift();
+
+    private bool _ignorePathSetter = false;
 
     private ImageTexture _yTexture;
     private ImageTexture _uTexture;
@@ -133,8 +139,19 @@ public partial class VideoPlayback : Control
     #region Tree Functions
     public override void _EnterTree()
     {
+        var emptyImage = Image.CreateEmpty(2, 2, false, Image.Format.R8);
+
+        _yTexture = ImageTexture.CreateFromImage(emptyImage);
+        _uTexture = ImageTexture.CreateFromImage(emptyImage);
+        _vTexture = ImageTexture.CreateFromImage(emptyImage);
+        _aTexture = ImageTexture.CreateFromImage(emptyImage);
+
         _shaderMaterial = new ShaderMaterial();
-        
+        if (RenderingServer.GetCurrentRenderingMethod() == "forward_plus" && (bool)ProjectSettings.GetSetting("rendering/viewport/hdr_2d", false))
+            _shaderMaterial.Shader = GD.Load<Shader>(SHADER_PATH_FORWARD);
+        else
+            _shaderMaterial.Shader = GD.Load<Shader>(SHADER_PATH_COMPATIBILITY);
+
         VideoTexture.Material = _shaderMaterial;
         VideoTexture.Texture = new ImageTexture();
         VideoTexture.AnchorRight = (float)TextureRect.Anchor.End;
@@ -148,17 +165,14 @@ public partial class VideoPlayback : Control
         AudioServer.AddBus();
         AudioStream.Bus = AudioServer.GetBusName(AudioServer.BusCount - 1);
         AudioServer.AddBusEffect(AudioServer.BusCount - 1, _audioPitchEffect);
-        AudioServer.SetBusMute(AudioServer.BusCount - 1, false);
-        
+
         if (Debug && OS.GetName().ToLower() != "web")
             PrintSystemDebug();
     }
 
     public override void _ExitTree()
     {
-        if (Video != null)
-            Close();
-
+        Close();
         AudioServer.RemoveBus(AudioServer.GetBusIndex(AudioStream.Bus));
     }
 
@@ -167,46 +181,66 @@ public partial class VideoPlayback : Control
         EmitSignalPlaybackReady();
     }
     #endregion
-    
+
     #region Video Data Handling
     public async void SetVideoPath(string newPath)
     {
-        if (Video != null)
-            Close();
+        if (_ignorePathSetter)
+        {
+            _path = newPath;
+            return;
+        }
+
+        Close();
 
         if (!IsNodeReady())
             await ToSignal(this, SignalName.Ready);
         if (!GetTree().Root.IsNodeReady())
             await ToSignal(GetTree().Root, SignalName.Ready);
 
-        AudioStream.Stream = null;
-
         if (newPath == "" || newPath.EndsWith(".tscn"))
             return;
-        if (newPath.Split(":")[0] == "uid")
+        else if (newPath.Split(":")[0] == "uid")
             newPath = ResourceUid.GetIdPath(ResourceUid.TextToId(newPath));
 
         _path = newPath;
-        
+
         Video = new GoZenVideo();
-        
+
         if (Debug)
             Video.EnableDebug();
         else
             Video.DisableDebug();
-        
-        _threads.Add(WorkerThreadPool.AddTask(Callable.From(() => OpenVideo())));
+
+        _videoThread = WorkerThreadPool.AddTask(Callable.From(() => OpenVideo()));
         if (EnableAudio)
             OpenAudio();
     }
 
-    public void UpdateVideo(GoZenVideo video, AudioStream audioStream = null)
+    public async void UpdateVideo(GoZenVideo video, AudioStream audioStream = null)
     {
-        if (Video != null)
-            Close();
-        
-        AudioStream.Stream = audioStream;
+        Close();
+
+        if (!IsNodeReady())
+            await ToSignal(this, SignalName.Ready);
+        if (!GetTree().Root.IsNodeReady())
+            await ToSignal(GetTree().Root, SignalName.Ready);
+
+        _ignorePathSetter = true;
+        Path = video.GetVideoPath();
+        _ignorePathSetter = false;
+
+        if (EnableAudio)
+        {
+            if (audioStream != null)
+                AudioStream.Stream = audioStream;
+            else
+                OpenAudio();
+        }
+
         _UpdateVideo(video);
+        if (IsOpen() && EnableAutoPlay)
+            Play();
     }
 
     private void _UpdateVideo(GoZenVideo video)
@@ -216,12 +250,16 @@ public partial class VideoPlayback : Control
         if (!IsOpen())
         {
             GD.PrintErr("Video isn't open!");
+            Video = null;
             return;
         }
 
         Image image;
-        var rotation_radians = Mathf.DegToRad((float)Video.GetRotation());
-        
+        var rotationRadians = Mathf.DegToRad((float)Video.GetRotation());
+
+        IsPlaying = false;
+        CurrentFrame = 0;
+
         _padding = Video.GetPadding();
         _rotation = Video.GetRotation();
         _frameRate = Video.GetFramerate();
@@ -250,108 +288,67 @@ public partial class VideoPlayback : Control
         else
             image = Image.CreateEmpty(_resolution.X, _resolution.Y, false, Image.Format.R8);
 
-        image.Fill(Colors.Black);
+        image.Fill(Colors.White);
 
         if (Debug)
             PrintVideoDebug();
 
         ((ImageTexture)VideoTexture.Texture).SetImage(image);
-        if (_hasAlpha)
-        {
-            if (Video.IsFullColorRange())
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_full.gdshader");
-            else
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuva420p_standard.gdshader");
-        }
-        else
-        {
-            if (Video.IsFullColorRange())
-            {
-                if (Video.GetInterlaced() == 0)
-                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_full.gdshader");
-                else
-                    _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_full.gdshader");
-            }
-            else if (Video.GetInterlaced() == 0)
-            {
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/yuv420p_standard.gdshader");
-            }
-            else
-            {
-                _shaderMaterial.Shader = GD.Load<Shader>("res://addons/gde_gozen/shaders/deinterlace_yuv420p_standard.gdshader");
-                _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
-            }
-        }
 
-        SetColorProfile();
-        
         _shaderMaterial.SetShaderParameter("resolution", Video.GetActualResolution());
-        _shaderMaterial.SetShaderParameter("rotation", rotation_radians);
+        _shaderMaterial.SetShaderParameter("full_color", Video.IsFullColorRange());
+        _shaderMaterial.SetShaderParameter("interlaced", Video.GetInterlaced());
+        _shaderMaterial.SetShaderParameter("rotation", rotationRadians);
+        SetColorProfile();
 
-        IsPlaying = false;
-        SetPlaybackSpeed(PlaybackSpeed);
-        CurrentFrame = 0;
+        _yTexture.SetImage(Video.GetYData());
+        _uTexture.SetImage(Video.GetUData());
+        _vTexture.SetImage(Video.GetVData());
+        _aTexture.SetImage(_hasAlpha ? Video.GetAData() : image);
 
-        if (_yTexture == null)
-        {
-            _yTexture = ImageTexture.CreateFromImage(Video.GetYData());
-            _uTexture = ImageTexture.CreateFromImage(Video.GetUData());
-            _vTexture = ImageTexture.CreateFromImage(Video.GetVData());
-
-            if (_hasAlpha)
-                _aTexture = ImageTexture.CreateFromImage(Video.GetAData());
-        }
-        
         _shaderMaterial.SetShaderParameter("y_data", _yTexture);
         _shaderMaterial.SetShaderParameter("u_data", _uTexture);
         _shaderMaterial.SetShaderParameter("v_data", _vTexture);
+        _shaderMaterial.SetShaderParameter("a_data", _aTexture);
 
-        if (_hasAlpha)
-            _shaderMaterial.SetShaderParameter("a_data", _aTexture);
-
-        SeekFrame(CurrentFrame);
-
+        SetPlaybackSpeed(PlaybackSpeed);
         EmitSignalVideoLoaded();
     }
 
     private void SetColorProfile(ColorProfile? colorProfile = null)
     {
-        var profile = "";
-        if (colorProfile != null)
-            _colorProfile = colorProfile.Value;
+        Vector4 colorData;
+        var profile = Video.GetColorProfile();
 
-        profile = ColorProfile switch
-        {
-            ColorProfile.Auto => Video.GetColorProfile(),
-            ColorProfile.Bt470 => "bt470",
-            ColorProfile.Bt601 => "bt601",
-            ColorProfile.Bt709 => "bt709",
-            ColorProfile.Bt2020 => "bt2020",
-            ColorProfile.Bt2100 => "bt2100",
-            _ => Video.GetColorProfile(),
-        };
+        if (colorProfile.HasValue)
+            ColorProfile = colorProfile.Value;
+
+        if (ColorProfile != ColorProfile.Auto)
+            profile = ColorProfile.ToString().ToLower();
 
         switch (profile)
         {
-            case "bt601":
-            case "bt470":
-                _shaderMaterial.SetShaderParameter("color_profile", new Vector4(1.402f, 0.344136f, 0.714136f, 1.772f));
-                break;
             case "bt2020":
             case "bt2100":
-                _shaderMaterial.SetShaderParameter("color_profile", new Vector4(1.4746f, 0.16455f, 0.57135f, 1.8814f));
+                colorData = new Vector4(1.4746f, 0.16455f, 0.57135f, 1.8814f);
+                break;
+            case "bt601":
+            case "bt470":
+                colorData = new Vector4(1.402f, 0.344136f, 0.714136f, 1.772f);
                 break;
             default:
-                _shaderMaterial.SetShaderParameter("color_profile", new Vector4(1.5748f, 0.1873f, 0.4681f, 1.8556f));
+                colorData = new Vector4(1.5748f, 0.1873f, 0.4681f, 1.8556f);
                 break;
         }
+
+        _shaderMaterial.SetShaderParameter("color_profile", colorData);
     }
 
     public void SeekFrame(int frame)
     {
         if (!IsOpen() && frame == CurrentFrame)
             return;
-        
+
         CurrentFrame = int.Clamp(frame, 0, _frameCount);
         if (Video.SeekFrame(CurrentFrame) != (int)Error.Ok)
         {
@@ -360,67 +357,107 @@ public partial class VideoPlayback : Control
         else
             SetFrameImage();
 
-        if (EnableAudio)
+        if (EnableAudio && AudioStream.Stream != null && AudioStream.Stream.GetLength() != 0)
         {
             AudioStream.SetStreamPaused(false);
             AudioStream.Play(CurrentFrame / _frameRate);
             AudioStream.SetStreamPaused(!IsPlaying);
         }
     }
-    
-    private void NextFrame(bool skip = false)
+
+    public bool NextFrame(bool skip = false)
     {
-        if (Video.NextFrame(skip) && !skip)
+        bool success = Video.NextFrame(skip);
+        if (success && !skip)
         {
             SetFrameImage();
             EmitSignalNextFrameCalled(CurrentFrame);
         }
-        else if (!skip)
-        {
-            GD.Print("Something went wrong getting next frame!");
-        }
+        return success;
     }
 
     public void Close()
     {
+        if (_videoThread != -1)
+        {
+            var error = WorkerThreadPool.WaitForTaskCompletion(_videoThread);
+            if (error != Error.Ok)
+                GD.PrintErr($"Something went wrong waiting for task completion! {error}");
+            _videoThread = -1;
+        }
+
         if (Video != null)
         {
             if (IsPlaying)
                 Pause();
-
             Video = null;
-            _yTexture = null;
-            _uTexture = null;
-            _vTexture = null;
-            _aTexture = null;
+        }
+
+        if (AudioStream != null)
+        {
+            AudioStream.Stop();
+            AudioStream.Stream = null;
         }
     }
     #endregion
-    
+
     #region Playback Handling
 
     public override void _Process(double delta)
     {
         if (IsPlaying)
         {
+            _skippedFrames = 1;
             _timeElapsed += (float)delta;
 
             if (_timeElapsed < _timeFrame)
                 return;
 
-            var skipped = 0;
-            while (_timeElapsed >= _timeFrame)
+            if (_timeElapsed >= _timeFrame)
             {
-                _timeElapsed -= _timeFrame;
-                CurrentFrame++;
-                skipped++;
+                int frames = Mathf.RoundToInt(_timeElapsed / _timeFrame);
+                _skippedFrames = frames;
             }
 
-            if (CurrentFrame >= _frameCount)
+            _timeElapsed -= _skippedFrames * _timeFrame;
+            CurrentFrame += _skippedFrames;
+
+            bool eofReached = false;
+
+            if (_frameCount > 0 && CurrentFrame >= _frameCount)
+            {
+                eofReached = true;
+            }
+            else
+            {
+                if (EnableAudio)
+                    _SyncAudioVideo();
+
+                if (_skippedFrames > _frameRate)
+                {
+                    SeekFrame(CurrentFrame);
+                }
+                else
+                {
+                    while (_skippedFrames != 1)
+                    {
+                        if (!NextFrame(true))
+                        {
+                            eofReached = true;
+                            break;
+                        }
+                        _skippedFrames--;
+                    }
+                    if (!eofReached && !NextFrame())
+                        eofReached = true;
+                }
+            }
+
+            if (eofReached)
             {
                 IsPlaying = !IsPlaying;
 
-                if (EnableAudio)
+                if (EnableAudio && AudioStream.Stream != null)
                     AudioStream.SetStreamPaused(true);
 
                 EmitSignalVideoEnded();
@@ -431,71 +468,56 @@ public partial class VideoPlayback : Control
                     Play();
                 }
             }
-            else
-            {
-                _SyncAudioVideo();
-                while (skipped != 1)
-                {
-                    NextFrame(true);
-                    skipped--;
-                }
-
-                NextFrame();
-            }
         }
-        else if (_threads.Count != 0)
+        else if (_videoThread != -1)
         {
-            var remove = new Array<long>();
-            foreach (var i in _threads)
-            {
-                if (WorkerThreadPool.IsTaskCompleted(i))
-                {
-                    WorkerThreadPool.WaitForTaskCompletion(i);
-                    remove.Add(i);
-                }
-            }
-            foreach (var i in remove)
-                _threads.Remove(i);
+            var error = WorkerThreadPool.WaitForTaskCompletion(_videoThread);
+            if (error != Error.Ok)
+                GD.PrintErr($"Something went wrong waiting for task completion! {error}");
 
-            if (_threads.Count == 0)
-            {
-                _UpdateVideo(Video);
-                if (EnableAutoPlay)
-                    Play();
-            }
+            _videoThread = -1;
+            _UpdateVideo(Video);
+            if (EnableAutoPlay)
+                Play();
         }
     }
 
     public void Play()
     {
-        if (Video != null && IsOpen() && IsPlaying)
+        if (!IsOpen())
+        {
+            GD.Print($"The video on '{Path}' isn't open yet!");
             return;
+        }
+
+        if (IsPlaying) return;
         IsPlaying = true;
 
-        if (EnableAudio)
+        if (EnableAudio && AudioStream.Stream != null && AudioStream.Stream.GetLength() != 0)
         {
             AudioStream.SetStreamPaused(false);
             AudioStream.Play((CurrentFrame + 1) / _frameRate);
             AudioStream.SetStreamPaused(!IsPlaying);
         }
+
         EmitSignalPlaybackStarted();
     }
 
     public void Pause()
     {
-        if (Video != null && !IsOpen())
-            return;
         IsPlaying = false;
-        
-        if (EnableAudio)
+
+        if (EnableAudio && AudioStream.Stream != null)
             AudioStream.SetStreamPaused(true);
-        
+
         EmitSignalPlaybackPaused();
     }
 
     private void _SyncAudioVideo()
     {
-        if (EnableAudio && AudioStream.Stream.GetLength() != 0)
+        if (_timeElapsed < 1.20f)
+            return;
+        else if (EnableAudio && AudioStream.Stream != null && AudioStream.Stream.GetLength() != 0)
         {
             float audioOffset = AudioStream.GetPlaybackPosition() + (float)AudioServer.GetTimeSinceLastMix() - (CurrentFrame + 1) / _frameRate;
 
@@ -522,7 +544,6 @@ public partial class VideoPlayback : Control
                 }
                 else
                 {
-                    // Logic: if not (pitch > speed) != not (offset < 0) -> essentially XOR logic checking direction
                     if (!((AudioStream.PitchScale > PlaybackSpeed) != (audioOffset < 0)))
                     {
                         AudioStream.PitchScale = PlaybackSpeed;
@@ -533,12 +554,16 @@ public partial class VideoPlayback : Control
         }
     }
     #endregion
-    
+
     #region Getters
     public int GetVideoFrameCount() => _frameCount;
     public float GetVideoFramerate() => _frameRate;
+    public int GetVideoLength() => (int)(_frameCount / _frameRate);
+    public float GetVideoLengthFloat() => _frameCount / _frameRate;
+    public int GetCurrentPlaybackPosition() => (int)(CurrentFrame / _frameRate);
+    public float GetCurrentPlaybackPositionFloat() => CurrentFrame / _frameRate;
     public int GetVideoRotation() => _rotation;
-    public float GetVideoLength() => _frameCount / _frameRate;
+    public bool IsVideoAlpha() => _hasAlpha;
 
     public string GetStreamTitle(int stream)
     {
@@ -571,7 +596,7 @@ public partial class VideoPlayback : Control
         return ImageTexture.CreateFromImage(image);
     }
     #endregion
-    
+
     #region Setters
 
     public void SetCurrentFrame(int frame)
@@ -582,17 +607,21 @@ public partial class VideoPlayback : Control
 
     public void SetFrameImage()
     {
-        _yTexture.Update(Video.GetYData());
-        _uTexture.Update(Video.GetUData());
-        _vTexture.Update(Video.GetVData());
+        RenderingServer.Texture2DUpdate(_yTexture.GetRid(), Video.GetYData(), 0);
+        RenderingServer.Texture2DUpdate(_uTexture.GetRid(), Video.GetUData(), 0);
+        RenderingServer.Texture2DUpdate(_vTexture.GetRid(), Video.GetVData(), 0);
 
         if (_hasAlpha)
-            _aTexture.Update(Video.GetAData());
+            RenderingServer.Texture2DUpdate(_aTexture.GetRid(), Video.GetAData(), 0);
     }
 
     public void SetPlaybackSpeed(float speed)
     {
-        _playbackSpeed = Mathf.Clamp(speed, 0.5f, 2f);
+        if (PlaybackSpeedOverride == Vector2.Zero)
+            _playbackSpeed = Mathf.Clamp(speed, 0.5f, 2f);
+        else
+            _playbackSpeed = Mathf.Clamp(speed, PlaybackSpeedOverride.X, PlaybackSpeedOverride.Y);
+
         _timeFrame = (1.0f / _frameRate) / PlaybackSpeed;
 
         if (EnableAudio && AudioStream.Stream != null)
@@ -617,7 +646,7 @@ public partial class VideoPlayback : Control
     {
         if (PitchAdjust)
             _audioPitchEffect.PitchScale = (float)Mathf.Clamp(1.0 / PlaybackSpeed, 0.5f, 2f);
-        else if (Math.Abs(_audioPitchEffect.PitchScale - 1.0f) > 0.001)
+        else if (_audioPitchEffect.PitchScale != 1.0f)
         {
             _audioPitchEffect.PitchScale = 1.0f;
         }
@@ -640,7 +669,7 @@ public partial class VideoPlayback : Control
         if (EnableAudio)
         {
             OpenAudio(stream);
-            if (IsPlaying && AudioStream.Stream.GetLength() != 0)
+            if (IsPlaying && AudioStream.Stream != null && AudioStream.Stream.GetLength() != 0)
             {
                 AudioStream.SetStreamPaused(false);
                 AudioStream.Play(CurrentFrame / _frameRate);
@@ -649,7 +678,7 @@ public partial class VideoPlayback : Control
         }
     }
     #endregion
-    
+
     #region Misc
     public string DurationToFormattedString(float durationInSeconds)
     {
@@ -671,7 +700,6 @@ public partial class VideoPlayback : Control
     private void OpenAudio(int stream = -1)
     {
         var asff = new AudioStreamFFmpeg();
-        asff.Open(Path, stream);
         if (asff.Open(Path, stream) != (int)Error.Ok)
             GD.PrintErr($"Failed to open AudioStreamFFmpeg for: {Path}");
 
@@ -714,32 +742,25 @@ public partial class VideoPlayback : Control
         GD.Print("Actual resolution: ", Video.GetActualResolution());
         GD.Print("Pixel format: ", Video.GetPixelFormat());
         GD.Print("Color profile: ", Video.GetColorProfile());
-        GD.Print("Has alpha: ", Video.GetHasAlpha());
         GD.Print("Framerate: ", _frameRate);
         GD.Print("Duration (in frames): ", _frameCount);
         GD.Print("Padding: ", _padding);
         GD.Print("Rotation: ", _rotation);
+        GD.Print("Alpha: ", _hasAlpha);
         GD.Print("Full color range: ", Video.IsFullColorRange());
         GD.Print("Interlaced flag: ", Video.GetInterlaced());
         GD.Print("Using sws: ", Video.IsUsingSws());
         GD.Print("Sar: ", Video.GetSar());
 
-        if (VideoStreams.Length != 0)
-        {
-            GD.PrintRich($"Video streams: [i]({VideoStreams.Length})");
-            PrintStreamInfo(VideoStreams);
-        }
-        else
-        {
-            GD.Print("No video streams found.");
-        }
+        GD.PrintRich($"Video streams: [i]({VideoStreams.Length})");
+        PrintStreamInfo(VideoStreams);
 
         if (AudioStreams.Length != 0)
         {
             GD.PrintRich($"Audio streams: [i]({AudioStreams.Length})");
             PrintStreamInfo(AudioStreams);
         }
-        else
+        else if (Debug)
         {
             GD.Print("No audio streams found.");
         }
@@ -749,7 +770,7 @@ public partial class VideoPlayback : Control
             GD.PrintRich($"Subtitle streams: [i]({SubtitleStreams.Length})");
             PrintStreamInfo(SubtitleStreams);
         }
-        else
+        else if (Debug)
         {
             GD.Print("No subtitle streams found.");
         }
