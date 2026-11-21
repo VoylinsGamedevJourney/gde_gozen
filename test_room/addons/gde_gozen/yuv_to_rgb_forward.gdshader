@@ -40,19 +40,31 @@ void fragment() {
 	if (tex_uv.x < 0.0 || tex_uv.x > 1.0 || tex_uv.y < 0.0 || tex_uv.y > 1.0) {
 		COLOR = vec4(0.0);
 	} else {
+		float luma_texture_width = float(textureSize(y_data, 0).x);
+		float visible_luma_ratio = resolution.x / luma_texture_width;
+		vec2 luma_uv = vec2(tex_uv.x * visible_luma_ratio, tex_uv.y);
+		luma_uv.x = min(luma_uv.x, (resolution.x - 0.5) / luma_texture_width);
+
+		float chroma_texture_width = float(textureSize(u_data, 0).x);
+		float visible_chroma_width = (abs(chroma_texture_width - luma_texture_width) < 1.0)
+				? resolution.x
+				: ceil(resolution.x * 0.5);
+		vec2 chroma_sample_uv = vec2(tex_uv.x * (visible_chroma_width / chroma_texture_width), tex_uv.y);
+		chroma_sample_uv.x = min(chroma_sample_uv.x, (visible_chroma_width - 0.5) / chroma_texture_width);
+
 		float y_val;
 
 		// Deinterlacing by blending (slight blur, but viewable image).
 		if (interlaced > 0) {
 			float pixel_h = 1.0 / resolution.y;
 			float offset_dir = (interlaced == 1) ? -pixel_h : pixel_h;
-			vec2 offset_uv = clamp(tex_uv + vec2(0.0, offset_dir), 0.0, 1.0);
+			vec2 offset_uv = clamp(luma_uv + vec2(0.0, offset_dir), 0.0, 1.0);
 			float y_neighbor = texture(y_data, offset_uv).r;
 
-			y_val = mix(texture(y_data, tex_uv).r, y_neighbor, 0.5);
-		} else y_val = texture(y_data, tex_uv).r;
+			y_val = mix(texture(y_data, luma_uv).r, y_neighbor, 0.5);
+		} else y_val = texture(y_data, luma_uv).r;
 
-		vec3 yuv = vec3(y_val, texture(u_data, tex_uv).r, texture(v_data, tex_uv).r);
+		vec3 yuv = vec3(y_val, texture(u_data, chroma_sample_uv).r, texture(v_data, chroma_sample_uv).r);
 
 		if (full_color) yuv.yz -= 0.5; // Full range just needs Chroma offset.
 		else yuv = (yuv - LIMITED_Y_OFFSET) * LIMITED_SCALE;
@@ -61,7 +73,7 @@ void fragment() {
 				yuv.x + (yuv.z * color_profile.x),
 				yuv.x - (yuv.y * color_profile.y) - (yuv.z * color_profile.z),
 				yuv.x + (yuv.y * color_profile.w),
-				texture(a_data, tex_uv).r);
+				texture(a_data, luma_uv).r);
 
 		vec3 clamped_color = clamp(final_color.rgb, 0.0, 1.0);
 		vec3 low = clamped_color / 12.92;
