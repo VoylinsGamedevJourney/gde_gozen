@@ -58,8 +58,7 @@ ENABLED_MODULES = [
     "--enable-decoder=av1",
     "--enable-parser=av1",
     # HTTPS support
-    "--enable-protocol=https",
-    "--enable-protocol=tls",
+    "--enable-protocol=https,tls",
     # Animated images support
     "--enable-demuxer=gif",
     "--enable-decoder=gif",
@@ -456,17 +455,18 @@ def compile_ffmpeg_linux(arch: str) -> None:
         ]
 
     if subprocess.run(cmd, cwd="./ffmpeg/").returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Linux ...")
     if (
         subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode
         != 0
     ):
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
     if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
 
     print(
@@ -538,14 +538,15 @@ def compile_ffmpeg_windows(arch: str) -> None:
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Windows ...")
     if subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/").returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
     if subprocess.run(["make", "install"], cwd="./ffmpeg/").returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
 
     print("Compiling FFmpeg for Windows finished!")
@@ -581,17 +582,18 @@ def compile_ffmpeg_macos(arch: str) -> None:
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for MacOS ...")
     if (
         subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode
         != 0
     ):
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
     if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
 
     print(
@@ -717,17 +719,18 @@ def compile_ffmpeg_android(arch: str) -> None:
 
     result = subprocess.run(cmd, cwd="./ffmpeg/")
     if result.returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
+        sys.exit(1)
 
     print("Compiling FFmpeg for Android ...")
     if (
         subprocess.run(["make", f"-j{THREADS}"], cwd="./ffmpeg/", check=True).returncode
         != 0
     ):
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
     if subprocess.run(["make", "install"], cwd="./ffmpeg/", check=True).returncode != 0:
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
 
     print("Compiling FFmpeg for Android finished!")
@@ -806,7 +809,7 @@ def compile_ffmpeg_web(arch: str) -> None:
         "--enable-bsf=aac_adtstoasc",
         "--enable-bsf=extract_extradata",
         "--enable-bsf=noise",
-        "--enable-protocol=file,http",
+        "--enable-protocol=file,http,https,tls",
         "--enable-libvpx",
         "--enable-libaom",
         "--enable-libtls",
@@ -833,7 +836,7 @@ def compile_ffmpeg_web(arch: str) -> None:
         ).returncode
         != 0
     ):
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
     if (
         subprocess.run(
@@ -841,7 +844,7 @@ def compile_ffmpeg_web(arch: str) -> None:
         ).returncode
         != 0
     ):
-        print("Error: FFmpeg failed!")
+        print("Error: FFmpeg configure failed!")
         sys.exit(1)
 
     print("Copying static lib files (.a) ...")
