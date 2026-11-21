@@ -27,3 +27,7 @@ android.debug.arm64 = "res://addons/gde_gozen/bin/libgozen.android.template_debu
 android.release.arm64 = "res://addons/gde_gozen/bin/libgozen.android.template_release.arm64.so"
 android.debug.arm32 = "res://addons/gde_gozen/bin/libgozen.android.template_debug.arm32.so"
 android.release.arm32 = "res://addons/gde_gozen/bin/libgozen.android.template_release.arm32.so"
+android.debug.x86_64 = "res://addons/gde_gozen/bin/libgozen.android.template_debug.x86_64.so"
+android.release.x86_64 = "res://addons/gde_gozen/bin/libgozen.android.template_release.x86_64.so"
+android.debug.x86_32 = "res://addons/gde_gozen/bin/libgozen.android.template_debug.x86_32.so"
+android.release.x86_32 = "res://addons/gde_gozen/bin/libgozen.android.template_release.x86_32.so"

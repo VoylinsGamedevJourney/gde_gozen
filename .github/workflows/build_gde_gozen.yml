@@ -108,6 +108,12 @@ jobs:
             arch: arm32
             ffmpeg_arg: armv7a
             extra_packages: jdk17-openjdk cmake unzip libtool
+          - platform: android
+            arch: x86_64
+            extra_packages: jdk17-openjdk cmake unzip libtool
+          - platform: android
+            arch: x86_32
+            extra_packages: jdk17-openjdk cmake unzip libtool
 
     env:
       ANDROID_SDK_ROOT: /opt/android-sdk
@@ -211,6 +217,8 @@ jobs:
           # Android.
           cp -r artifacts/bin_android_arm64/* test_room/addons/gde_gozen/bin/
           cp -r artifacts/bin_android_arm32/* test_room/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_x86_64/* test_room/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_x86_32/* test_room/addons/gde_gozen/bin/
 
           # Linux (C#).
           cp -r artifacts/bin_linux_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/
@@ -223,6 +231,8 @@ jobs:
           # Android (C#).
           cp -r artifacts/bin_android_arm64_csharp/* test_room_csharp/addons/gde_gozen/bin/
           cp -r artifacts/bin_android_arm32_csharp/* test_room_csharp/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_x86_64_csharp/* test_room_csharp/addons/gde_gozen/bin/
+          cp -r artifacts/bin_android_x86_32_csharp/* test_room_csharp/addons/gde_gozen/bin/
 
           # Copy license and config.
           cp LICENSE test_room/addons/gde_gozen/

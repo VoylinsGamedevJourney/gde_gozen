@@ -25,6 +25,7 @@ const PLAYBACK_SPEED_MIN: float = 0.25
 const PLAYBACK_SPEED_MAX: float = 4
 const AUDIO_OFFSET_THRESHOLD: float = 0.1
 
+
 ## Vector2(min, max) speed to override PLAYBACK_SPEED_MIN and PLAYBACK_SPEED_MAX constants
 ## Ignored if ZERO
 @export var playback_speed_override: Vector2 = Vector2.ZERO
@@ -40,6 +41,7 @@ var playback_speed: float = 1.0: set = set_playback_speed ## Adjust the video pl
 @export_group("Extra's")
 @export var color_profile: COLOR_PROFILE = COLOR_PROFILE.AUTO: set = _set_color_profile ## Force a specific color profile if needed.
 @export var debug: bool = false ## Enable/disable the printing of debug info.
+
 
 var video: GoZenVideo = null ## Video class object of GDE GoZen which interacts with video files through FFmpeg.
 

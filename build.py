@@ -175,19 +175,28 @@ def compile_libvpx(platform: str, arch: str) -> None:
     elif platform == OS_MACOS:
         target = "arm64-darwin20-gcc" if arch == ARCH_ARM64 else "x86_64-darwin20-gcc"
     elif platform == OS_ANDROID:
-        target = "arm64-android-gcc" if arch == ARCH_ARM64 else "armv7-android-gcc"
+        target_arch = ""
+        if arch == ARCH_ARM64:
+            target = "arm64-android-gcc"
+            target_arch = "aarch64-linux-android"
+        elif arch == ARCH_ARMV7A:
+            target = "armv7-android-gcc"
+            target_arch = "armv7a-linux-androideabi"
+        elif arch == ARCH_X86_32:
+            target = "x86-android-gcc"
+            target_arch = "i686-linux-android"
+        elif arch == ARCH_X86_64:
+            target = "x86_64-android-gcc"
+            target_arch = "x86_64-linux-android"
+
         ndk = os.getenv("ANDROID_NDK_ROOT") or os.getenv("ANDROID_NDK")
-        if ndk:
+        if ndk and target_arch:
             host_tag = get_ndk_host_tag()
             toolchain_bin = f"{ndk}/toolchains/llvm/prebuilt/{host_tag}/bin"
-            target_arch = (
-                "aarch64-linux-android"
-                if arch == ARCH_ARM64
-                else "armv7a-linux-androideabi"
-            )
             env["CC"] = f"{toolchain_bin}/{target_arch}{ANDROID_API_LEVEL}-clang"
             env["CXX"] = f"{toolchain_bin}/{target_arch}{ANDROID_API_LEVEL}-clang++"
-            env["AS"] = env["CC"]
+            if arch in (ARCH_ARM64, ARCH_ARMV7A):
+                env["AS"] = env["CC"]
             env["AR"] = f"{toolchain_bin}/llvm-ar"
             env["NM"] = f"{toolchain_bin}/llvm-nm"
             env["LD"] = env["CXX"]
@@ -280,10 +289,16 @@ def compile_libaom(platform: str, arch: str) -> None:
             cmd += ["-DCMAKE_OSX_ARCHITECTURES=x86_64"]
     elif platform == OS_ANDROID:
         ndk = os.getenv("ANDROID_NDK_ROOT") or os.getenv("ANDROID_NDK")
-        abi = "arm64-v8a" if arch == ARCH_ARM64 else "armeabi-v7a"
+        android_abi_map = {
+            ARCH_ARM64: "arm64-v8a",
+            ARCH_ARMV7A: "armeabi-v7a",
+            ARCH_X86_32: "x86",
+            ARCH_X86_64: "x86_64",
+        }
+        android_abi = android_abi_map[arch]
         cmd += [
             f"-DCMAKE_TOOLCHAIN_FILE={ndk}/build/cmake/android.toolchain.cmake",
-            f"-DANDROID_ABI={abi}",
+            f"-DANDROID_ABI={android_abi}",
             f"-DANDROID_PLATFORM=android-{ANDROID_API_LEVEL}",
             "-DCONFIG_RUNTIME_CPU_DETECT=0",
         ]
@@ -360,10 +375,16 @@ def compile_libressl(platform: str, arch: str) -> None:
             ]
     elif platform == OS_ANDROID:
         ndk = os.getenv("ANDROID_NDK_ROOT") or os.getenv("ANDROID_NDK")
-        abi = "arm64-v8a" if arch == ARCH_ARM64 else "armeabi-v7a"
+        android_abi_map = {
+            ARCH_ARM64: "arm64-v8a",
+            ARCH_ARMV7A: "armeabi-v7a",
+            ARCH_X86_32: "x86",
+            ARCH_X86_64: "x86_64",
+        }
+        android_abi = android_abi_map[arch]
         cmd += [
             f"-DCMAKE_TOOLCHAIN_FILE={ndk}/build/cmake/android.toolchain.cmake",
-            f"-DANDROID_ABI={abi}",
+            f"-DANDROID_ABI={android_abi}",
             f"-DANDROID_PLATFORM=android-{ANDROID_API_LEVEL}",
         ]
     elif platform == OS_WEB:
@@ -624,10 +645,18 @@ def compile_ffmpeg_android(arch: str) -> None:
         target_arch = "aarch64-linux-android"
         arch_flags = "-march=armv8-a"
         ffmpeg_arch = "aarch64"
-    else:  # armv7a
+    elif arch == ARCH_ARMV7A:
         target_arch = "armv7a-linux-androideabi"
         arch_flags = "-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
         ffmpeg_arch = "arm"
+    elif arch == ARCH_X86_32:
+        target_arch = "i686-linux-android"
+        arch_flags = "-march=i686"
+        ffmpeg_arch = "x86"
+    elif arch == ARCH_X86_64:
+        target_arch = "x86_64-linux-android"
+        arch_flags = "-march=x86-64"
+        ffmpeg_arch = "x86_64"
 
     main_folder: str = f"{ndk}/toolchains/llvm/prebuilt/{host_tag}"
     toolchain_bin: str = f"{main_folder}/bin"
@@ -889,11 +918,15 @@ def main():
                 arch = ARCH_ARM64
         case 4:
             platform = OS_ANDROID
-
-            if _print_options(title_arch, [ARCH_ARM64, ARCH_ARMV7A]) == 2:
-                arch = ARCH_ARMV7A
-            else:
-                arch = ARCH_ARM64
+            match _print_options(title_arch, [ARCH_ARM64, ARCH_ARMV7A, ARCH_X86_64, ARCH_X86_32]):
+                case 2:
+                    arch = ARCH_ARMV7A
+                case 3:
+                    arch = ARCH_X86_64
+                case 4:
+                    arch = ARCH_X86_32
+                case _:
+                    arch = ARCH_ARM64
         case 5:
             platform = OS_WEB
             arch = ARCH_WASM32

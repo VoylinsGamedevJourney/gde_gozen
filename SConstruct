@@ -85,8 +85,12 @@ elif "macos" in platform:
 elif "android" in platform:
     if arch == "arm64":
         env.Append(CCFLAGS=["-march=armv8-a"])
-    elif arch == "armv7a":
+    elif arch in ("armv7a", "arm32"):
         env.Append(CCFLAGS=["-march=armv7-a", "-mfloat-abi=softfp", "-mfpu=neon"])
+    elif arch == "x86_32":
+        env.Append(CCFLAGS=["-march=i686"])
+    elif arch == "x86_64":
+        env.Append(CCFLAGS=["-march=x86-64"])
 
     env.Append(
         LINKFLAGS=["-static-libstdc++"],
