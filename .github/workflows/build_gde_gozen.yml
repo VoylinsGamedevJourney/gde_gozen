@@ -128,7 +128,7 @@ jobs:
         run: |
           pacman-key --init
           pacman-key --populate archlinux
-          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip fontconfig libx11 libxcursor libxrandr libxi alsa-lib vulkan-icd-loader pkgconf ${{ matrix.extra_packages }}
+          pacman -Syu --noconfirm git sudo bash yasm python python-pip scons gcc diffutils make wget tar ffmpeg unzip fontconfig libx11 libxcursor libxrandr libxi alsa-lib vulkan-icd-loader pkgconf ${{ matrix.extra_packages }} which
 
       - name: Setup Android SDK
         if: matrix.platform == 'android'
